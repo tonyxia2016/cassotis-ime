@@ -191,6 +191,7 @@ function resolve_lexicon_root {
     )
 
     $candidates = @(
+        (Join-Path $repo_root 'lexicon'),
         (Join-Path $repo_root '..\cassotis-lexicon'),
         (Join-Path $repo_root '..\cassotis_lexicon')
     )

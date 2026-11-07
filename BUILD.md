@@ -8,7 +8,7 @@ This document describes the current build prerequisites, runtime dictionary pipe
 - Embarcadero Delphi 10.4 (Studio 21.0)
 - Visual Studio 2022 with the C++ build tools for x64 (Community, Professional, Enterprise, or Build Tools), for the native language-model bridge
 - Windows SDK
-- A checkout of [cassotis-lexicon](https://github.com/shenmin/cassotis-lexicon) next to this repository (`..\cassotis-lexicon` or `..\cassotis_lexicon`), for the dictionaries
+- The dictionaries come from [cassotis-lexicon](https://github.com/shenmin/cassotis-lexicon). This repository carries its v2.6.0 release in `lexicon\`; a checkout next to the repository (`..\cassotis-lexicon` or `..\cassotis_lexicon`) is still used when `lexicon\` is absent
 
 Included in this repository, nothing to install:
 

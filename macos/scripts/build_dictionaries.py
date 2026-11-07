@@ -19,7 +19,11 @@ def digest(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--lexicon', type=Path, default=Path(os.environ.get('CASSOTIS_LEXICON_ROOT', ROOT.parent / 'cassotis-lexicon')))
+    # In the cassotis-ime repository the lexicon sits beside macos/; a separate
+    # checkout next to this directory still works.
+    in_tree = ROOT.parent / 'lexicon'
+    default_lexicon = in_tree if (in_tree / 'data/generated').is_dir() else ROOT.parent / 'cassotis-lexicon'
+    parser.add_argument('--lexicon', type=Path, default=Path(os.environ.get('CASSOTIS_LEXICON_ROOT', default_lexicon)))
     parser.add_argument('--force', action='store_true')
     args = parser.parse_args()
     arch = os.environ.get('CASSOTIS_ARCH', 'arm64')

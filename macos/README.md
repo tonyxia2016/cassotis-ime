@@ -116,6 +116,7 @@ Prerequisites: a Mac with Apple silicon, Free Pascal 3.2.2, the Xcode command-li
 
 ```sh
 ./scripts/check_environment.sh
+# Optional: the build reads ../lexicon of the cassotis-ime repository by default.
 export CASSOTIS_LEXICON_ROOT="/path/to/cassotis-lexicon"
 ./build_all.sh
 ./install.sh
