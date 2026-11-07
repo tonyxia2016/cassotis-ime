@@ -1,5 +1,7 @@
 # Cassotis IME（言泉输入法）
 
+> 本仓库同时包含 Windows 版（根目录）、macOS 版（`macos/`）、iOS 版（`ios/`）和词库（`lexicon/`），结构与开发约定见 [REPOSITORY.md](REPOSITORY.md)。
+
 <p align="center">
   <img src="cassotis_ime_yanquan.png" alt="Cassotis IME logo" width="280">
 </p>
