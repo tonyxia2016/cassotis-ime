@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
         // Waits up to this long for the character LM before the replay (0: does not ask).
         else if (a == "--wait-model") waitModelSeconds = uint32_t(atoi(v.c_str()));
         else if (a == "--loop") options.loop = v == "1";
+        else if (a == "--poll") options.poll = v == "1";
         else { std::cerr << "unknown option " << a << "\n"; return 2; }
     }
     auto rows = loadCorpus(corpus);

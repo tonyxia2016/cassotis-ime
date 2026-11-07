@@ -41,7 +41,11 @@ void cassotis_core_close(void);
 // char_lm (1, the default: load <resource_dir>/char_lm with Core ML on a
 // background thread; candidates are unchanged until it is ready; 0: no model),
 // char_lm_async (0, the default: no Tab continuation or one-key rerank, whose
-// results a host must poll for; 1: queue them after every key, as on macOS).
+// results a host must poll for; 1: queue them after every key, as on macOS),
+// char_lm_deferred (0, the default; 1: a key runs without the character LM and
+// returns at once with the pending flag set; the next poll, request 17, runs
+// the candidates again with the model and returns them. A newer key makes the
+// poll stale. Only for a host that polls when it is idle).
 // The Core ML runtime (macos/src/host/native/nc_char_lm_coreml.mm) is in the
 // archive; the host links CoreML.framework and libc++.
 int32_t cassotis_core_set_option(const char *name, int32_t value);
@@ -55,6 +59,12 @@ uint32_t cassotis_core_cache_census(char *buffer, uint32_t capacity);
 // call starts it and waits up to timeout_ms (0: does not wait). The first load
 // of a new model file compiles it for the Neural Engine (seconds).
 int32_t cassotis_core_model_state(int32_t timeout_ms);
+
+// The one call that may come from any thread, while another call runs: a poll
+// that is running the candidates again with the character LM (char_lm_deferred)
+// skips the model calls it has not started and returns soon. A host calls it
+// when a key arrives during such a poll, then discards that poll's result.
+void cassotis_core_interrupt(void);
 
 #ifdef __cplusplus
 }

@@ -50,6 +50,7 @@ type
         // Characters of preceding text the model was trained to read (0: none).
         m_context_chars: Integer;
         m_ready: Boolean;
+        m_suspended: Integer;
         m_loaded: TEvent;
         m_loader: TThread;
         // One correction at a time: the native handle rejects concurrent calls.
@@ -66,7 +67,13 @@ type
           starts first; repairs are skipped until the model is ready. }
         constructor Create(const base_directory: string; const background_load: Boolean = True);
         destructor Destroy; override;
+        { Loaded and not suspended: repairs run. }
         function ready: Boolean;
+        // Loaded, whether or not suspended.
+        function loaded: Boolean;
+        { While suspended no repair runs, as before the model has loaded. Any
+          thread may call it; a repair under way finishes. }
+        procedure set_suspended(const value: Boolean);
         function wait_until_ready(const timeout_ms: Cardinal): Boolean;
         function last_error: string;
         procedure set_document_context(const document_key, preceding_text: string);
@@ -260,7 +267,17 @@ end;
 
 function TncLmRepairHost.ready: Boolean;
 begin
+    Result := loaded and (InterlockedCompareExchange(m_suspended, 0, 0) = 0);
+end;
+
+function TncLmRepairHost.loaded: Boolean;
+begin
     Result := (m_loaded.WaitFor(0) = wrSignaled) and m_ready;
+end;
+
+procedure TncLmRepairHost.set_suspended(const value: Boolean);
+begin
+    InterlockedExchange(m_suspended, Ord(value));
 end;
 
 function TncLmRepairHost.wait_until_ready(const timeout_ms: Cardinal): Boolean;

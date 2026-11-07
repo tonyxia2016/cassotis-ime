@@ -4,10 +4,13 @@
 #include <algorithm>
 #include <chrono>
 #include <cinttypes>
+#include <condition_variable>
 #include <cstdio>
+#include <mutex>
 #include <fstream>
 #include <mach/mach.h>
 #include <malloc/malloc.h>
+#include <memory>
 #include <sstream>
 #include <thread>
 #if TARGET_OS_IPHONE
@@ -57,6 +60,48 @@ static double quantile(const std::vector<float> &sorted, double q) {
     return sorted[size_t(q * double(sorted.size() - 1))];
 }
 
+// Calls cassotis_core_interrupt at a deadline unless disarmed first: the user
+// pressing the next key while a poll still runs.
+class Interrupter {
+public:
+    Interrupter() : thread_([this] { run(); }) {}
+    ~Interrupter() {
+        { std::lock_guard<std::mutex> lock(mutex_); quit_ = true; }
+        changed_.notify_all();
+        thread_.join();
+    }
+    void arm(std::chrono::steady_clock::time_point deadline) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        deadline_ = deadline;
+        armed_ = true;
+        fired_ = false;
+        changed_.notify_all();
+    }
+    // True when it fired.
+    bool disarm() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        armed_ = false;
+        changed_.notify_all();
+        return fired_;
+    }
+private:
+    void run() {
+        std::unique_lock<std::mutex> lock(mutex_);
+        while (!quit_) {
+            if (!armed_) { changed_.wait(lock); continue; }
+            if (changed_.wait_until(lock, deadline_, [this] { return quit_ || !armed_; })) continue;
+            cassotis_core_interrupt();
+            fired_ = true;
+            armed_ = false;
+        }
+    }
+    std::mutex mutex_;
+    std::condition_variable changed_;
+    bool armed_ = false, fired_ = false, quit_ = false;
+    std::chrono::steady_clock::time_point deadline_{};
+    std::thread thread_;
+};
+
 ReplayResult replay(EngineClient &client, const std::vector<Sentence> &corpus,
                     const ReplayOptions &options, const ReplayProgress &progress) {
     using clock = std::chrono::steady_clock;
@@ -87,8 +132,34 @@ ReplayResult replay(EngineClient &client, const std::vector<Sentence> &corpus,
         if (s.memory.available && s.memory.available < out.minAvailable) out.minAvailable = s.memory.available;
         if (progress && !progress(s)) stop = true;
     };
-    auto press = [&](const Key &key) {
+    std::vector<float> pollLatency;
+    std::unique_ptr<Interrupter> interrupter;
+    if (options.poll && options.paceMicros) interrupter = std::make_unique<Interrupter>();
+    bool pollDue = false;               // the last key returned pending
+    auto due = clock::now();            // when the user presses the next key
+    const auto pace = std::chrono::microseconds(options.paceMicros);
+    // A poll that changes the candidates goes into the sentence's digest h.
+    auto pollBefore = [&](bool interrupts, uint64_t &h) {
+        if (!pollDue) return;
+        pollDue = false;
+        if (interrupter && interrupts) interrupter->arm(due);
+        auto p0 = clock::now();
+        Result p = client.poll();
+        pollLatency.push_back(std::chrono::duration<float, std::milli>(clock::now() - p0).count());
+        ++out.polls;
+        if (interrupter && interrupter->disarm()) { ++out.pollsInterrupted; return; }
+        if (!p.handled) return;
+        ++out.pollsApplied;
+        if (options.onKey) options.onKey(p);
+        h = absorb(h, p);
+    };
+    // interrupts: a key that edits the composition may cut a poll short; one
+    // that commits waits for it.
+    auto press = [&](const Key &key, bool interrupts, uint64_t &h) {
+        if (options.poll) pollBefore(interrupts, h);
+        if (options.paceMicros) std::this_thread::sleep_until(due);
         auto t0 = clock::now();
+        if (options.poll && options.paceMicros && due < t0) t0 = due;  // pressed while a poll ran
         Result r = client.key(key);
         latency.push_back(std::chrono::duration<float, std::milli>(clock::now() - t0).count());
         if (options.onKey) {
@@ -97,8 +168,9 @@ ReplayResult replay(EngineClient &client, const std::vector<Sentence> &corpus,
         }
         ++out.keys;
         if (r.pending) ++out.deferred;
+        pollDue = options.poll && r.pending;
         if (out.keys >= nextSample) { nextSample += options.sampleEvery; sample(); }
-        if (options.paceMicros) std::this_thread::sleep_for(std::chrono::microseconds(options.paceMicros));
+        if (options.paceMicros) due = clock::now() + pace;
         return r;
     };
     try {
@@ -111,14 +183,16 @@ ReplayResult replay(EngineClient &client, const std::vector<Sentence> &corpus,
             if (options.useContext && !previous.empty())
                 client.surrounding(previous, int32_t(previous.size()), true);
             uint64_t h = 14695981039346656037ull;
+            pollDue = false;
             for (char c : s.keys) {
                 Key k; k.text = std::string(1, c);
-                h = absorb(h, press(k));
+                Result r = press(k, true, h);
+                h = absorb(h, r);
                 if (stop) break;
             }
             if (stop) break;
             Key space; space.special = 5;
-            Result r = press(space);
+            Result r = press(space, false, h);
             h = absorb(h, r);
             bool hit = r.commit == s.target;
             out.firstHits += hit;
@@ -151,6 +225,12 @@ ReplayResult replay(EngineClient &client, const std::vector<Sentence> &corpus,
         out.p99 = quantile(latency, 0.99);
         out.worst = latency.back();
     }
+    if (!pollLatency.empty()) {
+        std::sort(pollLatency.begin(), pollLatency.end());
+        out.pollP50 = quantile(pollLatency, 0.50);
+        out.pollP95 = quantile(pollLatency, 0.95);
+        out.pollWorst = pollLatency.back();
+    }
     if (!uiLatency.empty()) {
         std::sort(uiLatency.begin(), uiLatency.end());
         out.uiP50 = quantile(uiLatency, 0.50);
@@ -179,12 +259,14 @@ std::string toJSON(const ReplayResult &r, const std::string &label, const Memory
         "  \"ui_p50_ms\": %.2f, \"ui_p95_ms\": %.2f, \"ui_p99_ms\": %.2f, \"ui_worst_ms\": %.1f,\n"
         "  \"end_mb\": %.1f, \"peak_mb\": %.1f, \"available_end_mb\": %.1f, \"available_min_mb\": %.1f,\n"
         "  \"model_state\": %d, \"model_seconds\": %.2f,\n"
+        "  \"polls\": %u, \"polls_applied\": %u, \"polls_interrupted\": %u, \"poll_p50_ms\": %.2f, \"poll_p95_ms\": %.2f, \"poll_worst_ms\": %.1f,\n"
         "  \"digest\": \"%016" PRIx64 "\",\n",
         mb(beforeOpen.footprint), mb(afterOpen.footprint), openSeconds,
         r.keys, r.sentences, r.firstHits, r.sentences ? double(r.firstHits) / r.sentences : 0.0, r.deferred,
         r.seconds, r.p50, r.p95, r.p99, r.worst, r.mean, r.uiP50, r.uiP95, r.uiP99, r.uiWorst,
         mb(r.end.footprint), mb(r.end.footprintPeak), mb(r.end.available), mb(r.minAvailable),
-        r.modelState, r.modelSeconds, r.digest);
+        r.modelState, r.modelSeconds, r.polls, r.pollsApplied, r.pollsInterrupted, r.pollP50, r.pollP95,
+        r.pollWorst, r.digest);
     o << line;
     o << "  \"error\": \"" << escaped(r.error) << "\",\n  \"samples\": [";
     for (size_t i = 0; i < r.samples.size(); ++i) {

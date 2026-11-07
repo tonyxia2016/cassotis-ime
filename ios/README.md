@@ -60,7 +60,7 @@ CASSOTIS_VARIANT=macos-cmem CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build
 
 回放会给每次运行算一个候选摘要。语料前 300 句在缓存 100% 时应得到 `24ca8ec5e807ec1e`，1 万键在 iOS 配置下应得到 `87b8ed8b46c2e479`，可以用来确认引擎改动有没有改变候选。这两个摘要是不加载模型时的：比较时加 `--option char_lm=0`。
 
-带模型回放要让资源目录里有 `char_lm/`，并用 `--wait-model 秒数` 等模型就绪后再开始，例如：
+带模型回放要让资源目录里有 `char_lm/`，并用 `--wait-model 秒数` 等模型就绪后再开始。要和键盘一样延后用模型，再加 `--option char_lm_deferred=1 --poll 1`。加 `--pace-us` 时，下一个键在上一个结果出来后隔这么久按下，延迟从按下时算起。例如：
 
 ```bash
 ./build/macos/replay --dictionary ../macos/build/dictionaries/dict_sc.db --resources build/res \
@@ -82,7 +82,12 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 ./scripts/device_selftest.sh selftest "keys=10000"   # 引擎跑在 App 进程里，不需要启用键盘
 ```
 
-回放选项：`keys`、`seconds`、`pace`（微秒）、`every`、`context`、`learning`、`loop`、`ui`。内存策略选项：`cache`、`sqlite`、`mmap`、`ondemand`、`prewarm`。模型选项：`lm=0` 不加载字符模型；`wait` 是回放前最多等模型就绪的秒数（默认 180），报告里的 `model_state`、`model_seconds` 记录结果；`det=1` 关掉引擎的时间预算。其他命令：`mode=whoami`、`mode=probe`、`mode=idle`、`mode=limit`、`mode=next`、`mode=exit`、`mode=mltest`（直接用 Core ML 加载各长度函数，测加载时间、内存和单次推理时间）。
+回放选项：`keys`、`seconds`、`pace`（微秒）、`every`、`context`、`learning`、`loop`、`ui`。内存策略选项：`cache`、`sqlite`、`mmap`、`ondemand`、`prewarm`。模型选项：
+
+- `lm=0` 不加载字符模型。
+- `defer=0` 让每个按键当场用模型排序。默认是延后：按键先返回只按词库排的候选，键盘空闲时再轮询，取回模型排好的候选。轮询还没结束时来了拼音字母或退格，就中断它；空格、回车、选候选则等它跑完。报告里的 `polls`、`polls_applied`、`polls_interrupted` 和 `poll_*_ms` 记录轮询的次数与耗时。
+- `wait` 是回放前最多等模型就绪的秒数，默认 180；报告里的 `model_state`、`model_seconds` 记录结果。
+- `det=1` 关掉引擎的时间预算。其他命令：`mode=whoami`、`mode=probe`、`mode=idle`、`mode=limit`、`mode=next`、`mode=exit`、`mode=mltest`（直接用 Core ML 加载各长度函数，测加载时间、内存和单次推理时间）。
 
 模型在引擎打开后由后台线程加载，就绪前候选不使用模型。新装的模型第一次加载时，系统要为神经网络引擎编译，约 8 秒；之后每次进程启动约 0.2 秒。
 

@@ -222,11 +222,15 @@ final class HostViewController: UIViewController, UITextViewDelegate {
         finishSelfTest("{\"error\":\"\(error)\"}")
         return
       }
+      // As in the keyboard: wait for the character LM, poll for its ranking.
+      let model = number("lm", 1) == 1
+      if model { _ = engine.wait(forModel: UInt32(number("wait", 180) * 1000)) }
       let json = engine.replayCorpus(
         plugin + "/corpus.tsv", label: options["label"] ?? "selftest",
         maxKeys: UInt32(number("keys", 10000)), maxSeconds: UInt64(number("seconds", 0)),
         paceMicros: UInt32(number("pace", 0)), sampleEvery: UInt32(number("every", 500)),
         useContext: number("context", 0) == 1, loop: number("loop", 0) == 1,
+        poll: model && number("defer", 1) == 1,
         digestPath: data.path + "/digest-selftest.txt", onKey: nil, onSample: nil)
       finishSelfTest(json)
     }

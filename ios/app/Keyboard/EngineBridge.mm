@@ -19,6 +19,7 @@ static CassotisKeyResult *wrap(const Result &r) {
     o.preedit = ns(r.preedit);
     o.commit = ns(r.commit);
     o.handled = r.handled;
+    o.pending = r.pending;
     NSMutableArray<NSString *> *list = [NSMutableArray arrayWithCapacity:r.candidates.size()];
     for (const auto &c : r.candidates) [list addObject:ns(c.text)];
     o.candidates = list;
@@ -41,6 +42,7 @@ static CassotisKeyResult *wrap(const Result &r) {
 + (uint64_t)footprintPeak { return memorySnapshot().footprintPeak; }
 + (uint64_t)available { return memorySnapshot().available; }
 + (void)setOption:(NSString *)name value:(int32_t)value { cassotis_core_set_option(name.UTF8String, value); }
++ (void)interrupt { cassotis_core_interrupt(); }
 + (void)applyMemoryPolicy:(NSDictionary<NSString *, NSString *> *)options {
     int32_t (^number)(NSString *, int32_t) = ^int32_t(NSString *key, int32_t fallback) {
         NSString *value = options[key];
@@ -52,6 +54,7 @@ static CassotisKeyResult *wrap(const Result &r) {
     cassotis_core_set_option("query_path_on_demand", number(@"ondemand", 1));
     cassotis_core_set_option("prewarm_short_lookups", number(@"prewarm", 0));
     cassotis_core_set_option("char_lm", number(@"lm", 1));
+    cassotis_core_set_option("char_lm_deferred", number(@"defer", 1));
     cassotis_core_set_option("deterministic_search", number(@"det", 0));
 }
 
@@ -87,6 +90,9 @@ static CassotisKeyResult *wrap(const Result &r) {
 - (void)resetComposition {
     try { _client.reset(); } catch (const std::exception &e) { NSLog(@"reset: %s", e.what()); }
 }
+- (CassotisKeyResult *)poll {
+    try { return wrap(_client.poll()); } catch (const std::exception &e) { NSLog(@"poll: %s", e.what()); return [CassotisKeyResult new]; }
+}
 - (void)trim:(int32_t)level {
     cassotis_core_trim(level);
     malloc_zone_pressure_relief(nullptr, 0);  // hand the freed pages back at once
@@ -107,7 +113,7 @@ static CassotisKeyResult *wrap(const Result &r) {
 
 - (NSString *)replayCorpus:(NSString *)corpus label:(NSString *)label maxKeys:(uint32_t)maxKeys
                 maxSeconds:(uint64_t)maxSeconds paceMicros:(uint32_t)paceMicros sampleEvery:(uint32_t)sampleEvery
-                useContext:(BOOL)useContext loop:(BOOL)loop digestPath:(NSString *)digestPath
+                useContext:(BOOL)useContext loop:(BOOL)loop poll:(BOOL)poll digestPath:(NSString *)digestPath
                      onKey:(void (^)(CassotisKeyResult *))onKey
                   onSample:(BOOL (^)(uint32_t, double, uint64_t, uint64_t))onSample {
     ReplayOptions options;
@@ -117,6 +123,7 @@ static CassotisKeyResult *wrap(const Result &r) {
     options.sampleEvery = sampleEvery;
     options.useContext = useContext;
     options.loop = loop;
+    options.poll = poll;
     if (digestPath) options.digestPath = digestPath.UTF8String;
     if (onKey) options.onKey = [onKey](const Result &r) { @autoreleasepool { onKey(wrap(r)); } };
     ReplayProgress progress;

@@ -24,7 +24,8 @@ exports
     cassotis_core_close,
     cassotis_core_set_option,
     cassotis_core_cache_census,
-    cassotis_core_model_state;
+    cassotis_core_model_state,
+    cassotis_core_interrupt;
 
 begin
 end.

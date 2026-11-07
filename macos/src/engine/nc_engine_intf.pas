@@ -1317,6 +1317,11 @@ type
             const dictionary: TncDictionaryProvider);
         function dictionary_models_deferred: Boolean;
         function rebuild_candidates_after_dictionary_upgrade: Boolean;
+        { Builds the current composition's candidates again, as its last key
+          did: for an embedding host that ran the key while the character LM
+          was held back (char_lm_deferred). Not once the user has paged or
+          moved through the candidates: what they browse stays as shown. }
+        function rebuild_candidates_for_char_lm: Boolean;
         function try_upgrade_dictionary_from(const ready_engine: TncEngine;
             out candidates_rebuilt: Boolean): Boolean;
         procedure reload_dictionary_if_needed;
@@ -5638,6 +5643,15 @@ begin
     begin
         Exit;
     end;
+    build_candidates;
+    normalize_page_and_selection;
+end;
+
+function TncEngine.rebuild_candidates_for_char_lm: Boolean;
+begin
+    Result := (m_composition_text <> '') and (not m_candidate_navigation_started);
+    if not Result then
+        Exit;
     build_candidates;
     normalize_page_and_selection;
 end;

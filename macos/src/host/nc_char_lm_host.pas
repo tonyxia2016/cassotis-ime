@@ -44,7 +44,7 @@ type
         m_threads, m_timeout_ms: Integer;
         m_loader: TThread;
         m_signal: TEvent;
-        m_ready, m_stopping, m_failed: Integer;
+        m_ready, m_stopping, m_failed, m_suspended: Integer;
         m_module: TLibHandle;
         m_handle: Pointer;
         m_score: TScoreTexts;
@@ -86,8 +86,12 @@ type
         destructor Destroy; override;
         function char_lm_ready: Boolean;
         { 1 ready, 0 not loaded yet (the load starts on first use or on this
-          call), -1 failed (last_error). }
+          call), -1 failed (last_error). Not affected by set_suspended. }
         function model_state: Integer;
+        { While suspended the model answers nothing, as before it has loaded,
+          and every ranking falls back to the dictionary's. Any thread may
+          call it; a call under way finishes. }
+        procedure set_suspended(const value: Boolean);
         function score_texts(const context: string; const texts: TArray<string>;
             const min_count, max_nodes: Integer; out logp: TArray<Single>): Integer;
         function score_texts_background(const context: string; const texts: TArray<string>;
@@ -423,15 +427,22 @@ end;
 
 function TncCharLmHost.model_state: Integer;
 begin
-    if char_lm_ready then Exit(1);
+    if InterlockedCompareExchange(m_ready, 0, 0) = 1 then Exit(1);
+    m_signal.SetEvent;
     if InterlockedCompareExchange(m_failed, 0, 0) = 1 then Exit(-1);
     Result := 0;
+end;
+
+procedure TncCharLmHost.set_suspended(const value: Boolean);
+begin
+    InterlockedExchange(m_suspended, Ord(value));
 end;
 
 function TncCharLmHost.char_lm_ready: Boolean;
 begin
     Result := InterlockedCompareExchange(m_ready, 0, 0) = 1;
-    if not Result then m_signal.SetEvent;
+    if not Result then m_signal.SetEvent
+    else Result := InterlockedCompareExchange(m_suspended, 0, 0) = 0;
 end;
 
 function TncCharLmHost.score_texts(const context: string; const texts: TArray<string>;

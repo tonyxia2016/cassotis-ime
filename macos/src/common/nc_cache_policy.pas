@@ -40,6 +40,10 @@ var
     // rerank): queued after every key, run on worker threads. A host that does
     // not poll leaves it off, or it only takes the Neural Engine from the keys.
     g_char_lm_async: Boolean = False;
+    // Keys run without the character LM and return at once, marked pending;
+    // the frontend's next poll (request 17) reruns the candidates with it.
+    // Only for a host that polls, or keys never get the model's ranking.
+    g_char_lm_deferred: Boolean = False;
 
 function nc_cache_limit(const desktop_limit: Integer): Integer;
 

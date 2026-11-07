@@ -9,9 +9,17 @@ import UIKit
 
 /// One thread that outlives the engine, as cassotis_core.h demands. A serial
 /// DispatchQueue would hop between pool threads.
+///
+/// Besides the jobs, one idle job: the poll that brings the character LM's
+/// ranking for the last key (char_lm_deferred). It runs only when no job
+/// waits, so keys typed quickly never wait for the model, and a newer one
+/// replaces it.
 final class EngineThread {
   private let condition = NSCondition()
   private var jobs: [() -> Void] = []
+  private var idle: (() -> Void)?
+  private var idleRunning = false
+  private var idleInterrupted = false
   private var thread: Thread?
 
   init() {
@@ -23,20 +31,55 @@ final class EngineThread {
     thread.start()
   }
 
-  func run(_ job: @escaping () -> Void) {
+  /// interruptsPoll: a key that edits the composition cuts a running poll
+  /// short (cassotis_core_interrupt), since it will rebuild the candidates
+  /// anyway. Other work, a commit above all, waits for the poll, so that what
+  /// it commits is what the model ranked.
+  func run(interruptsPoll: Bool = false, _ job: @escaping () -> Void) {
     condition.lock()
     jobs.append(job)
+    let interrupt = interruptsPoll && idleRunning && !idleInterrupted
+    if interrupt { idleInterrupted = true }
     condition.signal()
     condition.unlock()
+    if interrupt { EngineBridge.interrupt() }
+  }
+
+  func runWhenIdle(_ job: @escaping () -> Void) {
+    condition.lock()
+    idle = job
+    condition.signal()
+    condition.unlock()
+  }
+
+  /// On the engine thread, in the idle job: whether a key interrupted it.
+  func idleWasInterrupted() -> Bool {
+    condition.lock()
+    defer { condition.unlock() }
+    return idleInterrupted
   }
 
   private func loop() {
     while true {
       condition.lock()
-      while jobs.isEmpty { condition.wait() }
-      let job = jobs.removeFirst()
+      while jobs.isEmpty && idle == nil { condition.wait() }
+      let job: () -> Void
+      let isIdle = jobs.isEmpty
+      if isIdle {
+        job = idle!
+        idle = nil
+        idleRunning = true
+        idleInterrupted = false
+      } else {
+        job = jobs.removeFirst()
+      }
       condition.unlock()
       autoreleasepool(invoking: job)
+      if isIdle {
+        condition.lock()
+        idleRunning = false
+        condition.unlock()
+      }
     }
   }
 }
@@ -109,10 +152,10 @@ class CommandKeyboardController: UIInputViewController {
   /// The engine opens with the first key, not with the view: selecting a keyboard
   /// starts the extension before the user types, and a run must set its policy first.
   func withEngine(options: [String: String] = [:], learning: Bool = false,
-    _ work: @escaping () -> Void)
+    interruptsPoll: Bool = false, _ work: @escaping () -> Void)
   {
     if Self.engineState == 2 {
-      Self.thread.run(work)
+      Self.thread.run(interruptsPoll: interruptsPoll, work)
       return
     }
     guard Self.engineState == 0 else {
@@ -144,20 +187,36 @@ class CommandKeyboardController: UIInputViewController {
   // MARK: - Typing
 
   func pressText(_ text: String) {
-    withEngine {
+    // A pinyin letter edits the composition; punctuation commits.
+    let edits = text.count == 1 && text.unicodeScalars.allSatisfy {
+      ("a"..."z").contains($0) || $0 == "'"
+    }
+    withEngine(interruptsPoll: edits) {
       let result = Self.engine.pressText(text)
       DispatchQueue.main.async { self.apply(result) }
+      if result.pending { self.pollWhenIdle() }
     }
   }
 
   func pressSpecial(_ code: UInt16, fallback: String?) {
     let composing = !preedit.isEmpty
-    withEngine {
+    withEngine(interruptsPoll: code == 1) {  // 1: backspace
       let result = Self.engine.pressSpecial(code)
       DispatchQueue.main.async {
         if !composing, let fallback { self.textDocumentProxy.insertText(fallback) }
         self.apply(result)
       }
+      if result.pending { self.pollWhenIdle() }
+    }
+  }
+
+  /// The model's ranking for the last key, once the engine thread is free.
+  /// A poll a key interrupted is dropped: that key's own result follows.
+  private func pollWhenIdle() {
+    Self.thread.runWhenIdle { [weak self] in
+      let result = Self.engine.poll()
+      guard result.handled, !Self.thread.idleWasInterrupted() else { return }
+      DispatchQueue.main.async { self?.apply(result) }
     }
   }
 
@@ -173,6 +232,7 @@ class CommandKeyboardController: UIInputViewController {
     withEngine {
       let result = Self.engine.select(Int32(index))
       DispatchQueue.main.async { self.apply(result) }
+      if result.pending { self.pollWhenIdle() }
     }
   }
 
@@ -300,7 +360,7 @@ class CommandKeyboardController: UIInputViewController {
       let json = Self.engine.replayCorpus(
         corpus, label: label, maxKeys: UInt32(keys), maxSeconds: UInt64(seconds),
         paceMicros: UInt32(pace), sampleEvery: UInt32(every), useContext: context, loop: loop,
-        digestPath: digest, onKey: onKey,
+        poll: model && number("defer", 1) == 1, digestPath: digest, onKey: onKey,
         onSample: { keys, seconds, footprint, available in
           NSLog(
             "replay keys=%u t=%.0f footprint=%.1fMB available=%.1fMB", keys, seconds,

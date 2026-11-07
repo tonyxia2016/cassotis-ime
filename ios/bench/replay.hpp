@@ -33,6 +33,12 @@ struct ReplayOptions {
     // Called after each key on the replay thread, with the UI work of a real
     // keyboard. Its time is reported apart from the engine's (ui_* in the JSON).
     std::function<void(const Result &)> onKey;
+    // Poll after a key that returns pending, as a frontend does when it is idle
+    // (char_lm_deferred). With paceMicros the user presses the next key pace
+    // after the last result: a pinyin letter interrupts a poll still running
+    // (cassotis_core_interrupt), a commit waits for it, and a key's latency
+    // counts from when it was pressed.
+    bool poll = false;
 };
 struct ReplaySample { uint32_t keys; double seconds; MemorySnapshot memory; };
 struct ReplayResult {
@@ -46,6 +52,10 @@ struct ReplayResult {
     // asked) and how long it waited for the model.
     int32_t modelState = -2;
     double modelSeconds = 0;
+    // Polls after pending keys: how many, how many changed the candidates,
+    // how many the next key interrupted, and how long they took.
+    uint32_t polls = 0, pollsApplied = 0, pollsInterrupted = 0;
+    double pollP50 = 0, pollP95 = 0, pollWorst = 0;
     std::vector<ReplaySample> samples;
     std::string error;
 };

@@ -40,6 +40,9 @@ type
         FModifierShortcutKeyCode: Word;
     public
         LongCompletionPending, OneKeyRerankPending, LearnedCandidatesInvalid: Boolean;
+        // The last key ran without the character LM; the next poll reruns its
+        // candidates with it (char_lm_deferred).
+        CharLmRerankPending: Boolean;
         constructor Create(const context_id: QWord);
         function AdvanceGeneration(const generation_id: QWord): Boolean;
         procedure Reset;
@@ -128,6 +131,7 @@ begin
         begin
             LongCompletionPending := False;
             OneKeyRerankPending := False;
+            CharLmRerankPending := False;
         end;
         FGeneration := generation_id;
     end;
@@ -148,6 +152,7 @@ begin
     LearnedCandidatesInvalid := False;
     LongCompletionPending := False;
     OneKeyRerankPending := False;
+    CharLmRerankPending := False;
     FComposition := '';
     FRawInputCandidate := '';
     FRawInputSelected := False;

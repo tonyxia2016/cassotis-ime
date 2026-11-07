@@ -21,6 +21,7 @@ procedure cassotis_core_close; cdecl;
 function cassotis_core_set_option(name: PAnsiChar; value: LongInt): LongInt; cdecl;
 function cassotis_core_cache_census(buffer: PAnsiChar; capacity: Cardinal): Cardinal; cdecl;
 function cassotis_core_model_state(timeout_ms: LongInt): LongInt; cdecl;
+procedure cassotis_core_interrupt; cdecl;
 
 implementation
 
@@ -181,6 +182,8 @@ begin
         g_char_lm_enabled := value <> 0
     else if key = 'char_lm_async' then
         g_char_lm_async := value <> 0
+    else if key = 'char_lm_deferred' then
+        g_char_lm_deferred := value <> 0
     else
         Result := c_err_arg;
 end;
@@ -235,6 +238,16 @@ begin
             set_error(E.ClassName + ': ' + E.Message);
             Result := c_err_exception;
         end;
+    end;
+end;
+
+procedure cassotis_core_interrupt; cdecl;
+begin
+    // Any thread, while another call may run: only atomic flags are touched.
+    try
+        if g_service <> nil then
+            g_service.InterruptCharLmPass;
+    except
     end;
 end;
 

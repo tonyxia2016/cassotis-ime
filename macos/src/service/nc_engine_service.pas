@@ -39,6 +39,8 @@ type
         // The objects behind FLmRepair and FCharLm (those references own them).
         FLmRepairHost: TncLmRepairHost;
         FCharLmHost: TncCharLmHost;
+        // 1 while a poll reruns candidates with the character LM (atomic).
+        FCharLmPassRunning: Integer;
         FLocalCompletionHost: TncLocalCompletionHost;
         FCharLm: IncCharLm;
         FOneKeyRerankHost: TncOneKeyRerankHost;
@@ -69,6 +71,9 @@ type
         function QueueOneKeyRerank(const context: TncEngineContext): Boolean;
         function RemoveCandidate(const context: TncEngineContext;
             const candidate_index: Integer): Boolean;
+        function ProcessKeyCore(const context_id: QWord; const generation_id: QWord;
+            const key_event: TncKeyEvent): TncEngineResult;
+        procedure SuspendCharLm(const value: Boolean);
     public
         constructor Create; overload;
         constructor Create(const dictionary_path: string); overload;
@@ -114,6 +119,10 @@ type
         function ModelState(const timeout_ms: Integer): Integer;
         // Why ModelState is -1.
         function ModelError: string;
+        { From any thread: a poll that is rerunning candidates with the
+          character LM (char_lm_deferred) skips the model calls it has not
+          made yet and returns soon; a key waiting behind it starts sooner. }
+        procedure InterruptCharLmPass;
         function DictionaryReady: Boolean;
         function UserDictionaryReady: Boolean;
         function RemoveUserCandidate(const context_id: QWord;
@@ -278,7 +287,7 @@ begin
         char_lm := FCharLmHost.model_state;
         if (char_lm < 0) or (FLmRepairHost.last_error <> '') then
             Exit(-1);
-        if (char_lm = 1) and FLmRepairHost.ready then
+        if (char_lm = 1) and FLmRepairHost.loaded then
             Exit(1);
         if (timeout_ms <= 0) or (GetTickCount64 - started >= QWord(timeout_ms)) then
             Exit(0);
@@ -947,7 +956,54 @@ begin
     FEngine.Reset;
 end;
 
+procedure TncEngineService.SuspendCharLm(const value: Boolean);
+begin
+    if FCharLmHost <> nil then
+        FCharLmHost.set_suspended(value);
+    if FLmRepairHost <> nil then
+        FLmRepairHost.set_suspended(value);
+end;
+
+procedure TncEngineService.InterruptCharLmPass;
+begin
+    if InterlockedCompareExchange(FCharLmPassRunning, 0, 0) = 1 then
+        SuspendCharLm(True);
+end;
+
+{ With char_lm_deferred a key runs as if the character LM had not loaded yet:
+  dictionary ranking only, which is what the frontend shows at once. The key
+  is marked pending, and PollResult reruns its candidates with the model. A
+  newer key makes that poll stale, so a fast typist's intermediate keys never
+  wait for the model. }
 function TncEngineService.ProcessKey(const context_id: QWord;
+    const generation_id: QWord;
+    const key_event: TncKeyEvent): TncEngineResult;
+var
+    deferred: Boolean;
+    context: TncEngineContext;
+begin
+    deferred := g_char_lm_deferred and (FCharLmHost <> nil) and (FLmRepairHost <> nil) and
+        (FCharLmHost.model_state = 1);
+    if not deferred then
+        Exit(ProcessKeyCore(context_id, generation_id, key_event));
+    SuspendCharLm(True);
+    try
+        Result := ProcessKeyCore(context_id, generation_id, key_event);
+    finally
+        SuspendCharLm(False);
+    end;
+    if (Result.error_code <> 0) or not Result.handled then
+        Exit;
+    context := FContexts.Find(context_id);
+    if (context <> nil) and (context.Generation = generation_id) and
+        (context.Composition <> '') then
+    begin
+        context.CharLmRerankPending := True;
+        Result.async_pending := True;
+    end;
+end;
+
+function TncEngineService.ProcessKeyCore(const context_id: QWord;
     const generation_id: QWord;
     const key_event: TncKeyEvent): TncEngineResult;
 var
@@ -1164,6 +1220,30 @@ begin
         if not ActivateContext(context) then Exit;
         if one_key.changed then FEngine.apply_one_key_rerank(one_key.task.request, one_key.chosen);
         delivered := True;
+    end;
+    if context.CharLmRerankPending then
+    begin
+        context.CharLmRerankPending := False;
+        if not ActivateContext(context) then Exit;
+        SuspendCharLm(False);
+        InterlockedExchange(FCharLmPassRunning, 1);
+        try
+            try
+                if FEngine.rebuild_candidates_for_char_lm then
+                    delivered := True;
+            except
+                // As ProcessKey reports a failed lookup.
+                on exception_value: Exception do
+                begin
+                    Result.error_code := c_engine_error_dictionary_query;
+                    Result.error_text := UnicodeString(exception_value.Message);
+                    Exit;
+                end;
+            end;
+        finally
+            InterlockedExchange(FCharLmPassRunning, 0);
+            SuspendCharLm(False);
+        end;
     end;
     if not delivered then Exit;
     Result.handled := True;

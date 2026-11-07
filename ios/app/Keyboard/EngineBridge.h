@@ -10,6 +10,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy) NSString *commit;
 @property(nonatomic, copy) NSArray<NSString *> *candidates;
 @property(nonatomic) BOOL handled;
+// The engine has more for this key: poll when idle (char_lm_deferred).
+@property(nonatomic) BOOL pending;
 @end
 
 @interface EngineBridge : NSObject
@@ -18,9 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (uint64_t)available;
 // Before the engine opens; see cassotis_core_set_option.
 + (void)setOption:(NSString *)name value:(int32_t)value;
+// cassotis_core_interrupt: safe on any thread while the engine thread polls.
++ (void)interrupt;
 // Applies the keyboard's memory policy, then any cache=/sqlite=/mmap=/ondemand=/
 // prewarm= overrides from a run's options; lm=0 opens the engine without the
-// character LM, det=1 sets deterministic_search.
+// character LM, defer=0 ranks with it inside every key instead of on the next
+// poll (char_lm_deferred), det=1 sets deterministic_search.
 + (void)applyMemoryPolicy:(NSDictionary<NSString *, NSString *> *)options;
 // Returns nil on success, otherwise the error text.
 - (nullable NSString *)openDictionary:(NSString *)dictionary
@@ -32,6 +37,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (CassotisKeyResult *)selectIndex:(int32_t)index;
 - (void)setLeftContext:(NSString *)text;
 - (void)resetComposition;
+// The candidates of the last key, ranked with the character LM; handled is NO
+// when there is nothing new (a newer key, or nothing was pending).
+- (CassotisKeyResult *)poll;
 - (void)trim:(int32_t)level;
 // cassotis_core_model_state: starts the character LM's load and waits up to
 // timeoutMs; 1 ready, 0 loading, -1 none (modelError says why). The next
@@ -48,6 +56,7 @@ NS_ASSUME_NONNULL_BEGIN
                 sampleEvery:(uint32_t)sampleEvery
                 useContext:(BOOL)useContext
                       loop:(BOOL)loop
+                      poll:(BOOL)poll
                  digestPath:(nullable NSString *)digestPath
                      onKey:(void (^_Nullable)(CassotisKeyResult *result))onKey
                   onSample:(BOOL (^_Nullable)(uint32_t keys, double seconds, uint64_t footprint, uint64_t available))onSample;
