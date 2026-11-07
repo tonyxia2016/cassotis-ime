@@ -1,0 +1,434 @@
+# sc	tc	usage_score
+# Keep computing/domain terminology in this layer instead of manifests/curated_daily_phrases.tsv.
+# Add only stable computing terms, product names, framework names, protocol names, and other
+# high-value vertical vocabulary that should not receive the same preferred-term treatment as
+# everyday chat phrases.
+行间距	行間距	0.80	hangjianju
+段间距	段間距	0.76	duanjianju
+段间	段間	0.58	duanjian
+列间距	列間距	0.68	liejianju
+注释掉	註釋掉	0.74	zhushidiao
+默认值	默認值	0.84	morenzhi
+默认项	默認項	0.72	morenxiang
+句柄	句柄	0.80	jubing
+防抖	防抖	0.74	fangdou
+折行	折行	0.68	zhehang
+软换行	軟換行	0.70	ruanhuanhang
+自动换行	自動換行	0.80	zidonghuanhang
+预训练	預訓練	0.82	yuxunlian
+后训练	後訓練	0.64	houxunlian
+命令行	命令列	0.80
+环境变量	環境變量	0.82
+配置文件	配置檔案	0.80
+应用程序	應用程式	0.78
+源代码	原始碼	0.80
+代码审查	程式碼審查	0.78
+版本控制	版本控制	0.78
+依赖项	依賴項	0.78
+运行时	執行期	0.78
+编译时	編譯期	0.76
+编译器	編譯器	0.82
+解释器	直譯器	0.80
+虚拟环境	虛擬環境	0.82
+包管理器	套件管理器	0.80
+数据库	資料庫	0.82
+信息流	資訊流	0.80	xinxiliu
+服务器	伺服器	0.82	fuwuqi
+负载	負載	0.80	fuzai
+服务器负载	伺服器負載	0.80	fuwuqifuzai
+关系型数据库	關係型資料庫	0.78
+非关系型数据库	非關係型資料庫	0.78
+数据结构	資料結構	0.80
+数据类型	資料型別	0.80
+带宽	帶寬	0.82	daikuan
+显存	顯存	0.82	xiancun
+爆显存	爆顯存	0.82	baoxiancun
+显存爆了	顯存爆了	0.78	xiancunbaole
+字段	欄位	0.74
+索引	索引	0.76
+主键	主鍵	0.76
+外键	外鍵	0.76
+查询优化	查詢最佳化	0.76
+事务	事務	0.76
+权重	權重	0.80	quanzhong
+读取	讀取	0.78	duqu
+延时	延時	0.64	yanshi
+硬件	硬件	0.84	yingjian
+响应	響應	0.78	xiangying
+提交	提交	0.82	tijiao
+推送	推送	0.82	tuisong
+提交推送	提交推送	0.80	tijiaotuisong
+迁移	遷移	0.78	qianyi
+算力	算力	0.80	suanli
+显卡	顯卡	0.82	xianka
+显卡驱动	顯卡驅動	0.82	xiankaqudong
+中间件	中介軟體	0.80
+消息队列	訊息佇列	0.78
+网关	閘道	0.74
+反向代理	反向代理	0.82
+负载均衡	負載平衡	0.82
+防火墙	防火牆	0.82	fanghuoqiang
+缓存命中	快取命中	0.78
+缓存失效	快取失效	0.76
+容器	容器	0.76
+容器镜像	容器映像	0.82
+微服务	微服務	0.76
+接口	介面	0.80
+协议	協議	0.76
+协议栈	協議棧	0.74
+序列化	序列化	0.80
+反序列化	反序列化	0.80
+事件循环	事件迴圈	0.80
+回调函数	回呼函式	0.80
+协程	協程	0.78
+并发编程	並行程式設計	0.80
+异步编程	非同步程式設計	0.80
+线程安全	執行緒安全	0.82
+线程池	執行緒池	0.80
+多线程	多執行緒	0.78
+内存泄漏	記憶體洩漏	0.84
+内存管理	記憶體管理	0.80
+爆内存	爆內存	0.82	baoneicun
+内存爆了	內存爆了	0.78	neicunbaole
+垃圾回收	垃圾回收	0.82
+静态类型	靜態型別	0.78
+动态类型	動態型別	0.78
+类型系统	型別系統	0.78
+解释执行	直譯執行	0.76
+运维	運維	0.82
+编译执行	編譯執行	0.74
+运行状态	執行狀態	0.80	yunxingzhuangtai
+单元测试	單元測試	0.84
+集成测试	整合測試	0.82
+端到端测试	端到端測試	0.80
+回归测试	回歸測試	0.82
+断点调试	中斷點除錯	0.82
+断点	中斷點	0.76
+调试器	除錯器	0.78
+插件	外掛	0.74
+扩展包	擴充套件包	0.74
+驱动程序	驅動程式	0.76
+开发者工具	開發者工具	0.80
+开发环境	開發環境	0.80	kaifahuanjing
+环境配置	環境配置	0.76
+构造函数	建構函式	0.78
+头文件	標頭檔	0.78
+成员变量	成員變量	0.78
+递归	遞迴	0.74
+父类	父類別	0.74
+子类	子類別	0.74
+实例化	實例化	0.76
+类名	類別名稱	0.72
+用户名	使用者名稱	0.70
+程序运行	程式執行	0.70
+词元	詞元	0.84
+黑屏	黑屏	0.82
+蓝屏	藍屏	0.82
+抛异常	拋異常	0.84
+闪屏	閃屏	0.80
+屏闪	屏閃	0.80
+会话	會話	0.82
+线程	執行緒	0.84
+大核	大核	0.80
+小核	小核	0.80
+即时通讯	即時通訊	0.82	jishitongxun
+团队协作	團隊協作	0.82	tuanduixiezuo
+神经网络	神經網絡	0.82	shenjingwangluo
+模型训练	模型訓練	0.82	moxingxunlian
+训练集	訓練集	0.80	xunlianji
+源代码	源代碼	0.82	yuandaima
+竞态条件	競態條件	0.82	jingtaitiaojian
+损失函数	損失函數	0.82	sunshihanshu
+网络带宽	網絡帶寬	0.82	wangluodaikuan
+向量	向量	0.80	xiangliang
+向量值	向量值	0.80	xiangliangzhi
+终端窗口	終端窗口	0.90	zhongduanchuangkou
+维护模式	維護模式	0.80	weihumoshi
+软件	軟件	0.86	ruanjian
+软件工程	軟件工程	0.84	ruanjiangongcheng
+软件工程师	軟件工程師	0.82	ruanjiangongchengshi
+工程师	工程師	0.84	gongchengshi
+编程	編程	0.86	biancheng
+基类	基類	0.78	jilei
+派生类	派生類	0.78	paishenglei
+虚方法	虛方法	0.78	xufangfa
+纯虚	純虛	0.76	chunxu
+重载	重載	0.78	zhongzai
+
+# word1 curated import 2026-06-03 (computing); reviewed from D:/word1.txt
+运维组	運維組	0.66	yunweizu
+反病毒	反病毒	0.66	fanbingdu
+工程化	工程化	0.66	gongchenghua
+技术细节	技術細節	0.66	jishuxijie
+计算技术	計算技術	0.66	jisuanjishu
+网络攻击	網絡攻擊	0.66	wangluogongji
+运行日志	運行日誌	0.66	yunxingrizhi
+竞品	競品	0.66	jingpin
+解释性	解釋性	0.66	jieshixing
+量子态	量子態	0.66	liangzitai
+竞态	競態	0.66	jingtai
+标识符	標識符	0.66	biaoshifu
+数据集	數據集	0.66	shujuji
+黑客工具	黑客工具	0.66	heikegongju
+控制系统	控制系統	0.66	kongzhixitong
+模拟训练	模擬訓練	0.66	monixunlian
+屏幕显示	屏幕顯示	0.66	pingmuxianshi
+黑客程序	黑客程序	0.66	heikechengxu
+技术水平	技術水平	0.66	jishushuiping
+系统故障	系統故障	0.66	xitongguzhang
+暴力破解	暴力破解	0.66	baolipojie
+参数设置	參數設置	0.66	canshushezhi
+分析报告	分析報告	0.66	fenxibaogao
+技术开发	技術開發	0.66	jishukaifa
+计算能力	計算能力	0.66	jisuannengli
+系统安全	系統安全	0.66	xitonganquan
+系统日志	系統日誌	0.66	xitongrizhi
+服务型	服務型	0.66	fuwuxing
+复杂度	複雜度	0.66	fuzadu
+复制到	複製到	0.66	fuzhidao
+数据源	數據源	0.66	shujuyuan
+预运算	預運算	0.66	yuyunsuan
+电脑系统	電腦系統	0.66	diannaoxitong
+分析模型	分析模型	0.66	fenximoxing
+关键技术	關鍵技術	0.66	guanjianjishu
+黑客攻击	黑客攻擊	0.66	heikegongji
+交互方式	交互方式	0.66	jiaohufangshi
+技术创新	技術創新	0.66	jishuchuangxin
+技术实力	技術實力	0.66	jishushili
+技术手段	技術手段	0.66	jishushouduan
+技术指标	技術指標	0.66	jishuzhibiao
+技术支持	技術支持	0.66	jishuzhichi
+计算结果	計算結果	0.66	jisuanjieguo
+计算机所	計算機所	0.66	jisuanjisuo
+逻辑推理	邏輯推理	0.66	luojituili
+身份验证	身份驗證	0.66	shenfenyanzheng
+数字证书	數字證書	0.66	shuzizhengshu
+网络流量	網絡流量	0.66	wangluoliuliang
+编译成	編譯成	0.66	bianyicheng
+电脑包	電腦包	0.66	diannaobao
+非技术	非技術	0.66	feijishu
+信息部	信息部	0.66	xinxibu
+信息量	信息量	0.66	xinxiliang
+源文件	源文件	0.66	yuanwenjian
+占用率	佔用率	0.66	zhanyonglv
+主程序	主程序	0.66	zhuchengxu
+安全漏洞	安全漏洞	0.66	anquanloudong
+操作程序	操作程序	0.66	caozuochengxu
+操作电脑	操作電腦	0.66	caozuodiannao
+测试通过	測試通過	0.66	ceshitongguo
+恶意程序	惡意程序	0.66	eyichengxu
+分析攻击	分析攻擊	0.66	fenxigongji
+工程技术	工程技術	0.66	gongchengjishu
+官方网站	官方網站	0.66	guanfangwangzhan
+关键步骤	關鍵步驟	0.66	guanjianbuzhou
+核心技术	核心技術	0.66	hexinjishu
+核心理念	核心理念	0.66	hexinlinian
+合作开发	合作開發	0.66	hezuokaifa
+合作项目	合作項目	0.66	hezuoxiangmu
+缓存数据	緩存數據	0.66	huancunshuju
+监测数据	監測數據	0.66	jianceshuju
+尖端技术	尖端技術	0.66	jianduanjishu
+键盘输入	鍵盤輸入	0.66	jianpanshuru
+交通系统	交通系統	0.66	jiaotongxitong
+基础架构	基础架構	0.66	jichujiagou
+技术秘密	技術祕密	0.66	jishumimi
+技术设备	技術設備	0.66	jishushebei
+计算成本	計算成本	0.66	jisuanchengben
+计算机系	計算機系	0.66	jisuanjixi
+计算速度	計算速度	0.66	jisuansudu
+计算中心	計算中心	0.66	jisuanzhongxin
+机械故障	機械故障	0.66	jixieguzhang
+拒绝服务	拒絕服務	0.66	jujuefuwu
+具体操作	具體操作	0.66	juticaozuo
+开发成本	開發成本	0.66	kaifachengben
+开发计划	開發計劃	0.66	kaifajihua
+开发软件	開發軟件	0.66	kaifaruanjian
+开始运行	開始運行	0.66	kaishiyunxing
+逻辑思维	邏輯思維	0.66	luojisiwei
+敏感数据	敏感數據	0.66	minganshuju
+能源消耗	能源消耗	0.66	nengyuanxiaohao
+前沿技术	前沿技術	0.66	qianyanjishu
+群发短信	羣發短信	0.66	qunfaduanxin
+人工干预	人工干預	0.66	rengongganyu
+软件产品	軟件產品	0.66	ruanjianchanpin
+设计方案	設計方案	0.66	shejifangan
+数学计算	數學計算	0.66	shuxuejisuan
+特征分析	特徵分析	0.66	tezhengfenxi
+投影设备	投影設備	0.66	touyingshebei
+网络拓扑	網絡拓撲	0.66	wangluotuopu
+网络系统	網絡系統	0.66	wangluoxitong
+文本编辑	文本編輯	0.66	wenbenbianji
+文件属性	文件屬性	0.66	wenjianshuxing
+现代科技	現代科技	0.66	xiandaikeji
+详细信息	詳細信息	0.66	xiangxixinxi
+性能参数	性能參數	0.66	xingnengcanshu
+系统核心	系統核心	0.66	xitonghexin
+系统漏洞	系統漏洞	0.66	xitongloudong
+系统资源	系統資源	0.66	xitongziyuan
+学习效果	學習效果	0.66	xuexixiaoguo
+虚拟世界	虛擬世界	0.66	xunishijie
+研发部门	研發部門	0.66	yanfabumen
+隐身技术	隱身技術	0.66	yinshenjishu
+智能算法	智能算法	0.66	zhinengsuanfa
+专利技术	專利技術	0.66	zhuanlijishu
+专利申请	專利申請	0.66	zhuanlishenqing
+自动检测	自動檢測	0.66	zidongjiance
+
+# computing and technical additions 2026-06-18: reviewed import from D:/words.txt
+学习率	學習率	0.60	xuexilv
+攻击源	攻擊源	0.60
+链接库	鏈接庫	0.60	lianjieku
+暗网上	暗網上	0.60
+浮动层	浮動層	0.60
+元指令	元指令	0.60	yuanzhiling
+意识指纹	意識指紋	0.56	yishizhiwen
+电极片	電極片	0.60	dianjipian
+导电胶	導電膠	0.60	daodianjiao
+# long-sentence attribution 2026-06-22: general technical phrases that were repeatedly split
+量子计算	量子計算	0.72	liangzijisuan
+量子计算机	量子計算機	0.70	liangzijisuanji
+神经元	神經元	0.72	shenjingyuan
+系统日志	系統日誌	0.70	xitongrizhi
+运行日志	運行日誌	0.68	yunxingrizhi
+模型算法	模型算法	0.68	moxingsuanfa
+技术团队	技術團隊	0.68	jishutuandui
+数据格式	數據格式	0.68	shujugeshi
+数据集	數據集	0.70	shujuji
+小程序	小程式	0.72	xiaochengxu
+
+# cloud computing additions 2026-06-23
+云主机	雲主機	0.70	yunzhuji
+云服务器	雲服務器	0.72	yunfuwuqi
+云计算	雲計算	0.72	yunjisuan
+云数据库	雲數據庫	0.68	yunshujuku
+云硬盘	雲硬盤	0.68	yunyingpan
+云电脑	雲電腦	0.70	yundiannao
+云桌面	雲桌面	0.68	yunzhuomian
+云平台	雲平台	0.72	yunpingtai
+云原生	雲原生	0.68	yunyuansheng
+云安全	雲安全	0.66	yunanquan
+云厂商	雲廠商	0.64	yunchangshang
+云服务商	雲服務商	0.64	yunfuwushang
+公有云	公有雲	0.66	gongyouyun
+私有云	私有雲	0.66	siyouyun
+混合云	混合雲	0.66	hunheyun
+上云	上雲	0.64	shangyun
+云资源	雲資源	0.64	yunziyuan
+云网络	雲網絡	0.64	yunwangluo
+云托管	雲託管	0.64	yuntuoguan
+云部署	雲部署	0.64	yunbushu
+云监控	雲監控	0.64	yunjiankong
+云迁移	雲遷移	0.64	yunqianyi
+云架构	雲架構	0.64	yunjiagou
+云开发	雲開發	0.64	yunkaifa
+
+# BEGIN words_new_import_2026_07_07
+# Imported from D:/_/words_new.txt on 2026-07-07; bucket=computing; reviewed by rule-based classifier.
+管理器	管理器	0.34
+计算符	計算符	0.34
+工作簿	工作簿	0.34
+开机键	開機鍵	0.34
+私钥	私鑰	0.34
+数据泄露	數據泄露	0.34
+零运维	零運維	0.34
+广告过滤	廣告過濾	0.34
+图片鉴黄	圖片鑑黃	0.34
+开放平台	開放平臺	0.34
+技术派	技術派	0.34
+大模型	大模型	0.62
+测试员	測試員	0.34
+应用技术	應用技術	0.34
+召回率	召回率	0.34
+兼容机	兼容機	0.34
+多显示器	多顯示器	0.34
+同步盘	同步盤	0.34
+盘位	盤位	0.34
+选配	選配	0.34
+良品率	良品率	0.34
+个人网站	個人網站	0.34
+自动更新	自動更新	0.34
+录音键	錄音鍵	0.34
+# END words_new_import_2026_07_07
+
+# BEGIN words_new_import_2026_07_09
+# Imported from D:/_/words_new.txt on 2026-07-09; reviewed by rule-based classifier.
+不可约	不可約	0.40
+维数	維數	0.40
+进制	進制	0.40
+实部	實部	0.40
+虚部	虛部	0.40
+聚类	聚類	0.40
+超弦	超弦	0.40
+超光速	超光速	0.40
+目标函数	目標函數	0.40
+拓扑量子场论	拓撲量子場論	0.30
+编程书	編程書	0.40
+时空分支	時空分支	0.40
+编程用语	編程用語	0.40
+双星系统	雙星系統	0.40
+数据降维	數據降維	0.40
+量子纠错	量子糾錯	0.40
+量子位	量子位	0.40
+数据清洗	數據清洗	0.40
+编程珠玑	編程珠璣	0.40
+回归函数	回歸函數	0.40
+算法工程师	算法工程師	0.30
+密度矩阵	密度矩陣	0.40
+量子化学	量子化學	0.40
+# END words_new_import_2026_07_09
+
+# Input-method, editor, and workspace terminology 2026-07-21.
+# Keep these in the computing layer so exact matches remain visible without
+# granting technical terms the broad daily/chat priority floor.
+分页	分頁	0.86	fenye
+小鹤	小鶴	0.62	xiaohe
+小鹤双拼	小鶴雙拼	0.64	xiaoheshuangpin
+自然码	自然碼	0.70	ziranma
+自然码双拼	自然碼雙拼	0.64	ziranmashuangpin
+重排器	重排器	0.72	chongpaiqi
+候选重排	候選重排	0.66	houxuanchongpai
+工作区	工作區	0.82	gongzuoqu
+工作目录	工作目錄	0.74	gongzuomulu
+拼音方案	拼音方案	0.72	pinyinfangan
+双拼方案	雙拼方案	0.70	shuangpinfangan
+全拼方案	全拼方案	0.68	quanpinfangan
+
+# Common dropdown and pull-to-refresh interface terminology.
+下拉框	下拉框	0.72	xialakuang
+下拉菜单	下拉菜單	0.74	xialacaidan
+下拉列表	下拉列表	0.68	xialaliebiao
+下拉刷新	下拉刷新	0.58	xialashuaxin
+上拉加载	上拉加載	0.54	shanglajiazai
+
+# Interface column and side-panel terminology.
+中栏	中欄	0.44	zhonglan
+左栏	左欄	0.54	zuolan
+上栏	上欄	0.48	shanglan
+下栏	下欄	0.48	xialan
+右栏	右欄	0.54	youlan
+左边栏	左邊欄	0.72	zuobianlan
+右边栏	右邊欄	0.72	youbianlan
+上边栏	上邊欄	0.48	shangbianlan
+下边栏	下邊欄	0.48	xiabianlan
+第一栏	第一欄	0.60	diyilan
+第二栏	第二欄	0.60	dierlan
+第三栏	第三欄	0.58	disanlan
+
+# Transfer, input-method, and reproducibility terminology 2026-08-04.
+续传	續傳	0.58	xuchuan
+打词	打詞	0.60	daci
+可验证	可驗證	0.72	keyanzheng
+可重现	可重現	0.68	kechongxian
+
+# Candidate-window terminology 2026-08-17.
+候选窗	候選窗	0.64	houxuanchuang
+候选窗口	候選窗口	0.78	houxuanchuangkou
+候选框	候選框	0.76	houxuankuang
+候选列表	候選列表	0.72	houxuanliebiao
+
+# Common storage-device terminology 2026-08-21.
+企业盘	企業盤	0.66	qiyepan
+机械盘	機械盤	0.64	jixiepan
+固态盘	固態盤	0.64	gutaipan
+监控盘	監控盤	0.56	jiankongpan
+硬盘盒	硬盤盒	0.72	yingpanhe

@@ -1,0 +1,610 @@
+# sc	tc	usage_score	pinyin(optional)
+# Project-maintained architecture terminology supplement.
+# Keep this layer separate from everyday/chat preferred-term routing.
+立面	立面	0.82
+剖面	剖面	0.82
+平面图	平面圖	0.82
+中庭	中庭	0.80
+柱廊	柱廊	0.80
+山墙	山牆	0.80
+檐口	簷口	0.80
+雨棚	雨棚	0.80
+女儿墙	女兒牆	0.82
+穹顶	穹頂	0.80
+拱券	拱券	0.80
+飞扶壁	飛扶壁	0.82
+门廊	門廊	0.80
+前厅	前廳	0.80
+前庭	前庭	0.80
+天井	天井	0.80
+庭院	庭院	0.80
+露台	露臺	0.80
+走廊	走廊	0.80
+回廊	回廊	0.80
+门厅	門廳	0.80
+采光井	採光井	0.80
+挑空	挑空	0.78
+连廊	連廊	0.78
+# renovation and home-improvement terms
+硬装	硬裝	0.80
+软装	軟裝	0.80
+半包	半包	0.78
+全包	全包	0.78
+清包	清包	0.76
+主材	主材	0.78
+辅材	輔材	0.78
+辅料	輔料	0.76
+基装	基裝	0.76
+整装	整裝	0.78
+精装修	精裝修	0.76
+简装	簡裝	0.76
+装修队	裝修隊	0.76
+施工队	施工隊	0.76
+工长	工長	0.76
+装修监理	裝修監理	0.76
+量房	量房	0.76
+验房	驗房	0.76
+设计费	設計費	0.76
+施工图	施工圖	0.78
+效果图	效果圖	0.78
+平面方案	平面方案	0.74
+水电工	水電工	0.76
+泥工	泥工	0.76
+瓦工	瓦工	0.76
+油工	油工	0.76
+木作	木作	0.76
+拆改	拆改	0.76
+拆旧	拆舊	0.76
+砌墙	砌牆	0.76
+打墙	打牆	0.74
+新风	新風	0.76
+新风系统	新風系統	0.76
+中央空调	中央空調	0.76
+暖通	暖通	0.76
+甲醛	甲醛	0.76	jiaquan
+油漆	油漆	0.80	youqi
+底漆	底漆	0.80
+面漆	面漆	0.80
+腻子	膩子	0.80
+腻子粉	膩子粉	0.78
+刷漆	刷漆	0.80
+上漆	上漆	0.76	shangqi
+补漆	補漆	0.74	buqi
+喷漆	噴漆	0.76	penqi
+滚漆	滾漆	0.72	gunqi
+调漆	調漆	0.70	tiaoqi
+墙面漆	牆面漆	0.74	qiangmianqi
+刷底漆	刷底漆	0.74	shuadiqi
+刷面漆	刷面漆	0.74	shuamianqi
+刷乳胶漆	刷乳膠漆	0.76	shuarujiaoqi
+挂网	掛網	0.78
+网格布	網格布	0.78
+乳胶漆	乳膠漆	0.80
+墙漆	牆漆	0.78
+内墙漆	內牆漆	0.76
+外墙漆	外牆漆	0.76
+木器漆	木器漆	0.76
+防水漆	防水漆	0.76
+清漆	清漆	0.76
+界面剂	界面劑	0.78
+
+# switches, sockets, and home electrical terms 2026-06-09
+油汀	油汀	0.78
+五孔	五孔	0.78
+六孔	六孔	0.76
+四孔	四孔	0.76
+三孔	三孔	0.76
+两孔	兩孔	0.76
+十孔	十孔	0.76
+二孔	二孔	0.74
+一开	一開	0.78
+二开	二開	0.76
+三开	三開	0.76
+四开	四開	0.76
+单开	單開	0.76
+双开	雙開	0.76
+单控	單控	0.80
+双控	雙控	0.80
+多控	多控	0.78
+五孔插座	五孔插座	0.80
+两孔插座	兩孔插座	0.76
+三孔插座	三孔插座	0.78
+四孔插座	四孔插座	0.76
+六孔插座	六孔插座	0.76
+十孔插座	十孔插座	0.76
+一开单控	一開單控	0.78
+一开双控	一開雙控	0.78
+二开单控	二開單控	0.76
+二开双控	二開雙控	0.76
+三开单控	三開單控	0.76
+三开双控	三開雙控	0.76
+四开单控	四開單控	0.74
+四开双控	四開雙控	0.74
+开关面板	開關面板	0.78
+墙壁开关	牆壁開關	0.78
+墙壁插座	牆壁插座	0.78
+空调插座	空調插座	0.76
+防溅盒	防濺盒	0.76
+暗盒	暗盒	0.76
+底盒	底盒	0.76
+明盒	明盒	0.74
+开关盒	開關盒	0.74
+插座盒	插座盒	0.74
+地插	地插	0.76
+墙插	牆插	0.74
+强电箱	強電箱	0.76
+弱电箱	弱電箱	0.76
+墙固	牆固	0.76
+地固	地固	0.76
+刮腻子	刮膩子	0.78
+批腻子	批膩子	0.76
+铲墙皮	鏟牆皮	0.76
+墙面找平	牆面找平	0.76
+地面找平	地面找平	0.76
+找平	找平	0.78
+冲筋	沖筋	0.00	chongjin
+冲筋找平	沖筋找平	0.40	chongjinzhaoping
+墙面冲筋	牆面沖筋	0.38	qiangmianchongjin
+地面冲筋	地面沖筋	0.36	dimianchongjin
+灰饼	灰餅	0.72	huibing
+打灰饼	打灰餅	0.72	dahuibing
+做灰饼	做灰餅	0.70	zuohuibing
+基层找平	基層找平	0.74	jicengzhaoping
+基层处理	基層處理	0.74	jicengchuli
+找平层	找平層	0.74	zhaopingceng
+抹灰找平	抹灰找平	0.74	mohuizhaoping
+石膏找平	石膏找平	0.72	shigaozhaoping
+水泥找平	水泥找平	0.72	shuinizhaoping
+水泥砂浆找平	水泥砂漿找平	0.72	shuinishajiangzhaoping
+找方	找方	0.70	zhaofang
+找直	找直	0.70	zhaozhi
+找垂直	找垂直	0.70	zhaochuizhi
+阴阳角	陰陽角	0.74	yinyangjiao
+阴阳角找直	陰陽角找直	0.70	yinyangjiaozhaozhi
+阳角条	陽角條	0.72	yangjiaotiao
+阴角条	陰角條	0.72	yinjiaotiao
+拉毛	拉毛	0.72	lamao
+墙面拉毛	牆面拉毛	0.70	qiangmianlamao
+拉毛处理	拉毛處理	0.70	lamaochuli
+打磨	打磨	0.76
+砂纸	砂紙	0.76
+涂刷	塗刷	0.76
+滚涂	滾塗	0.76
+喷涂	噴塗	0.76
+滚涂乳胶漆	滾塗乳膠漆	0.70	gunturujiaoqi
+喷涂乳胶漆	噴塗乳膠漆	0.70	penturujiaoqi
+刷墙	刷牆	0.78
+防水层	防水層	0.78
+防水涂料	防水塗料	0.78
+闭水试验	閉水試驗	0.78
+找坡	找坡	0.76
+地漏	地漏	0.78
+瓷砖	瓷磚	0.80
+地砖	地磚	0.78
+墙砖	牆磚	0.78
+铺砖	鋪磚	0.78
+贴砖	貼磚	0.78
+瓷砖胶	瓷磚膠	0.78
+结构胶	結構膠	0.74	jiegoujiao
+免钉胶	免釘膠	0.74	miandingjiao
+密封胶	密封膠	0.74	mifengjiao
+发泡胶	發泡膠	0.72	fapaojiao
+硅酮胶	硅酮膠	0.70	guitongjiao
+中性胶	中性膠	0.70	zhongxingjiao
+耐候胶	耐候膠	0.70	naihoujiao
+云石胶	雲石膠	0.68	yunshijiao
+白乳胶	白乳膠	0.70	bairujiao
+万能胶	萬能膠	0.68	wannengjiao
+热熔胶	熱熔膠	0.68	rerongjiao
+美缝	美縫	0.78
+勾缝	勾縫	0.76
+填缝	填縫	0.76
+水泥砂浆	水泥砂漿	0.76
+水电改造	水電改造	0.78
+开槽	開槽	0.76
+线管	線管	0.76
+穿线管	穿線管	0.76
+电线管	電線管	0.76
+强电	強電	0.76
+弱电	弱電	0.76
+配电箱	配電箱	0.78
+空开	空開	0.76
+回路	迴路	0.76
+冷热水管	冷熱水管	0.76
+排水管	排水管	0.76
+下水管	下水管	0.76
+地暖	地暖	0.78
+木工	木工	0.78
+露水河板	露水河板	0.74
+爱格板	愛格板	0.74
+欧松	歐松	0.76
+欧松板	歐松板	0.78
+颗粒板	顆粒板	0.78
+实木颗粒板	實木顆粒板	0.76
+木工板	木工板	0.78
+细木工板	細木工板	0.78
+多层板	多層板	0.78
+实木多层板	實木多層板	0.76
+胶合板	膠合板	0.76
+生态板	生態板	0.78
+免漆板	免漆板	0.78
+密度板	密度板	0.76
+中密度板	中密度板	0.76
+高密度板	高密度板	0.74
+纤维板	纖維板	0.76
+中纤板	中纖板	0.76
+刨花板	刨花板	0.76
+阻燃板	阻燃板	0.76
+饰面板	飾面板	0.76
+木饰面	木飾面	0.76
+木饰面板	木飾面板	0.76
+三聚氰胺板	三聚氰胺板	0.74
+定向刨花板	定向刨花板	0.76
+澳松板	澳松板	0.76
+奥松板	奧松板	0.76
+禾香板	禾香板	0.76
+香杉木板	香杉木板	0.76
+指接板	指接板	0.76
+集成板	集成板	0.76
+实木板	實木板	0.76
+实木拼板	實木拼板	0.74
+防潮板	防潮板	0.76
+橱柜板	櫥櫃板	0.76
+衣柜板	衣櫃板	0.76
+柜体板	櫃體板	0.76
+背板	背板	0.74
+门板	門板	0.76
+吊顶	吊頂	0.78
+石膏板	石膏板	0.78
+轻钢龙骨	輕鋼龍骨	0.76
+木龙骨	木龍骨	0.76
+封边	封邊	0.76
+收口	收口	0.76
+收边	收邊	0.72	shoubian
+收口条	收口條	0.70	shoukoutiao
+压边条	壓邊條	0.68	yabiantiao
+踢脚线	踢腳線	0.78
+阴角	陰角	0.76
+阳角	陽角	0.76
+护角条	護角條	0.76
+门套	門套	0.78
+窗套	窗套	0.76
+垭口	埡口	0.76
+窗台石	窗臺石	0.76
+过门石	過門石	0.76
+地板	地板	0.80
+木地板	木地板	0.78
+复合地板	複合地板	0.76
+墙排	牆排	0.76
+台盆	檯盆	0.76
+马桶	馬桶	0.78
+淋浴房	淋浴房	0.78
+浴霸	浴霸	0.76
+集成吊顶	集成吊頂	0.76
+橱柜	櫥櫃	0.78
+衣柜	衣櫃	0.78
+玄关柜	玄關櫃	0.76
+建材城	建材城	0.78	jiancaicheng
+建材市场	建材市場	0.76	jiancaishichang
+建材卖场	建材賣場	0.76	jiancaimaichang
+家居建材	家居建材	0.76	jiajujiancai
+门窗店	門窗店	0.74	menchuangdian
+板材店	板材店	0.74	bancaidian
+涂料店	塗料店	0.74	tuliaodian
+瓷砖店	瓷磚店	0.74	cizhuandian
+卫浴店	衛浴店	0.74	weiyudian
+橱柜店	櫥櫃店	0.74	chuguidian
+系统窗	系統窗	0.78	xitongchuang
+系统门	系統門	0.78	xitongmen
+断桥铝	斷橋鋁	0.78	duanqiaolv
+铝合金窗	鋁合金窗	0.76	lvhejinchuang
+平开窗	平開窗	0.76	pingkaichuang
+推拉窗	推拉窗	0.76	tuilachuang
+封窗	封窗	0.76	fengchuang
+坑距	坑距	0.76	kengju
+马桶坑距	馬桶坑距	0.76	matongkengju
+吸顶	吸頂	0.74	xiding
+吸顶灯	吸頂燈	0.76	xidingdeng
+吸顶音箱	吸頂音箱	0.72	xidingyinxiang
+吸顶空调	吸頂空調	0.72	xidingkongtiao
+吊顶灯	吊頂燈	0.74	diaodingdeng
+筒灯	筒燈	0.74	tongdeng
+射灯	射燈	0.74	shedeng
+灯带	燈帶	0.74	dengdai
+灯槽	燈槽	0.72	dengcao
+灯孔	燈孔	0.72	dengkong
+预留孔	預留孔	0.72	yuliukong
+检修口	檢修口	0.74	jianxiukou
+风口	風口	0.74	fengkou
+回风口	回風口	0.72	huifengkou
+出风口	出風口	0.72	chufengkou
+地漏	地漏	0.76	dilou
+防臭地漏	防臭地漏	0.74	fangchoudilou
+角阀	角閥	0.74	jiaofa
+止逆阀	止逆閥	0.72	zhinifa
+止回阀	止回閥	0.72	zhihuifa
+前置过滤器	前置過濾器	0.74	qianzhiguolvqi
+存水弯	存水彎	0.72	cunshuiwan
+排水管	排水管	0.74	paishuiguan
+排污管	排污管	0.72	paiwuguan
+排气管	排氣管	0.72	paiqiguan
+烟道	煙道	0.74	yandao
+玻璃胶	玻璃膠	0.74	bolijiao
+打胶	打膠	0.78	dajiao
+涂胶	塗膠	0.76	tujiao
+刷胶	刷膠	0.74	shuajiao
+上胶	上膠	0.74	shangjiao
+抹胶	抹膠	0.72	mojiao
+补胶	補膠	0.72	bujiao
+封胶	封膠	0.72	fengjiao
+收胶	收膠	0.70	shoujiao
+压胶	壓膠	0.70	yajiao
+胶枪	膠槍	0.72	jiaoqiang
+打胶枪	打膠槍	0.72	dajiaoqiang
+胶条	膠條	0.72	jiaotiao
+密封条	密封條	0.72	mifengtiao
+密封胶条	密封膠條	0.70	mifengjiaotiao
+门窗胶条	門窗膠條	0.70	menchuangjiaotiao
+门窗密封条	門窗密封條	0.70	menchuangmifengtiao
+橡胶条	橡膠條	0.68	xiangjiaotiao
+防撞条	防撞條	0.68	fangzhuangtiao
+防尘条	防塵條	0.68	fangchentiao
+防水胶条	防水膠條	0.68	fangshuijiaotiao
+挡水条	擋水條	0.72	dangshuitiao
+止水条	止水條	0.68	zhishuitiao
+嵌条	嵌條	0.66	qiantiao
+胶缝	膠縫	0.68	jiaofeng
+胶痕	膠痕	0.66	jiaohen
+溢胶	溢膠	0.66	yijiao
+防霉胶	防霉膠	0.68	fangmeijiao
+磁吸	磁吸	0.76	cixi
+磁吸门	磁吸門	0.72	ciximen
+磁吸锁	磁吸鎖	0.70	cixisuo
+磁吸灯	磁吸燈	0.70	cixideng
+磁吸轨道	磁吸軌道	0.68	cixiguidao
+磁吸轨道灯	磁吸軌道燈	0.68	cixiguidaodeng
+磁吸条	磁吸條	0.68	cixitiao
+美缝剂	美縫劑	0.74	meifengji
+填缝剂	填縫劑	0.72	tianfengji
+勾缝剂	勾縫劑	0.72	goufengji
+踢脚线	踢腳線	0.76	tijiaoxian
+收边条	收邊條	0.72	shoubiantiao
+压条	壓條	0.72	yatiao
+卡扣	卡扣	0.76	kakou
+卡槽	卡槽	0.72	kacao
+卡条	卡條	0.70	katiao
+扣条	扣條	0.70	koutiao
+扣板	扣板	0.70	kouban
+卡扣条	卡扣條	0.68	kakoutiao
+卡扣板	卡扣板	0.68	kakouban
+卡扣式	卡扣式	0.66	kakoushi
+阴角	陰角	0.72	yinjiao
+阳角	陽角	0.72	yangjiao
+找坡	找坡	0.72	zhaopo
+闭水	閉水	0.74	bishui
+闭水试验	閉水試驗	0.74	bishuishiyan
+开孔	開孔	0.74	kaikong
+扩孔	擴孔	0.72	kuokong
+打孔	打孔	0.74	dakong
+封边	封邊	0.72	fengbian
+封边条	封邊條	0.72	fengbiantiao
+
+# word1 curated import 2026-06-03 (architecture_terms); reviewed from D:/word1.txt
+两房两厅	兩房兩廳	0.58	liangfangliangting
+住宅小区	住宅小區	0.58	zhuzhaixiaoqu
+隔墙	隔牆	0.58	geqiang
+墙上	牆上	0.58	qiangshang
+单元楼	單元樓	0.58	danyuanlou
+两间房	兩間房	0.58	liangjianfang
+去看房	去看房	0.58	qukanfang
+容积率	容積率	0.58	rongjilv
+单身公寓	單身公寓	0.58	danshengongyu
+居住小区	居住小區	0.58	juzhuxiaoqu
+真皮沙发	真皮沙發	0.58	zhenpishafa
+
+# plumbing and weak-current renovation additions 2026-06-08
+增压泵	增壓泵	0.74	zengyabeng
+稳压泵	穩壓泵	0.70	wenyabeng
+循环泵	循環泵	0.72	xunhuanbeng
+热水循环泵	熱水循環泵	0.70	reshuixunhuanbeng
+回水泵	回水泵	0.70	huishuibeng
+屏蔽泵	屏蔽泵	0.66	pingbibeng
+水泵	水泵	0.72	shuibeng
+增压阀	增壓閥	0.66	zengyafa
+减压阀	減壓閥	0.68	jianyafa
+网口	網口	0.76	wangkou
+千兆网口	千兆網口	0.72	qianzhaowangkou
+百兆网口	百兆網口	0.66	baizhaowangkou
+双网口	雙網口	0.68	shuangwangkou
+网线口	網線口	0.68	wangxiankou
+内丝	內絲	0.70	neisi
+外丝	外絲	0.70	waisi
+内牙	內牙	0.64	neiya
+外牙	外牙	0.64	waiya
+内螺纹	內螺紋	0.68	neiluowen
+外螺纹	外螺紋	0.68	wailuowen
+内丝弯	內絲彎	0.64	neisiwan
+外丝弯	外絲彎	0.64	waisiwan
+内丝弯头	內絲彎頭	0.68	neisiwantou
+外丝弯头	外絲彎頭	0.68	waisiwantou
+内丝三通	內絲三通	0.66	neisisantong
+外丝三通	外絲三通	0.66	waisisantong
+内丝直接	內絲直接	0.66	neisizhijie
+外丝直接	外絲直接	0.66	waisizhijie
+内丝直通	內絲直通	0.66	neisizhitong
+外丝直通	外絲直通	0.66	waisizhitong
+内丝接头	內絲接頭	0.68	neisijietou
+外丝接头	外絲接頭	0.68	waisijietou
+内丝活接	內絲活接	0.64	neisihuojie
+外丝活接	外絲活接	0.64	waisihuojie
+内丝堵头	內絲堵頭	0.62	neisidutou
+外丝堵头	外絲堵頭	0.62	waisidutou
+内丝球阀	內絲球閥	0.66	neisiqiufa
+外丝球阀	外絲球閥	0.66	waisiqiufa
+内丝管件	內絲管件	0.64	neisiguanjian
+外丝管件	外絲管件	0.64	waisiguanjian
+对丝	對絲	0.58	duisi
+补芯	補芯	0.58	buxin
+变径	變徑	0.62	bianjing
+变径接头	變徑接頭	0.62	bianjingjietou
+异径直接	異徑直接	0.60	yijingzhijie
+异径三通	異徑三通	0.60	yijingsantong
+生料带	生料帶	0.68	shengliaodai
+麻丝	麻絲	0.56	masi
+
+# weak-current and network wiring additions 2026-06-09
+水晶头	水晶頭	0.76	shuijingtou
+超六类	超六類	0.74	chaoliulei
+超六类线	超六類線	0.74	chaoliuleixian
+六类线	六類線	0.74	liuleixian
+超五类	超五類	0.72	chaowulei
+超五类线	超五類線	0.72	chaowuleixian
+七类线	七類線	0.70	qileixian
+网线管	網線管	0.70	wangxianguan
+网线插座	網線插座	0.70	wangxianchazuo
+网络面板	網絡面板	0.72	wangluomianban
+信息面板	信息面板	0.70	xinximianban
+信息插座	信息插座	0.70	xinxichazuo
+网线模块	網線模塊	0.68	wangxianmokuai
+网络模块	網絡模塊	0.68	wangluomokuai
+弱电布线	弱電布線	0.72	ruodianbuxian
+弱电点位	弱電點位	0.68	ruodiandianwei
+信息箱	信息箱	0.70	xinxixiang
+家居配线箱	家居配線箱	0.68	jiajupeixianxiang
+配线架	配線架	0.68	peixianjia
+理线架	理線架	0.66	lixianjia
+压线钳	壓線鉗	0.66	yaxianqian
+测线仪	測線儀	0.66	cexianyi
+光纤	光纖	0.72	guangxian
+光纤线	光纖線	0.68	guangxianxian
+光纤入户	光纖入戶	0.70	guangxianruhu
+路由器	路由器	0.74	luyouqi
+交换机	交換機	0.72	jiaohuanji
+无线网	無線網	0.72	wuxianwang
+无线网络	無線網絡	0.72	wuxianwangluo
+# renovation surface and home-improvement additions 2026-06-18
+平铺	平鋪	0.74	pingpu
+平铺图	平鋪圖	0.66	pingputu
+平铺效果	平鋪效果	0.64	pingpuxiaoguo
+花砖	花磚	0.70	huazhuan
+小花砖	小花磚	0.62	xiaohuazhuan
+家装	家裝	0.76	jiazhuang
+家装公司	家裝公司	0.68	jiazhuanggongsi
+家装设计	家裝設計	0.68	jiazhuangsheji
+家装材料	家裝材料	0.66	jiazhuangcailiao
+底楼	底樓	0.62	dilou
+铺砖	鋪磚	0.72	puzhuan
+贴砖	貼磚	0.74	tiezhuan
+墙砖	牆磚	0.72	qiangzhuan
+地砖	地磚	0.74	dizhuan
+瓷砖	瓷磚	0.76	cizhuan
+木纹砖	木紋磚	0.68	muwenzhuan
+厨房砖	廚房磚	0.64	chufangzhuan
+卫生间砖	衛生間磚	0.64	weishengjianzhuan
+阳台砖	陽台磚	0.62	yangtaizhuan
+
+# metal and hardware material additions 2026-06-18
+锌合金	鋅合金	0.70	xinhejin
+锌合金门	鋅合金門	0.64	xinhejinmen
+锌合金锁	鋅合金鎖	0.64	xinhejinsuo
+锌合金把手	鋅合金把手	0.62	xinhejinbashou
+黄铜	黃銅	0.70	huangtong
+黄铜件	黃銅件	0.64	huangtongjian
+黄铜阀	黃銅閥	0.64	huangtongfa
+黄铜接头	黃銅接頭	0.64	huangtongjietou
+铜件	銅件	0.62	tongjian
+铜阀	銅閥	0.62	tongfa
+铜接头	銅接頭	0.62	tongjietou
+不锈钢件	不鏽鋼件	0.66	buxiugangjian
+不锈钢门	不鏽鋼門	0.66	buxiugangmen
+不锈钢管	不鏽鋼管	0.66	buxiugangguan
+不锈钢板	不鏽鋼板	0.66	buxiugangban
+铝合金门	鋁合金門	0.66	lvhejinmen
+铝合金框	鋁合金框	0.64	lvhejinkuang
+铝合金型材	鋁合金型材	0.64	lvhejinxingcai
+
+# common renovation material additions 2026-06-18
+太空铝	太空鋁	0.66	taikonglv
+冷轧钢	冷軋鋼	0.62	lengzhagang
+冷轧钢板	冷軋鋼板	0.60	lengzhagangban
+镀锌钢	鍍鋅鋼	0.62	duxingang
+镀锌钢板	鍍鋅鋼板	0.60	duxingangban
+碳钢	碳鋼	0.58	tangang
+碳钢板	碳鋼板	0.56	tangangban
+实木	實木	0.72	shimu
+实木板	實木板	0.68	shimuban
+实木门	實木門	0.68	shimumen
+实木地板	實木地板	0.66	shimudiban
+竹木纤维板	竹木纖維板	0.62	zhumuxianweiban
+岩板	岩板	0.70	yanban
+岩板台面	岩板檯面	0.66	yanbantaimian
+岩板餐桌	岩板餐桌	0.62	yanbancanzhuo
+人造石	人造石	0.64	renzaoshi
+微水泥	微水泥	0.64	weishuini
+夹胶玻璃	夾膠玻璃	0.62	jiajiaoboli
+超白玻璃	超白玻璃	0.62	chaobaiboli
+长虹玻璃	長虹玻璃	0.64	changhongboli
+亚克力	亞克力	0.64	yakeli
+亚克力板	亞克力板	0.62	yakeliban
+艺术漆	藝術漆	0.66	yishuqi
+硅藻泥	硅藻泥	0.62	guizaoni
+墙布	牆布	0.44	qiangbu
+墙纸	牆紙	0.40	qiangzhi
+地板革	地板革	0.58	dibange
+釉面陶瓷	釉面陶瓷	0.60	youmiantaoci
+石英石台面	石英石檯面	0.66	shiyingshitaimian
+
+# BEGIN words_new_import_2026_07_07
+# Imported from D:/_/words_new.txt on 2026-07-07; bucket=arch; reviewed by rule-based classifier.
+木门	木門	0.34
+玻璃窗	玻璃窗	0.34
+老院子	老院子	0.34
+自建房	自建房	0.34
+床榻	床榻	0.34
+木柜	木櫃	0.34
+门窗	門窗	0.34
+石砖	石磚	0.34
+青瓦	青瓦	0.34
+铁栏杆	鐵欄杆	0.34
+地下停车场	地下停車場	0.34
+地下车库	地下車庫	0.34
+车座	車座	0.34
+车头	車頭	0.34
+墙缝	牆縫	0.34
+水阀	水閥	0.34
+水阀门	水閥門	0.34
+壁柜	壁櫃	0.34
+木箱	木箱	0.34
+石墙	石牆	0.34
+石路	石路	0.34
+石桥	石橋	0.34
+床脚	床腳	0.34
+窗栏	窗欄	0.34
+椅垫	椅墊	0.34
+纱帘	紗簾	0.34
+帷帐	帷帳	0.34
+床帷	床帷	0.34
+青砖	青磚	0.34
+红瓦	紅瓦	0.34
+枝形吊灯	枝形吊燈	0.34
+# END words_new_import_2026_07_07
+
+# BEGIN words_new_import_2026_07_09
+# Imported from D:/_/words_new.txt on 2026-07-09; reviewed by rule-based classifier.
+玻璃柜	玻璃櫃	0.34
+保鲜柜	保鮮櫃	0.34
+柜式	櫃式	0.34
+储藏柜	儲藏櫃	0.34
+鞋柜	鞋櫃	0.34
+电视柜	電視櫃	0.34
+冷藏柜	冷藏櫃	0.34
+公共厨房	公共廚房	0.34
+开放式厨房	開放式廚房	0.24
+装修费	裝修費	0.34
+掉漆	掉漆	0.34
+# END words_new_import_2026_07_09
+
+# Building-services and pump-system terminology.
+扬程	揚程	0.68	yangcheng
+泵水	泵水	0.52	bengshui
+聚脲	聚脲	0.52	juniao

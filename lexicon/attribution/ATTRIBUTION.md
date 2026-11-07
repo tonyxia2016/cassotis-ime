@@ -1,0 +1,228 @@
+﻿# Attribution (Public)
+
+This repository may publish generated lexicon artifacts that include entries
+derived from external open data sources.
+
+## CC-CEDICT
+
+- Name: CC-CEDICT Chinese-English Dictionary
+- Homepage: https://www.mdbg.net/chinese/dictionary?page=cc-cedict
+- Download: https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
+- License: CC BY-SA 4.0
+- Copyright holder: MDBG and CC-CEDICT contributors
+
+Notes:
+
+- The raw source file is not committed in this repository.
+- This repository stores transformed dictionary artifacts only.
+
+## THUOCL
+
+- Name: THUOCL (Tsinghua Open Chinese Lexicon)
+- Homepage: https://github.com/thunlp/THUOCL
+- Download: https://github.com/thunlp/THUOCL/archive/refs/heads/master.zip
+- License: MIT (see [upstream LICENSE](https://github.com/thunlp/THUOCL/blob/master/LICENSE)
+  and [included notice](THUOCL-LICENSE.txt))
+- Copyright holder: THUNLP and THUOCL contributors
+
+Notes:
+
+- THUOCL is used as an external broad-coverage word list with DF statistics.
+- Filtered `THUOCL_IT` and `THUOCL_medical` subsets are also used as isolated
+  vertical-layer candidate sources.
+- The raw source archive is not committed in this repository.
+- A reviewed animal/husbandry subset is kept in
+  [thuocl_reviewed_animals.tsv](../manifests/vertical/thuocl_reviewed_animals.tsv),
+  with explicit readings and upstream DF values. These add-only specialist terms
+  use low exact weights, not general-frequency or character-popularity boosts.
+- Additional cleaned three-to-ten-character entries from the IT, animal,
+  finance, car, food, law and medical categories are recorded in
+  [thuocl_specialist_admissions.tsv](../manifests/vertical/thuocl_specialist_admissions.tsv).
+  The pinned source revision, checksum and filtering counts are recorded in
+  [the admission report](../reports/thuocl_specialist_admissions.json).
+- Prediction eligibility is separate from admission: catalogue-only entries
+  are excluded from short-prefix and Tab prediction. Familiar general-use
+  expressions are explicitly reviewed in
+  [specialist_common_terms.tsv](../manifests/specialist_common_terms.tsv),
+  without inventing corpus counts or changing existing dictionary weights.
+
+## jieba dict.txt
+
+- Name: jieba dictionary (`jieba/dict.txt`)
+- Homepage: https://github.com/fxsjy/jieba
+- Download: https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt
+- License: MIT
+- Copyright holder: Sun Junyi and jieba contributors
+
+Notes:
+
+- jieba word frequencies are used as ranking signal in external broad profile.
+- Raw source file is not committed in this repository.
+
+## OpenCC STPhrases
+
+- Name: OpenCC dictionary (STPhrases)
+- Homepage: https://github.com/BYVoid/OpenCC
+- Download: https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/STPhrases.txt
+- License: Apache-2.0
+- Copyright holder: OpenCC contributors
+
+## Unicode Unihan (Readings)
+
+- Name: Unicode Unihan Database (`Unihan_Readings.txt`)
+- Homepage: https://www.unicode.org/ucd/
+- Download: https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip
+- License: Unicode-3.0
+- Copyright holder: Unicode Consortium
+
+## Wiktionary zh titles (ns0)
+
+- Name: Wikimedia zhwiktionary title dump (namespace 0)
+- Homepage: https://dumps.wikimedia.org/zhwiktionary/latest/
+- Download: https://dumps.wikimedia.org/zhwiktionary/latest/zhwiktionary-latest-all-titles-in-ns0.gz
+- License: CC BY-SA 4.0 (as part of Wikimedia content licensing)
+- Copyright holder: Wikimedia contributors
+
+Notes:
+
+- This repository uses titles as lexical seeds for daily wording, colloquial phrases, and chat-style expressions.
+- Filtered title subsets are also used as lightweight lexical supplements for the isolated gaming and game-development vertical layers.
+- Raw dump files are not committed in this repository.
+
+## Wikipedia zh titles (ns0)
+
+- Name: Wikimedia zhwiki title dump (namespace 0)
+- Homepage: https://dumps.wikimedia.org/zhwiki/latest/
+- Download: https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-all-titles-in-ns0.gz
+- License: CC BY-SA 4.0 (as part of Wikimedia content licensing)
+- Copyright holder: Wikimedia contributors
+
+Notes:
+
+- This repository uses titles as external ranking/coverage signals for the broad profile.
+- Filtered title subsets are also used as conservative lexical supplements for the isolated gaming and game-development vertical layers.
+- Raw dump files are not committed in this repository.
+
+## Wikimedia Pageviews Top (zh.wikipedia)
+
+- Name: Wikimedia REST Pageviews Top API (zh.wikipedia)
+- Homepage: https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews
+- Endpoint: https://wikimedia.org/api/rest_v1/metrics/pageviews/top/zh.wikipedia/all-access/{year}/{month}/all-days
+- License: CC BY-SA 4.0 (as part of Wikimedia content licensing)
+- Copyright holder: Wikimedia contributors
+
+Notes:
+
+- This repository uses aggregated monthly top-pageview counts as ranking signal only.
+- API responses are cached locally during build and are not committed as raw source dumps.
+
+## Godot Docs zh-cn title index
+
+- Name: Godot Docs zh-cn title index (`searchindex.js`)
+- Homepage: https://docs.godotengine.org/zh-cn/stable/
+- Download: https://docs.godotengine.org/zh-cn/stable/searchindex.js
+- License: CC BY 3.0
+- Copyright holder: Godot contributors
+
+Notes:
+
+- This repository uses filtered Chinese documentation titles as the main term source for the isolated game-development vertical layer.
+- Cached source payloads may be stored locally during build but are not committed as raw source dumps.
+
+## Getty AAT zh architectural terms
+
+- Name: Getty Art & Architecture Thesaurus (AAT) Chinese architectural terms
+- Homepage: https://www.getty.edu/research/tools/vocabularies/aat/
+- Endpoint: https://vocab.getty.edu/sparql.json
+- License: ODC-By 1.0
+- Copyright holder: Getty Vocabulary Program / J. Paul Getty Trust
+
+Notes:
+
+- This repository queries Chinese-prefLabel architecture terms from Getty AAT
+  through the official SPARQL endpoint.
+- The imported set is limited to isolated architecture terminology layers and
+  does not share the daily/chat preferred-term path.
+- Query responses are cached locally during build and are not committed as raw
+  source dumps.
+
+## Wikidata zh architecture terms / landmarks
+
+- Name: Wikidata Query Service architecture terms and landmark entities (Chinese labels/aliases)
+- Homepage: https://www.wikidata.org/wiki/Wikidata:Main_Page
+- Endpoint: https://query.wikidata.org/sparql
+- License: CC0-1.0
+- Copyright holder: Wikidata contributors
+
+Notes:
+
+- This repository queries Chinese labels and aliases for architectural elements,
+  architectural styles, and architectural landmarks.
+- The imported set is used only in isolated architecture vertical layers and
+  is weighted conservatively to avoid overriding the main everyday lexicon.
+- Query responses are cached locally during build and are not committed as raw
+  source dumps.
+
+## Wikidata zh gaming / game-engine entities
+
+- Name: Wikidata Query Service gaming entities and game-engine entities (Chinese labels/aliases)
+- Homepage: https://www.wikidata.org/wiki/Wikidata:Main_Page
+- Endpoint: https://query.wikidata.org/sparql
+- License: CC0-1.0
+- Copyright holder: Wikidata contributors
+
+Notes:
+
+- This repository queries Chinese labels and aliases for video games, video-game series, genres, consoles, and game engines.
+- Query responses are cached locally during build and are not committed as raw source dumps.
+
+## MeSH descriptor catalog
+
+- Name: Medical Subject Headings (MeSH) descriptor catalog
+- Homepage: https://www.nlm.nih.gov/mesh/meshhome.html
+- Download: https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc2026.xml
+- License: NLM MeSH terms and conditions
+- Copyright holder: U.S. National Library of Medicine
+
+Notes:
+
+- This repository uses MeSH descriptor records as the medical concept whitelist
+  for the isolated medicine vertical layer.
+- The raw XML catalog is cached locally during build and is not committed in
+  this repository.
+
+## Wikidata zh medical entities (MeSH-linked)
+
+- Name: Wikidata Query Service medical entities (Chinese labels/aliases linked to MeSH)
+- Homepage: https://www.wikidata.org/wiki/Wikidata:Main_Page
+- Endpoint: https://query.wikidata.org/sparql
+- License: CC0-1.0
+- Copyright holder: Wikidata contributors
+
+Notes:
+
+- This repository queries Chinese labels and aliases for Wikidata items that
+  expose a linked MeSH descriptor ID.
+- Query results are filtered against the imported MeSH descriptor catalog before
+  they are used in the isolated medicine vertical layer.
+- Query responses are cached locally during build and are not committed as raw
+  source dumps.
+
+## chinese-poetry
+
+- Name: chinese-poetry (Classical Chinese poetry database)
+- Homepage: https://github.com/chinese-poetry/chinese-poetry
+- Download: https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master/
+  (`全唐诗/唐诗三百首.json`, `蒙学/qianjiashi.json`, `宋词/宋词三百首.json`,
+  and the full Tang and Song corpora for the poems of the school curriculum)
+- License: MIT (see [included notice](CHINESE-POETRY-LICENSE.txt))
+- Copyright holder: JackeyGao and chinese-poetry contributors
+
+Notes:
+
+- The poems themselves are in the public domain; the dataset supplies their
+  texts. Lines of 4 to 11 characters of the school curriculum, 唐诗三百首,
+  千家诗 and 宋词三百首 are exact rows of the supplement manifest
+  (`exact_rank_exact_only`: found when the whole line is typed, no completions),
+  converted to simplified characters and to OpenCC `s2tw` traditional forms.
+- The raw dataset is not committed in this repository.

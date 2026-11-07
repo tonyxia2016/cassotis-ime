@@ -1,0 +1,541 @@
+# External Build Report
+
+- profile: unihan_single
+- generated_at_utc: 2026-05-07T07:41:06+00:00
+- min_hanzi: 1
+- max_entries: unlimited
+
+## Sources
+- opencc-stphrases: OpenCC STPhrases
+  - license: Apache-2.0
+  - risk_level: low
+  - redistribution_class: permissive
+  - url: https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/STPhrases.txt
+- unicode-unihan-readings: Unicode Unihan_Readings
+  - license: Unicode-3.0
+  - risk_level: low
+  - redistribution_class: permissive
+  - url: https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip
+- project-curated-fiction-entities: Cassotis curated fiction entities
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/fiction_entities.tsv
+- project-curated-proper-nouns: Cassotis curated proper nouns
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/proper_nouns.tsv
+- project-curated-vertical-people-names: Cassotis curated people names
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/people_names.tsv
+- wikidata-historical-people-zh: Wikidata zh historical people
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- project-curated-vertical-place-names: Cassotis curated place names
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/place_names.tsv
+- project-curated-vertical-countries-regions: Cassotis curated countries and regions
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/countries_regions.tsv
+- project-curated-vertical-world-cities: Cassotis curated world cities
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/world_cities.tsv
+- project-curated-vertical-landmarks: Cassotis curated landmarks
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/landmarks.tsv
+- wikidata-countries-zh: Wikidata zh countries
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-major-cities-zh: Wikidata zh major cities
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-admin-territories-zh: Wikidata zh administrative territories
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-tourist-landmarks-zh: Wikidata zh tourist attractions and landmarks
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- thuocl-chengyu-vertical: THUOCL chengyu subset
+  - license: THUOCL custom open terms
+  - risk_level: medium
+  - redistribution_class: attribution_required
+  - url: https://github.com/thunlp/THUOCL/archive/refs/heads/master.zip#THUOCL_chengyu.txt
+- project-curated-vertical-idioms-allusions: Cassotis curated idioms and allusions
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/idioms_allusions.tsv
+- thuocl-it-vertical: THUOCL IT subset
+  - license: THUOCL custom open terms
+  - risk_level: medium
+  - redistribution_class: attribution_required
+  - url: https://github.com/thunlp/THUOCL/archive/refs/heads/master.zip#THUOCL_IT.txt
+- project-curated-vertical-computing: Cassotis curated computing terms
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/computing.tsv
+- project-curated-vertical-civic: Cassotis curated civic terms
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/civic.tsv
+- project-curated-vertical-architecture-terms: Cassotis curated architecture terms
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/architecture_terms.tsv
+- getty-aat-architectural-elements-zh: Getty AAT zh architectural elements
+  - license: ODC-By 1.0
+  - risk_level: low
+  - redistribution_class: attribution_required
+  - url: https://vocab.getty.edu/sparql.json
+- getty-aat-rooms-spaces-zh: Getty AAT zh rooms and spaces
+  - license: ODC-By 1.0
+  - risk_level: low
+  - redistribution_class: attribution_required
+  - url: https://vocab.getty.edu/sparql.json
+- wikidata-architectural-elements-zh: Wikidata zh architectural elements
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-architectural-styles-zh: Wikidata zh architectural styles
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- project-curated-vertical-architecture-entities: Cassotis curated architecture entities
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/architecture_entities.tsv
+- wikidata-architectural-landmarks-zh: Wikidata zh architectural landmarks
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- project-curated-vertical-gaming: Cassotis curated gaming terms
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/gaming.tsv
+- wikidata-video-games-zh: Wikidata zh video games
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-video-game-series-zh: Wikidata zh video game series
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-video-game-genres-zh: Wikidata zh video game genres
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- wikidata-game-consoles-zh: Wikidata zh game consoles
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- zhwiktionary-gaming-lexical: Wiktionary zh gaming lexical titles
+  - license: CC BY-SA 4.0
+  - risk_level: medium
+  - redistribution_class: copyleft_sharealike
+  - url: https://dumps.wikimedia.org/zhwiktionary/latest/zhwiktionary-latest-all-titles-in-ns0.gz
+- zhwiki-gaming-lexical: Wikipedia zh gaming lexical titles
+  - license: CC BY-SA 4.0
+  - risk_level: medium
+  - redistribution_class: copyleft_sharealike
+  - url: https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-all-titles-in-ns0.gz
+- project-curated-vertical-game-dev: Cassotis curated game development terms
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/game_dev.tsv
+- godot-zh-searchindex-titles: Godot Docs zh-cn title index
+  - license: CC BY 3.0
+  - risk_level: low
+  - redistribution_class: attribution_required
+  - url: https://docs.godotengine.org/zh-cn/stable/searchindex.js
+- wikidata-game-engines-zh: Wikidata zh game engines
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- zhwiktionary-game-dev-lexical: Wiktionary zh game-development lexical titles
+  - license: CC BY-SA 4.0
+  - risk_level: medium
+  - redistribution_class: copyleft_sharealike
+  - url: https://dumps.wikimedia.org/zhwiktionary/latest/zhwiktionary-latest-all-titles-in-ns0.gz
+- zhwiki-game-dev-lexical: Wikipedia zh game-development lexical titles
+  - license: CC BY-SA 4.0
+  - risk_level: medium
+  - redistribution_class: copyleft_sharealike
+  - url: https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-all-titles-in-ns0.gz
+- project-curated-vertical-medicine: Cassotis curated medical terms
+  - license: Repository license (project-authored)
+  - risk_level: low
+  - redistribution_class: project_authored
+  - url: repo://manifests/vertical/medicine.tsv
+- mesh-descriptor-catalog: MeSH descriptor catalog
+  - license: NLM MeSH terms and conditions
+  - risk_level: low
+  - redistribution_class: attribution_required
+  - url: https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc2026.xml
+- wikidata-medical-mesh-zh: Wikidata zh medical entities (MeSH-linked)
+  - license: CC0-1.0
+  - risk_level: low
+  - redistribution_class: public_domain
+  - url: https://query.wikidata.org/sparql
+- thuocl-medical-vertical: THUOCL medical subset
+  - license: THUOCL custom open terms
+  - risk_level: medium
+  - redistribution_class: attribution_required
+  - url: https://github.com/thunlp/THUOCL/archive/refs/heads/master.zip#THUOCL_medical.txt
+
+## Parse stats
+- admin_place_alias_added_sc: 0
+- admin_place_alias_added_tc: 0
+- admin_place_alias_augmented_sc_terms: 0
+- admin_place_alias_augmented_tc_terms: 0
+- admin_place_alias_boosted_sc: 0
+- admin_place_alias_boosted_tc: 0
+- admin_place_alias_skipped_existing: 0
+- admin_place_alias_skipped_no_pinyin: 0
+- admin_place_alias_skipped_short: 0
+- admin_place_alias_source_terms: 0
+- filtered_short: 0
+- final_curated_daily_exact_sc_added: 0
+- final_curated_daily_exact_sc_reinforced: 0
+- final_curated_daily_exact_tc_added: 0
+- final_curated_daily_exact_tc_reinforced: 0
+- invalid_format: 0
+- known_incorrect_jiancha_entries_removed_sc: 0
+- known_incorrect_jiancha_entries_removed_tc: 0
+- known_incorrect_lexical_entries_removed_sc: 0
+- known_incorrect_lexical_entries_removed_tc: 0
+- lexical_seed_augmented_sc_terms: 0
+- lexical_seed_augmented_tc_terms: 0
+- override_entries: 72
+- override_hits: 1
+- override_injected: 0
+- parsed_lines: 49243
+- sc_char_normalized_blocked_reverse_entries: 0
+- sc_char_normalized_converted_entries: 22
+- sc_char_normalized_total_entries: 23925
+- sc_civic_neutral_rows_considered: 0
+- sc_civic_neutral_rows_reduced: 0
+- sc_civic_neutral_weight_delta_total: 0
+- sc_curated_daily_number_cap_rows: 0
+- sc_curated_daily_number_cap_terms: 0
+- sc_curated_daily_prefix_competitor_rows: 0
+- sc_curated_daily_prefix_competitors_capped: 0
+- sc_curated_daily_prefix_reinforced: 0
+- sc_curated_daily_prefix_terms_considered: 0
+- sc_explicit_multi_char_drop_rows: 0
+- sc_filtered_non_windows_cjk: 0
+- sc_final_prefix_fragment_entries_removed: 0
+- sc_global_tail_constituent_mismatch_removed: 0
+- sc_global_tail_fragment_removed: 0
+- sc_global_tail_literary_removed: 0
+- sc_global_tail_modernity_risk_removed: 0
+- sc_global_tail_named_removed: 0
+- sc_global_tail_rare_char_removed: 0
+- sc_global_tail_removed: 0
+- sc_global_tail_written_removed: 0
+- sc_homophone_buckets: 400
+- sc_homophone_daily_number_boosted: 0
+- sc_homophone_daily_phrase_boosted: 0
+- sc_homophone_daily_phrase_damped: 0
+- sc_homophone_daily_phrase_short_non_daily_damped: 0
+- sc_homophone_dominant_common_boosted: 0
+- sc_homophone_dominant_common_damped: 0
+- sc_homophone_entries_adjusted: 23835
+- sc_homophone_entries_boosted: 3626
+- sc_homophone_entries_damped: 20209
+- sc_homophone_inflated_short_penalized: 0
+- sc_homophone_literary_penalized: 0
+- sc_homophone_modernity_risk_penalized: 0
+- sc_homophone_preferred_term_boosted: 0
+- sc_homophone_preferred_term_damped: 0
+- sc_homophone_rare_form_penalized: 0
+- sc_homophone_semantic_daily_boosted: 0
+- sc_homophone_short_everyday_boosted: 0
+- sc_homophone_short_everyday_non_daily_damped: 0
+- sc_homophone_short_family_noun_damped: 0
+- sc_homophone_short_popular_named_bucket_damped: 0
+- sc_homophone_short_popular_wiki_boosted: 0
+- sc_homophone_sparse_penalized: 0
+- sc_homophone_written_tail_penalized: 0
+- sc_low_signal_fragment_removed: 0
+- sc_low_signal_literary_removed: 0
+- sc_low_signal_named_removed: 0
+- sc_low_signal_rare_buckets: 0
+- sc_low_signal_rare_removed: 0
+- sc_low_signal_written_removed: 0
+- sc_multi_pronunciation_damped: 0
+- sc_multi_pronunciation_penalty_total: 0
+- sc_multi_pronunciation_terms: 0
+- sc_prefix_fragment_entries_removed: 0
+- sc_script_filtered_entries: 0
+- sc_script_filtered_total_entries: 23925
+- sc_single_char_leading_adjusted: 392
+- sc_single_char_leading_delta_total: 21072
+- sc_single_char_reading_preference_adjusted: 1499
+- sc_single_char_reading_preference_delta_total: 21111
+- sc_single_char_reading_removed: 1
+- sc_snapshot_rows_considered: 23923
+- sc_snapshot_rows_restored: 0
+- sc_snapshot_rows_skipped_blocked_prefix: 0
+- sc_snapshot_rows_skipped_explicit_drop: 0
+- sc_snapshot_rows_skipped_low_signal_risk: 0
+- sc_snapshot_rows_skipped_prefix_fragment: 0
+- sc_snapshot_texts_restored: 0
+- sc_word_pinyin_override_terms_merged: 1
+- sc_word_pinyin_override_terms_rekeyed: 1
+- sc_word_pinyin_override_terms_total: 23924
+- tc_char_normalized_converted_entries: 18
+- tc_char_normalized_total_entries: 24090
+- tc_civic_neutral_rows_considered: 0
+- tc_civic_neutral_rows_reduced: 0
+- tc_civic_neutral_weight_delta_total: 0
+- tc_curated_daily_number_cap_rows: 0
+- tc_curated_daily_number_cap_terms: 0
+- tc_curated_daily_prefix_competitor_rows: 0
+- tc_curated_daily_prefix_competitors_capped: 0
+- tc_curated_daily_prefix_reinforced: 0
+- tc_curated_daily_prefix_terms_considered: 0
+- tc_explicit_multi_char_drop_rows: 0
+- tc_filtered_non_windows_cjk: 0
+- tc_final_prefix_fragment_entries_removed: 0
+- tc_global_tail_constituent_mismatch_removed: 0
+- tc_global_tail_fragment_removed: 0
+- tc_global_tail_literary_removed: 0
+- tc_global_tail_modernity_risk_removed: 0
+- tc_global_tail_named_removed: 0
+- tc_global_tail_rare_char_removed: 0
+- tc_global_tail_removed: 0
+- tc_global_tail_written_removed: 0
+- tc_homophone_buckets: 399
+- tc_homophone_daily_number_boosted: 0
+- tc_homophone_daily_phrase_boosted: 0
+- tc_homophone_daily_phrase_damped: 0
+- tc_homophone_daily_phrase_short_non_daily_damped: 0
+- tc_homophone_dominant_common_boosted: 0
+- tc_homophone_dominant_common_damped: 0
+- tc_homophone_entries_adjusted: 23961
+- tc_homophone_entries_boosted: 3986
+- tc_homophone_entries_damped: 19975
+- tc_homophone_inflated_short_penalized: 0
+- tc_homophone_literary_penalized: 0
+- tc_homophone_modernity_risk_penalized: 0
+- tc_homophone_preferred_term_boosted: 0
+- tc_homophone_preferred_term_damped: 0
+- tc_homophone_rare_form_penalized: 0
+- tc_homophone_sc_guided_boost_total: 0
+- tc_homophone_sc_guided_boosted: 0
+- tc_homophone_sc_guided_buckets: 0
+- tc_homophone_sc_guided_damped: 0
+- tc_homophone_sc_guided_penalty_total: 0
+- tc_homophone_semantic_daily_boosted: 0
+- tc_homophone_short_everyday_boosted: 0
+- tc_homophone_short_everyday_non_daily_damped: 0
+- tc_homophone_short_family_noun_damped: 0
+- tc_homophone_short_popular_named_bucket_damped: 0
+- tc_homophone_short_popular_wiki_boosted: 0
+- tc_homophone_sparse_penalized: 0
+- tc_homophone_written_tail_penalized: 0
+- tc_idiom_allusion_simplified_variant_rows_merged: 0
+- tc_idiom_allusion_simplified_variant_targets_boosted: 0
+- tc_low_signal_fragment_removed: 0
+- tc_low_signal_literary_removed: 0
+- tc_low_signal_named_removed: 0
+- tc_low_signal_rare_buckets: 0
+- tc_low_signal_rare_removed: 0
+- tc_low_signal_written_removed: 0
+- tc_multi_pronunciation_damped: 0
+- tc_multi_pronunciation_penalty_total: 0
+- tc_multi_pronunciation_sc_guided_damped: 0
+- tc_multi_pronunciation_sc_guided_penalty_total: 0
+- tc_multi_pronunciation_sc_guided_terms: 0
+- tc_multi_pronunciation_terms: 0
+- tc_prefix_fragment_entries_removed: 0
+- tc_project_preferred_converted_variant_rows_merged: 0
+- tc_project_preferred_converted_variant_targets_boosted: 0
+- tc_script_filtered_entries: 0
+- tc_script_filtered_total_entries: 24090
+- tc_single_char_leading_adjusted: 319
+- tc_single_char_leading_delta_total: 17892
+- tc_single_char_reading_preference_adjusted: 1911
+- tc_single_char_reading_preference_delta_total: 44456
+- tc_single_char_reading_removed: 1
+- tc_snapshot_rows_considered: 24088
+- tc_snapshot_rows_restored: 0
+- tc_snapshot_rows_skipped_blocked_prefix: 0
+- tc_snapshot_rows_skipped_explicit_drop: 0
+- tc_snapshot_rows_skipped_low_signal_risk: 0
+- tc_snapshot_rows_skipped_prefix_fragment: 0
+- tc_snapshot_texts_restored: 0
+- tc_word_pinyin_override_terms_merged: 1
+- tc_word_pinyin_override_terms_rekeyed: 1
+- tc_word_pinyin_override_terms_total: 24089
+- total_lines: 49250
+- unihan_core_size: 18816
+- unihan_family_support_boosted_sc: 5010
+- unihan_family_support_boosted_tc: 5574
+- unihan_family_support_terms_sc: 5833
+- unihan_family_support_terms_tc: 6312
+- unihan_frequency_size: 0
+- unihan_grade_size: 2632
+- unihan_inferred_reading_support_terms_sc: 5981
+- unihan_inferred_reading_support_terms_tc: 6485
+- unihan_leading_support_terms_sc: 4748
+- unihan_leading_support_terms_tc: 5050
+- unihan_map_size: 26711
+- unihan_phrase_inferred_reading_injected_sc: 7
+- unihan_phrase_inferred_reading_injected_tc: 18
+- unihan_pinlu_size: 3799
+- unihan_reading_support_terms_sc: 1518
+- unihan_reading_support_terms_tc: 2011
+- unihan_readings_chars: 26711
+- unihan_readings_pairs: 33910
+- unihan_sc_only_chars: 2767
+- unihan_single_char_injected_sc: 23940
+- unihan_single_char_injected_tc: 24089
+- unihan_tc_only_chars: 2916
+- vertical_godot_titles_invalid_format: 0
+- vertical_godot_titles_invalid_json: 0
+- vertical_godot_titles_kept: 260
+- vertical_godot_titles_skipped_colon: 78
+- vertical_godot_titles_skipped_duplicate: 2
+- vertical_godot_titles_skipped_empty: 0
+- vertical_godot_titles_skipped_filter: 1583
+- vertical_godot_titles_skipped_long: 88
+- vertical_godot_titles_skipped_non_cjk: 2230
+- vertical_godot_titles_skipped_short: 0
+- vertical_godot_titles_total: 4241
+- vertical_layer_sources_loaded: 40
+- vertical_layer_sources_skipped_inactive: 0
+- vertical_layer_sources_skipped_unsupported: 0
+- vertical_layer_sources_total: 40
+- vertical_layers_active: 12
+- vertical_layers_declared: 12
+- vertical_layers_manifest_present: 1
+- vertical_mesh_descriptors_medical: 50066
+- vertical_mesh_descriptors_nonmedical: 12154
+- vertical_mesh_descriptors_total: 62220
+- vertical_mesh_missing_payload: 0
+- vertical_payload_titles_candidates: 4376386
+- vertical_payload_titles_kept: 2838
+- vertical_payload_titles_skipped_duplicate: 106
+- vertical_payload_titles_skipped_filter: 4373442
+- vertical_support_excluded_sc: 63966
+- vertical_support_excluded_tc: 36958
+- vertical_term_kept: 991
+- vertical_term_rows: 991
+- vertical_term_skipped_malformed: 0
+- vertical_term_skipped_non_cjk: 0
+- vertical_term_skipped_short: 0
+- vertical_terms_fallback_downloads: 0
+- vertical_terms_missing_payload_source: 0
+- vertical_terms_unsupported_source_type: 0
+- vertical_thuocl_files_matched: 3
+- vertical_thuocl_invalid_format: 0
+- vertical_thuocl_kept: 29396
+- vertical_thuocl_missing_member: 0
+- vertical_thuocl_rows: 43268
+- vertical_thuocl_skipped_filter: 10727
+- vertical_thuocl_skipped_non_cjk: 3145
+- vertical_thuocl_skipped_short: 0
+- vertical_wikidata_kept: 16414
+- vertical_wikidata_missing_mesh_payload: 0
+- vertical_wikidata_missing_payload: 0
+- vertical_wikidata_rows: 37607
+- vertical_wikidata_skipped_duplicate: 1661
+- vertical_wikidata_skipped_non_cjk: 1573
+- vertical_wikidata_skipped_nonmedical_mesh: 17959
+- vertical_wikidata_skipped_short: 0
+- vertical_wikidata_term_kept: 17734
+- vertical_wikidata_term_rows: 38176
+- vertical_wikidata_term_skipped_duplicate: 2659
+- vertical_wikidata_term_skipped_filter: 0
+- vertical_wikidata_term_skipped_long: 205
+- vertical_wikidata_term_skipped_non_cjk: 17578
+- vertical_wikidata_term_skipped_short: 0
+- wiki_deduplicated: 428610
+- wiki_kept_titles: 4376386
+- wiki_proper_augmented_sc_terms: 0
+- wiki_proper_augmented_tc_terms: 0
+- wiki_skipped_colon: 20268
+- wiki_skipped_empty: 10
+- wiki_skipped_long: 299458
+- wiki_skipped_non_cjk: 6102104
+- wiki_skipped_short: 0
+- wiki_total_lines: 11226836
+- word_pinyin_override_entries: 72
+
+## Output
+- sc_file: data/generated/dict_unihan_sc.txt
+- tc_file: data/generated/dict_unihan_tc.txt
+- sc_entries: 23923
+- tc_entries: 24088
+- suspicious_sc_entries: 25
+
+## Suspicious SC Reason Summary
+
+- weak-usage: 25
+- high-modernity-risk: 25
+
+## Suspicious High-Weight SC Entries
+
+| text | pinyin | weight | risk_score | modernity_risk | usage | jieba | pageviews | source_hits | char_score | pos | reasons |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 不 | bu | 793 | 821 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.913 | - | weak-usage,high-modernity-risk |
+| 有 | you | 784 | 813 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.910 | - | weak-usage,high-modernity-risk |
+| 他 | ta | 781 | 810 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.908 | - | weak-usage,high-modernity-risk |
+| 大 | da | 772 | 797 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.936 | - | weak-usage,high-modernity-risk |
+| 这 | zhe | 760 | 790 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.899 | - | weak-usage,high-modernity-risk |
+| 一 | yi | 760 | 790 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.899 | - | weak-usage,high-modernity-risk |
+| 那 | na | 755 | 785 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.897 | - | weak-usage,high-modernity-risk |
+| 我 | wo | 751 | 782 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.895 | - | weak-usage,high-modernity-risk |
+| 可 | ke | 748 | 779 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.894 | - | weak-usage,high-modernity-risk |
+| 是 | shi | 738 | 769 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.890 | - | weak-usage,high-modernity-risk |
+| 上 | shang | 731 | 763 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.887 | - | weak-usage,high-modernity-risk |
+| 没 | mei | 731 | 760 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.908 | - | weak-usage,high-modernity-risk |
+| 就 | jiu | 727 | 759 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.885 | - | weak-usage,high-modernity-risk |
+| 也 | ye | 727 | 759 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.885 | - | weak-usage,high-modernity-risk |
+| 在 | zai | 720 | 753 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.882 | - | weak-usage,high-modernity-risk |
+| 和 | he | 721 | 750 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.910 | - | weak-usage,high-modernity-risk |
+| 去 | qu | 713 | 746 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.879 | - | weak-usage,high-modernity-risk |
+| 出 | chu | 711 | 744 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.878 | - | weak-usage,high-modernity-risk |
+| 你 | ni | 710 | 743 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.878 | - | weak-usage,high-modernity-risk |
+| 以 | yi | 709 | 742 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.877 | - | weak-usage,high-modernity-risk |
+| 要 | yao | 708 | 741 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.877 | - | weak-usage,high-modernity-risk |
+| 都 | dou | 710 | 740 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.903 | - | weak-usage,high-modernity-risk |
+| 好 | hao | 707 | 740 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.876 | - | weak-usage,high-modernity-risk |
+| 能 | neng | 698 | 732 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.873 | - | weak-usage,high-modernity-risk |
+| 下 | xia | 698 | 732 | 312 | 0.000 | 0.000 | 0.000 | 0 | 0.873 | - | weak-usage,high-modernity-risk |

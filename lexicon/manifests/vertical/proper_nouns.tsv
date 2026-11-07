@@ -1,0 +1,514 @@
+# sc	tc	usage_score	pinyin(optional)
+# Project-maintained proper nouns kept separate from everyday/chat phrase seeds.
+# Use this file for general proper nouns such as product names, organizations,
+# platforms, and other non-person real-world named entities that should remain inputable
+# without inheriting the everyday/chat preferred-term path.
+抖音	抖音	0.92	douyin
+微信	微信	0.94	weixin
+可灵	可靈	0.88	keling
+火山引擎	火山引擎	0.86	huoshanyinqing
+飞书	飛書	0.88	feishu
+钉钉	釘釘	0.88	dingding
+剪映	剪映	0.90	jianying
+美团	美團	0.90	meituan
+大众点评	大眾點評	0.88	dazhongdianping
+京东	京東	0.92	jingdong
+闲鱼	閒魚	0.88	xianyu
+招商银行	招商銀行	0.90	zhaoshangyinhang
+月之暗面	月之暗面	0.88	yuezhianmian
+文心	文心	0.84	wenxin
+文心一言	文心一言	0.88	wenxinyiyan
+文心大模型	文心大模型	0.84	wenxindamoxing
+百度文心	百度文心	0.84	baiduwenxin
+通义	通義	0.84	tongyi
+千问	千問	0.82	qianwen
+通义千问	通義千問	0.88	tongyiqianwen
+阿里通义	阿里通義	0.84	alitongyi
+通义万相	通義萬相	0.82	tongyiwanxiang
+通义听悟	通義聽悟	0.82	tongyitingwu
+通义灵码	通義靈碼	0.82	tongyilingma
+阶跃	階躍	0.76	jieyue
+阶跃星辰	階躍星辰	0.84	jieyuexingchen
+跃问	躍問	0.78	yuewen
+深度求索	深度求索	0.84	shenduqiusuo
+深度探索	深度探索	0.70	shendutansuo
+智谱	智譜	0.84	zhipu
+智谱清言	智譜清言	0.86	zhipuqingyan
+混元	混元	0.80	hunyuan
+混元大模型	混元大模型	0.84	hunyuandamoxing
+腾讯混元	騰訊混元	0.86	tengxunhunyuan
+腾讯元宝	騰訊元寶	0.84	tengxunyuanbao
+讯飞星火	訊飛星火	0.86	xunfeixinghuo
+星火大模型	星火大模型	0.82	xinghuodamoxing
+百川智能	百川智能	0.82	baichuanzhineng
+百川大模型	百川大模型	0.80	baichuandamoxing
+豆包	豆包	0.82	doubao
+豆包大模型	豆包大模型	0.82	doubaodamoxing
+零一万物	零一萬物	0.82	lingyiwanwu
+商汤日日新	商湯日日新	0.80	shangtangririxin
+日日新	日日新	0.74	ririxin
+华为盘古	華為盤古	0.82	huaweipangu
+盘古大模型	盤古大模型	0.80	pangudamoxing
+昆仑万维	崑崙萬維	0.80	kunlunwanwei
+天工大模型	天工大模型	0.78	tiangongdamoxing
+淘宝	淘寶	0.94	taobao
+米家	米家	0.88	mijia
+谷歌	谷歌	0.92	guge
+脸书	臉書	0.90	lianshu
+言泉	言泉	0.94	yanquan
+言泉输入法	言泉輸入法	0.96	yanquanshurufa
+言泉拼音输入法	言泉拼音輸入法	0.96	yanquanpinyinshurufa
+七加二	七加二	0.86	qijiaer
+前进四	前進四	0.84	qianjinsi
+细选网	細選網	0.88	xixuanwang
+细选	細選	0.84	xixuan
+东日	東日	0.82	dongri
+东日软件	東日軟件	0.88	dongriruanjian
+永恒的舞动	永恆的舞動	0.90	yonghengdewudong
+阿里云	阿里雲	0.94	aliyun
+腾讯云	騰訊雲	0.94	tengxunyun
+华为云	華為雲	0.94	huaweiyun
+百度云	百度雲	0.94	baiduyun
+谷歌云	谷歌雲	0.94	gugeyun
+滴滴	滴滴	0.92	didi
+高德	高德	0.92	gaode
+佬肥猫	佬肥貓	0.90	laofeimao
+萨莉亚	薩莉亞	0.90	saliya
+国华	國華	0.88	guohua
+宜家	宜家	0.92	yijia
+大松	大松	0.78	dasong
+斯坦福	斯坦福	0.88	sitanfu
+搬瓦工	搬瓦工	0.90	banwagong
+东芝	東芝	0.90	dongzhi
+宏碁	宏碁	0.88	hongqi
+博世	博世	0.88	boshi
+惠而浦	惠而浦	0.88	huierpu
+创维	創維	0.88	chuangwei
+魅族	魅族	0.88	meizu
+大疆	大疆	0.90	dajiang
+罗技	羅技	0.86	luoji
+雷蛇	雷蛇	0.86	leishe
+迪卡侬	迪卡儂	0.88	dikannong
+联合利华	聯合利華	0.86	lianhelihua
+起亚	起亞	0.86	qiya
+广汽	廣汽	0.82	guangqi
+广汽本田	廣汽本田	0.82	guangqibentian
+广汽丰田	廣汽豐田	0.82	guangqifengtian
+广汽传祺	廣汽傳祺	0.80	guangqichuanqi
+广汽埃安	廣汽埃安	0.80	guangqiaian
+传祺	傳祺	0.78	chuanqi
+埃安	埃安	0.78	aian
+一汽	一汽	0.78	yiqi
+上汽	上汽	0.78	shangqi
+比亚迪	比亞迪	0.84	biyadi
+蔚来	蔚來	0.82	weilai
+小鹏	小鵬	0.82	xiaopeng
+理想汽车	理想汽車	0.80	lixiangqiche
+五菱	五菱	0.78	wuling
+零跑	零跑	0.76	lingpao
+极氪	極氪	0.76	jike
+问界	問界	0.76	wenjie
+鸿蒙智行	鴻蒙智行	0.76	hongmengzhixing
+智己	智己	0.74	zhiji
+岚图	嵐圖	0.74	lantu
+腾势	騰勢	0.74	tengshi
+摩尔线程	摩爾線程	0.80	moerxiancheng
+沐曦	沐曦	0.78	muxi
+沐曦集成	沐曦集成	0.76	muxijicheng
+壁仞	壁仞	0.78	biren
+壁仞科技	壁仞科技	0.76	birenkeji
+天数智芯	天數智芯	0.78	tianshuzhixin
+海光	海光	0.76	haiguang
+海光信息	海光信息	0.76	haiguangxinxi
+燧原	燧原	0.76	suiyuan
+燧原科技	燧原科技	0.76	suiyuankeji
+景嘉微	景嘉微	0.76	jingjiawei
+龙芯	龍芯	0.78	longxin
+龙芯中科	龍芯中科	0.76	longxinzhongke
+飞腾	飛騰	0.76	feiteng
+兆芯	兆芯	0.76	zhaoxin
+申威	申威	0.76	shenwei
+昇腾	昇騰	0.76	shengteng
+昆仑芯	崑崙芯	0.76	kunlunxin
+鲲鹏	鯤鵬	0.76	kunpeng
+
+# word1 curated import 2026-06-03 (proper_nouns); reviewed from D:/word1.txt
+北京奥运	北京奧運	0.58	beijingaoyun
+
+# word2 curated import 2026-06-03 (proper_nouns); reviewed from D:/word2.txt
+创智	創智	0.46	chuangzhi
+
+# home-improvement brand and product-name additions 2026-06-08
+小火箭	小火箭	0.62	xiaohuojian
+威乐	威樂	0.66	weile
+霍尼韦尔	霍尼韋爾	0.70	huoniweier
+施耐德	施耐德	0.72	shinaide
+美的	美的	0.62	meidi
+西蒙	西蒙	0.58	ximeng
+格兰富	格蘭富	0.66	gelanfu
+怡口	怡口	0.62	yikou
+罗格朗	羅格朗	0.64	luogelang
+汉斯格雅	漢斯格雅	0.64	hansigeya
+高仪	高儀	0.62	gaoyi
+摩恩	摩恩	0.62	moen
+
+# retail and electrical/tool brand additions 2026-06-10
+红星美凯龙	紅星美凱龍	0.74	hongxingmeikailong
+美凯龙	美凱龍	0.64	meikailong
+正泰	正泰	0.66	zhengtai
+东成	東成	0.62	dongcheng
+德力西	德力西	0.66	delixi
+公牛	公牛	0.66	gongniu
+欧普	歐普	0.64	oupu
+雷士	雷士	0.62	leishi
+西门子	西門子	0.70	ximengzi
+飞利浦	飛利浦	0.68	feilipu
+牧田	牧田	0.60	mutian
+威克士	威克士	0.58	weikeshi
+得伟	得偉	0.58	dewei
+百得	百得	0.56	baide
+喜利得	喜利得	0.56	xilide
+史丹利	史丹利	0.58	shidanli
+# adhesive and building-material brand additions 2026-07-03
+邓白氏	鄧白氏	0.58	dengbaishi
+瓦克	瓦克	0.56	wake
+瓦克胶	瓦克膠	0.52	wakejiao
+汉高	漢高	0.56	hangao
+汉高百得	漢高百得	0.54	hangaobaide
+百得胶	百得膠	0.52	baidejiao
+西卡	西卡	0.56	xika
+西卡胶	西卡膠	0.52	xikajiao
+德高胶	德高膠	0.52	degaojiao
+马贝胶	馬貝膠	0.50	mabeijiao
+东方雨虹	東方雨虹	0.60	dongfangyuhong
+道康宁	道康寧	0.54	daokangning
+道康宁胶	道康寧膠	0.50	daokangningjiao
+硅宝胶	硅寶膠	0.50	guibaojiao
+安泰胶	安泰膠	0.50	antaijiao
+回天胶	回天膠	0.50	huitianjiao
+之江胶	之江膠	0.50	zhijiangjiao
+白云胶	白雲膠	0.50	baiyunjiao
+科顺	科順	0.52	keshun
+科顺防水	科順防水	0.50	keshunfangshui
+卓宝	卓寶	0.48	zhuobao
+# lighting and renovation brand additions 2026-06-18
+欧司朗	歐司朗	0.68	ousilang
+
+# font family and typeface proper-name additions 2026-07-04
+霞鹜	霞鶩	0.28	xiawu
+霞鹜文楷	霞鶩文楷	0.40	xiawuwenkai
+霞鹜文楷等宽	霞鶩文楷等寬	0.36	xiawuwenkaidengkuan
+霞鹜新晰黑	霞鶩新晰黑	0.38	xiawuxinxihei
+霞鹜新致宋	霞鶩新致宋	0.38	xiawuxinzhisong
+霞鹜晰黑	霞鶩晰黑	0.36	xiawuxihei
+霞鹜漫黑	霞鶩漫黑	0.36	xiawumanhei
+
+# finance/proper noun additions 2026-06-18: reviewed import from D:/words.txt
+股指期货	股指期貨	0.46	guzhiqihuo
+沪深	滬深	0.46
+中证	中證	0.46
+
+# BEGIN words_new_import_2026_07_07
+# Imported from D:/_/words_new.txt on 2026-07-07; bucket=proper; reviewed by rule-based classifier.
+魔兽争霸	魔獸爭霸	0.40
+奥拓	奧拓	0.44
+绿箭	綠箭	0.44
+三国杀	三國殺	0.44
+狼人	狼人	0.44
+因特尔	因特爾	0.44
+阿斯顿马丁	阿斯頓馬丁	0.40
+北京站	北京站	0.44
+南站	南站	0.44
+西站	西站	0.44
+史努比	史努比	0.44
+百达翡丽	百達翡麗	0.40
+叮当猫	叮噹貓	0.44
+丁香园	丁香園	0.44
+悍马	悍馬	0.44
+云直播	雲直播	0.44
+楚汉争霸	楚漢爭霸	0.40
+滴滴打车	滴滴打車	0.40
+猎聘网	獵聘網	0.44
+美图	美圖	0.44
+狼人杀	狼人殺	0.44
+四大名捕	四大名捕	0.40
+德芙	德芙	0.44
+淮海路	淮海路	0.44
+复兴路	復興路	0.44
+波特曼	波特曼	0.44
+南京西路	南京西路	0.40
+恒隆	恆隆	0.44
+春水堂	春水堂	0.44
+沪杭	滬杭	0.44
+金鸡湖	金雞湖	0.44
+阳澄湖	陽澄湖	0.44
+路易斯威登	路易斯威登	0.40
+浮士德	浮士德	0.44
+毒霸	毒霸	0.44
+群晖	羣暉	0.44
+海韵	海韻	0.44
+技嘉	技嘉	0.44
+华擎	華擎	0.44
+华莱士	華萊士	0.44
+清美	清美	0.44
+清柠	清檸	0.44
+五芳斋	五芳齋	0.44
+杨浦	楊浦	0.44
+徐闻	徐聞	0.44
+天猫	天貓	0.44
+皮媞亚	皮媞亞	0.44
+饿了么	餓了麼	0.44
+泰晤士河	泰晤士河	0.40
+巴贝里尼	巴貝里尼	0.40
+美狄亚	美狄亞	0.44
+吉普赛	吉普賽	0.44
+汉莎	漢莎	0.44
+曼秀雷敦	曼秀雷敦	0.40
+华尔街之狼	華爾街之狼	0.40
+瓦力	瓦力	0.44
+疯狂动物城	瘋狂動物城	0.40
+唐顿庄园	唐頓莊園	0.40
+朝阳区	朝陽區	0.44
+雨巷	雨巷	0.44
+皇家邮政	皇家郵政	0.40
+湘水	湘水	0.44
+水湄	水湄	0.44
+憬彼淮夷	憬彼淮夷	0.40
+# END words_new_import_2026_07_07
+
+# BEGIN words_new_import_2026_07_09
+# Imported from D:/_/words_new.txt on 2026-07-09; reviewed by rule-based classifier.
+小浣熊	小浣熊	0.44
+南洋理工	南洋理工	0.42
+阿斯顿	阿斯頓	0.44
+科尼塞克	科尼塞克	0.42
+麦克拉伦	麥克拉倫	0.42
+玫瑰园	玫瑰園	0.38
+小虎队	小虎隊	0.44
+鬼吹灯	鬼吹燈	0.44
+皮卡丘	皮卡丘	0.44
+波克比	波克比	0.44
+可达鸭	可達鴨	0.44
+妙蛙种子	妙蛙種子	0.42
+菊草叶	菊草葉	0.44
+大风车	大風車	0.44
+派克笔	派克筆	0.44
+古惑仔	古惑仔	0.44
+灌篮高手	灌籃高手	0.42
+柯南	柯南	0.44
+胡润	胡潤	0.44
+富豪榜	富豪榜	0.44
+珐琅彩	琺瑯彩	0.44
+胖虎	胖虎	0.44
+静香	靜香	0.44
+小夫	小夫	0.44
+远征队	遠征隊	0.38
+三面环山	三面環山	0.38
+三甲医院	三甲醫院	0.38
+白玉堂	白玉堂	0.38
+未名湖	未名湖	0.38
+搪瓷杯	搪瓷杯	0.38
+集训队	集訓隊	0.38
+教师食堂	教師食堂	0.38
+酸奶杯	酸奶杯	0.38
+团体奖	團體獎	0.38
+个人奖	個人獎	0.38
+日本队	日本隊	0.38
+财富榜	財富榜	0.38
+电脑公司	電腦公司	0.38
+参与奖	參與獎	0.38
+第二中学	第二中學	0.38
+高尔夫球队	高爾夫球隊	0.30
+蓬莱山	蓬萊山	0.38
+文学院	文學院	0.38
+光华管理学院	光華管理學院	0.30
+服务站	服務站	0.38
+田径队	田徑隊	0.38
+小分队	小分隊	0.38
+软件科技园	軟件科技園	0.30
+妇产医院	婦產醫院	0.38
+长洲岛	長洲島	0.38
+# END words_new_import_2026_07_09
+
+# BEGIN words_source_import_2026_07_10 (reviewed proper-noun)
+芭比	芭比	0.50	babi
+楞次定律	楞次定律	0.50	lengcidinglv
+# END words_source_import_2026_07_10
+
+# Product and input-method names.
+方太	方太	0.70	fangtai
+紫光	紫光	0.64	ziguang
+加加	加加	0.52	jiajia
+色戒	色戒	0.60	sejie
+
+# Transport and cultural proper names 2026-08-04.
+纵贯线	縱貫線	0.52	zongguanxian
+
+# Storage brands and established color-name proper nouns 2026-08-21.
+西数	西數	0.74	xishu
+西部数据	西部數據	0.78	xibushuju
+希捷	希捷	0.78	xijie
+闪迪	閃迪	0.72	shandi
+铠侠	鎧俠	0.62	kaixia
+金士顿	金士頓	0.76	jinshidun
+莫兰迪	莫蘭迪	0.64	molandi
+蒂芙尼	蒂芙尼	0.70	difuni
+潘通	潘通	0.62	pantong
+
+# Canonical classical Chinese literary titles 2026-09-01.
+# Keep titles in the proper-noun layer so exact input remains available without
+# inheriting the everyday/chat preferred-term path.
+
+# Pre-Qin and Han.
+论语十二章	論語十二章	0.74	lunyushierzhang
+劝学	勸學	0.78	quanxue
+烛之武退秦师	燭之武退秦師	0.76	zhuzhiwutuiqinshi
+郑伯克段于鄢	鄭伯克段於鄢	0.66	zhengbokeduanyuyan
+曹刿论战	曹劌論戰	0.80	caoguilunzhan
+邹忌讽齐王纳谏	鄒忌諷齊王納諫	0.76	zoujifengqiwangnajian
+触龙说赵太后	觸龍說趙太后	0.66	chulongshuizhaotaihou
+冯谖客孟尝君	馮諼客孟嘗君	0.66	fengxuankemengchangjun
+唐雎不辱使命	唐雎不辱使命	0.74	tangjuburushiming
+荆轲刺秦王	荊軻刺秦王	0.80	jingkeciqinwang
+鸿门宴	鴻門宴	0.84	hongmenyan
+廉颇蔺相如列传	廉頗藺相如列傳	0.74	lianpolinxiangruliezhuan
+屈原列传	屈原列傳	0.76	quyuanliezhuan
+苏武传	蘇武傳	0.76	suwuzhuan
+张衡传	張衡傳	0.68	zhanghengzhuan
+陈涉世家	陳涉世家	0.72	chensheshijia
+谏逐客书	諫逐客書	0.76	jianzhukeshu
+报任安书	報任安書	0.82	baorenanshu
+报任少卿书	報任少卿書	0.70	baorenshaoqingshu
+过秦论	過秦論	0.84	guoqinlun
+生于忧患死于安乐	生於憂患死於安樂	0.76	shengyuyouhuansiyuanle
+鱼我所欲也	魚我所欲也	0.76	yuwosuoyuye
+得道多助失道寡助	得道多助失道寡助	0.72	dedaoduozhushidaoguazhu
+富贵不能淫	富貴不能淫	0.72	fuguibunengyin
+北冥有鱼	北冥有魚	0.78	beimingyouyu
+逍遥游	逍遙遊	0.84	xiaoyaoyou
+庄子与惠子游于濠梁之上	莊子與惠子遊於濠梁之上	0.66	zhuangziyuhuiziyouyuhaoliangzhishang
+虽有嘉肴	雖有嘉餚	0.76	suiyoujiayao
+礼运	禮運	0.66	liyun
+大道之行也	大道之行也	0.76	dadaozhixingye
+季氏将伐颛臾	季氏將伐顓臾	0.68	jishijiangfazhuanyu
+子路曾皙冉有公西华侍坐	子路曾皙冉有公西華侍坐	0.68	ziluzengxiranyougongxihuashizuo
+周亚夫军细柳	周亞夫軍細柳	0.72	zhouyafujunxiliu
+孙权劝学	孫權勸學	0.78	sunquanquanxue
+离骚	離騷	0.78	lisao
+涉江采芙蓉	涉江採芙蓉	0.70	shejiangcaifurong
+孔雀东南飞	孔雀東南飛	0.82	kongquedongnanfei
+归田赋	歸田賦	0.68	guitianfu
+
+# Wei, Jin, and the Northern and Southern dynasties.
+短歌行	短歌行	0.78	duangexing
+洛神赋	洛神賦	0.84	luoshenfu
+出师表	出師表	0.88	chushibiao
+前出师表	前出師表	0.72	qianchushibiao
+后出师表	後出師表	0.64	houchushibiao
+陈情表	陳情表	0.84	chenqingbiao
+兰亭集序	蘭亭集序	0.86	lantingjixu
+兰亭序	蘭亭序	0.78	lantingxu
+归园田居	歸園田居	0.80	guiyuantianju
+归去来兮辞	歸去來兮辭	0.82	guiqulaixici
+桃花源记	桃花源記	0.86	taohuayuanji
+五柳先生传	五柳先生傳	0.70	wuliuxianshengzhuan
+与朱元思书	與朱元思書	0.76	yuzhuyuansishu
+木兰诗	木蘭詩	0.82	mulanshi
+
+# Sui and Tang.
+谏太宗十思疏	諫太宗十思疏	0.78	jiantaizongshisishu
+滕王阁序	滕王閣序	0.86	tengwanggexu
+春夜宴从弟桃花园序	春夜宴從弟桃花園序	0.68	chunyeyancongditaohuayuanxu
+陋室铭	陋室銘	0.84	loushiming
+师说	師說	0.86	shishuo
+马说	馬說	0.78	mashuo
+祭十二郎文	祭十二郎文	0.72	jishierlangwen
+种树郭橐驼传	種樹郭橐駝傳	0.72	zhongshuguotuotuozhuan
+捕蛇者说	捕蛇者說	0.70	bushezheshuo
+小石潭记	小石潭記	0.80	xiaoshitanji
+阿房宫赋	阿房宮賦	0.82	epanggongfu
+静夜思	靜夜思	0.88	jingyesi
+将进酒	將進酒	0.86	qiangjinjiu
+蜀道难	蜀道難	0.84	shudaonan
+梦游天姥吟留别	夢遊天姥吟留別	0.76	mengyoutianmuyinliubie
+春江花月夜	春江花月夜	0.84	chunjianghuayueye
+山居秋暝	山居秋暝	0.80	shanjuqiuming
+琵琶行	琵琶行	0.86	pipaxing
+长恨歌	長恨歌	0.86	changhenge
+登高	登高	0.72	denggao
+登岳阳楼	登岳陽樓	0.76	dengyueyanglou
+蜀相	蜀相	0.72	shuxiang
+客至	客至	0.62	kezhi
+兵车行	兵車行	0.72	bingchexing
+燕歌行	燕歌行	0.70	yangexing
+李凭箜篌引	李憑箜篌引	0.68	lipingkonghouyin
+锦瑟	錦瑟	0.72	jinse
+白雪歌送武判官归京	白雪歌送武判官歸京	0.76	baixuegesongwupanguanguijing
+茅屋为秋风所破歌	茅屋為秋風所破歌	0.76	maowuweiqiufengsuopoge
+登鹳雀楼	登鸛雀樓	0.82	dengguanquelou
+黄鹤楼	黃鶴樓	0.82	huanghelou
+使至塞上	使至塞上	0.78	shizhisaishang
+钱塘湖春行	錢塘湖春行	0.82	qiantanghuchunxing
+
+# Song.
+岳阳楼记	岳陽樓記	0.88	yueyanglouji
+醉翁亭记	醉翁亭記	0.86	zuiwengtingji
+秋声赋	秋聲賦	0.72	qiushengfu
+爱莲说	愛蓮說	0.84	ailianshuo
+六国论	六國論	0.82	liuguolun
+答司马谏议书	答司馬諫議書	0.78	dasimajianyishu
+游褒禅山记	遊褒禪山記	0.72	youbaochanshanji
+赤壁赋	赤壁賦	0.88	chibifu
+前赤壁赋	前赤壁賦	0.78	qianchibifu
+后赤壁赋	後赤壁賦	0.74	houchibifu
+石钟山记	石鐘山記	0.78	shizhongshanji
+记承天寺夜游	記承天寺夜遊	0.80	jichengtiansiyeyou
+黄冈竹楼记	黃岡竹樓記	0.66	huanggangzhulouji
+上枢密韩太尉书	上樞密韓太尉書	0.66	shangshumihantaiweishu
+五代史伶官传序	五代史伶官傳序	0.70	wudaishilingguanzhuanxu
+水调歌头明月几时有	水調歌頭明月幾時有	0.82	shuidiaogetoumingyuejishiyou
+望海潮东南形胜	望海潮東南形勝	0.68	wanghaichaodongnanxingsheng
+虞美人春花秋月何时了	虞美人春花秋月何時了	0.78	yumeirenchunhuaqiuyueheshiliao
+念奴娇赤壁怀古	念奴嬌赤壁懷古	0.84	niannujiaochibihuaigu
+江城子密州出猎	江城子密州出獵	0.80	jiangchengzimizhouchulie
+定风波莫听穿林打叶声	定風波莫聽穿林打葉聲	0.72	dingfengbomotingchuanlindayesheng
+桂枝香金陵怀古	桂枝香金陵懷古	0.72	guizhixiangjinlinghuaigu
+鹊桥仙纤云弄巧	鵲橋仙纖雲弄巧	0.72	queqiaoxianxianyunnongqiao
+苏幕遮燎沉香	蘇幕遮燎沉香	0.66	sumuzheliaochenxiang
+声声慢寻寻觅觅	聲聲慢尋尋覓覓	0.80	shengshengmanxunxunmimi
+永遇乐京口北固亭怀古	永遇樂京口北固亭懷古	0.80	yongyulejingkoubeigutinghuaigu
+青玉案元夕	青玉案元夕	0.82	qingyu'anyuanxi
+扬州慢淮左名都	揚州慢淮左名都	0.70	yangzhoumanhuaizuomingdu
+临安春雨初霁	臨安春雨初霽	0.68	linanchunyuchuji
+书愤	書憤	0.66	shufen
+贺新郎国脉微如缕	賀新郎國脈微如縷	0.62	hexinlangguomaiweirulv
+念奴娇过洞庭	念奴嬌過洞庭	0.68	niannujiaoguodongting
+登快阁	登快閣	0.68	dengkuaige
+满江红怒发冲冠	滿江紅怒髮衝冠	0.80	manjianghongnufachongguan
+破阵子为陈同甫赋壮词以寄之	破陣子為陳同甫賦壯詞以寄之	0.74	pozhenziweichentongfufuzhuangciyijizhi
+渔家傲秋思	漁家傲秋思	0.72	yujiaaoqiusi
+南乡子登京口北固亭有怀	南鄉子登京口北固亭有懷	0.72	nanxiangzidengjingkoubeigutingyouhuai
+
+# Yuan through late Qing.
+长亭送别	長亭送別	0.76	changtingsongbie
+天净沙秋思	天淨沙秋思	0.84	tianjingshaqiusi
+山坡羊潼关怀古	山坡羊潼關懷古	0.76	shanpoyangtongguanhuaigu
+朝天子咏喇叭	朝天子詠喇叭	0.70	chaotianziyonglaba
+送东阳马生序	送東陽馬生序	0.82	songdongyangmashengxu
+五人墓碑记	五人墓碑記	0.68	wurenmubeiji
+项脊轩志	項脊軒志	0.76	xiangjixuanzhi
+核舟记	核舟記	0.72	hezhouji
+湖心亭看雪	湖心亭看雪	0.80	huxintingkanxue
+登泰山记	登泰山記	0.76	dengtaishanji
+梅花岭记	梅花嶺記	0.64	meihualingji
+狱中杂记	獄中雜記	0.62	yuzhongzaji
+左忠毅公逸事	左忠毅公軼事	0.62	zuozhongyigongyishi
+促织	促織	0.64	cuzhi
+原君	原君	0.62	yuanjun
+病梅馆记	病梅館記	0.70	bingmeiguanji
+少年中国说	少年中國說	0.82	shaonianzhongguoshuo
+毛诗序	毛詩序	0.68	maoshixu
+典论论文	典論論文	0.66	dianlunlunwen
+诗品序	詩品序	0.64	shipinxu
+与元九书	與元九書	0.64	yuyuanjiushu
+人间词话	人間詞話	0.80	renjiancihua

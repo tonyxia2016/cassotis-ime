@@ -1,0 +1,333 @@
+# sc	tc	usage_score	pinyin(optional)
+# Project-maintained fiction entity layer.
+# Use this file for fictional character names, fiction titles,
+# fictional organizations, artifacts, and other story-specific named entities that should remain
+# separate from everyday/chat phrase seeds and general proper nouns.
+沈语熙	沈語熙	0.84	shenyuxi
+林浩	林浩	0.82	linhao
+优雅	優雅	0.72	youya
+林毅	林毅	0.82	linyi
+陆雅婷	陸雅婷	0.84	luyating
+陈天宇	陳天宇	0.84	chentianyu
+王骁	王驍	0.82	wangxiao
+沈蔚	沈蔚	0.82	shenwei
+张晓峰	張曉峰	0.84	zhangxiaofeng
+艾利斯	艾利斯	0.80	ailisi
+布莱克	布萊克	0.82	bulaike
+孟凡	孟凡	0.78	mengfan
+李洪涛	李洪濤	0.82	lihongtao
+赵明轩	趙明軒	0.84	zhaomingxuan
+谢伟林	謝偉林	0.84	xieweilin
+何思婕	何思婕	0.82	hesijie
+顾海森	顧海森	0.84	guhaisen
+宋志明	宋志明	0.82	songzhiming
+王云飞	王雲飛	0.82	wangyunfei
+王思涵	王思涵	0.82	wangsihan
+朱迅	朱迅	0.80	zhuxun
+韩东	韓東	0.80	handong
+徐青松	徐青松	0.80	xuqingsong
+埃里克	埃里克	0.80	ailike
+约翰逊	約翰遜	0.82	yuehanxun
+张明磊	張明磊	0.84	zhangminglei
+陈泽辉	陳澤輝	0.84	chenzehui
+银河之光	銀河之光	0.86	yinhezhiguang
+金蜂	金蜂	0.78	jinfeng
+银燕	銀燕	0.78	yinyan
+灵笔	靈筆	0.80	lingbi
+永恒智能	永恆智能	0.84	yonghengzhineng
+华瑞银行	華瑞銀行	0.88	huaruiyinhang
+李自然	李自然	0.84	liziran
+申旻	申旻	0.84	shenmin
+三体	三體	0.90	santi
+雪山飞狐	雪山飛狐	0.96	xueshanfeihu
+飞狐外传	飛狐外傳	0.94	feihuwaizhuan
+连城诀	連城訣	0.94	lianchengjue
+天龙八部	天龍八部	0.96	tianlongbabu
+射雕英雄传	射鵰英雄傳	0.96	shediaoyingxiongzhuan
+白马啸西风	白馬嘯西風	0.92	baimaxiaoxifeng
+鹿鼎记	鹿鼎記	0.96	ludingji
+笑傲江湖	笑傲江湖	0.96	xiaoaojianghu
+书剑恩仇录	書劍恩仇錄	0.94	shujianenchoulu
+神雕侠侣	神鵰俠侶	0.96	shendiaoxialv
+侠客行	俠客行	0.94	xiakexing
+倚天屠龙记	倚天屠龍記	0.96	yitiantulongji
+碧血剑	碧血劍	0.94	bixuejian
+鸳鸯刀	鴛鴦刀	0.92	yuanyangdao
+越女剑	越女劍	0.92	yuenvjian
+郭靖	郭靖	0.92	guojing
+黄蓉	黃蓉	0.92	huangrong
+杨过	楊過	0.92	yangguo
+小龙女	小龍女	0.92	xiaolongnv
+张无忌	張無忌	0.92	zhangwuji
+赵敏	趙敏	0.90	zhaomin
+周芷若	周芷若	0.88	zhouzhiruo
+令狐冲	令狐沖	0.90	linghuchong
+任盈盈	任盈盈	0.88	renyingying
+乔峰	喬峰	0.90	qiaofeng
+段誉	段譽	0.88	duanyu
+虚竹	虛竹	0.86	xuzhu
+王语嫣	王語嫣	0.88	wangyuyan
+阿朱	阿朱	0.84	azhu
+阿紫	阿紫	0.84	azi
+慕容复	慕容復	0.86	murongfu
+韦小宝	韋小寶	0.90	weixiaobao
+洪七公	洪七公	0.86	hongqigong
+欧阳锋	歐陽鋒	0.86	ouyangfeng
+郭襄	郭襄	0.84	guoxiang
+杨康	楊康	0.84	yangkang
+穆念慈	穆念慈	0.84	munianci
+黄药师	黃藥師	0.86	huangyaoshi
+欧阳克	歐陽克	0.82	ouyangke
+梅超风	梅超風	0.84	meichaofeng
+周伯通	周伯通	0.86	zhoubotong
+裘千仞	裘千仞	0.82	qiuqianren
+李莫愁	李莫愁	0.84	limochou
+胡斐	胡斐	0.84	hufei
+程灵素	程靈素	0.84	chenglingsu
+苗若兰	苗若蘭	0.82	miaoruolan
+袁承志	袁承志	0.84	yuanchengzhi
+夏雪宜	夏雪宜	0.82	xiaxueyi
+陈家洛	陳家洛	0.84	chenjialuo
+霍青桐	霍青桐	0.82	huoqingtong
+香香公主	香香公主	0.84	xiangxianggongzhu
+狄云	狄雲	0.82	diyun
+丁典	丁典	0.82	dingdian
+水笙	水笙	0.80	shuisheng
+石破天	石破天	0.84	shipotian
+谢逊	謝遜	0.84	xiexun
+殷素素	殷素素	0.84	yinsusu
+成昆	成昆	0.80	chengkun
+东方不败	東方不敗	0.88	dongfangbubai
+任我行	任我行	0.84	renwoxing
+岳不群	岳不群	0.84	yuebuqun
+林平之	林平之	0.84	linpingzhi
+程心	程心	0.92	chengxin
+叶文洁	葉文潔	0.92	yewenjie
+汪淼	汪淼	0.92	wangmiao
+史强	史強	0.92	shiqiang
+罗辑	羅輯	0.92	luoji
+章北海	章北海	0.92	zhangbeihai
+云天明	雲天明	0.92	yuntianming
+智子	智子	0.90	zhizi
+丁仪	丁儀	0.88	dingyi
+郭昊凡	郭昊凡	0.84	guohaofan
+程碧桃	程碧桃	0.84	chengbitao
+小桃	小桃	0.82	xiaotao
+
+# word2 curated import 2026-06-03 (fiction_entities); reviewed from D:/word2.txt
+苏星河	蘇星河	0.52	suxinghe
+
+# fiction/proper entity additions 2026-06-18: reviewed import from D:/words.txt
+小艾	小艾	0.48	xiaoai
+尼克劳斯	尼克勞斯	0.46	nikelaosi
+二雅	二雅	0.48
+星光科技	星光科技	0.46	xingguangkeji
+智梦	智夢	0.48
+水韵	水韻	0.48
+耀辉	耀輝	0.48
+小荤	小葷	0.48	xiaohun
+华瑞	華瑞	0.48
+纯真卫士	純真衛士	0.46
+雾鹿传媒	霧鹿傳媒	0.46	wuluchuanmei
+语熙	語熙	0.48	yuxi
+沈姐	沈姐	0.48	shenjie
+顾行长	顧行長	0.48	guhangzhang
+何助理	何助理	0.48	hezhuli
+玄光	玄光	0.48
+玄光量子	玄光量子	0.46
+凝零素	凝零素	0.48	ninglingsu
+小涵	小涵	0.48
+华银理财	華銀理財	0.46
+
+# BEGIN words_new_import_2026_07_07
+# Imported from D:/_/words_new.txt on 2026-07-07; bucket=fiction; reviewed by rule-based classifier.
+江明	江明	0.44
+蒋正寒	蔣正寒	0.48
+夏林希	夏林希	0.48
+张怀武	張懷武	0.48
+顾晓曼	顧曉曼	0.48
+陈亦川	陳亦川	0.48
+赵宁成	趙寧成	0.48
+方强	方強	0.44
+老夏	老夏	0.44
+夏安琪	夏安琪	0.48
+孟之行	孟之行	0.48
+秦越	秦越	0.44
+成霜	成霜	0.44
+冯天俊	馮天俊	0.48
+杜永元	杜永元	0.48
+周云飞	周雲飛	0.48
+钱辰	錢辰	0.44
+老钱	老錢	0.44
+小辰	小辰	0.44
+辰哥	辰哥	0.44
+蒋大神	蔣大神	0.48
+楚秋妍	楚秋妍	0.48
+徐智礼	徐智禮	0.48
+李莎莎	李莎莎	0.48
+沈文悦	沈文悅	0.48
+庄菲	莊菲	0.44
+魏华	魏華	0.44
+谢平川	謝平川	0.48
+曹主管	曹主管	0.48
+柯小玉	柯小玉	0.48
+严子明	嚴子明	0.48
+吴经理	吳經理	0.48
+李夫人	李夫人	0.48
+老杨	老楊	0.44
+杨志贵	楊志貴	0.48
+卫董	衛董	0.44
+杨威	楊威	0.44
+楚楚	楚楚	0.44
+秦氏	秦氏	0.44
+何阳	何陽	0.44
+张叔叔	張叔叔	0.48
+何颖	何穎	0.44
+阿舅	阿舅	0.44
+黎家	黎家	0.44
+儒木	儒木	0.44
+老关	老關	0.44
+夏总	夏總	0.44
+阿章	阿章	0.44
+王小川	王小川	0.48
+小胖	小胖	0.44
+海飞	海飛	0.44
+佳佳	佳佳	0.44
+珠珠	珠珠	0.44
+阿霞	阿霞	0.44
+陈然	陳然	0.44
+美娜	美娜	0.44
+陆明远	陸明遠	0.48
+苏乔	蘇喬	0.44
+江修齐	江修齊	0.48
+小乔	小喬	0.44
+乔凡尼	喬凡尼	0.48
+陈贺	陳賀	0.44
+宋佳琪	宋佳琪	0.48
+苏展	蘇展	0.44
+沈曼	沈曼	0.44
+贺安柏	賀安柏	0.48
+陆沉	陸沉	0.44
+顾宁诚	顧寧誠	0.48
+叶姝	葉姝	0.44
+苏景山	蘇景山	0.48
+袁腾	袁騰	0.44
+周扬	周揚	0.44
+周茜萍	周茜萍	0.48
+叶绍华	葉紹華	0.48
+关靖	關靖	0.44
+吴良	吳良	0.44
+赵冰淼	趙冰淼	0.48
+苏澈	蘇澈	0.44
+程烈	程烈	0.44
+戚倩	戚倩	0.44
+冯霏	馮霏	0.44
+陆甜甜	陸甜甜	0.48
+陈雅	陳雅	0.44
+温如玉	溫如玉	0.48
+周杨	周楊	0.44
+陆浔美	陸潯美	0.48
+# END words_new_import_2026_07_07
+
+# BEGIN words_new_import_2026_07_09
+# Imported from D:/_/words_new.txt on 2026-07-09; reviewed by rule-based classifier.
+林知夏	林知夏	0.44
+江逾白	江逾白	0.44
+林泽秋	林澤秋	0.44
+聂天清	聶天清	0.44
+柳行简	柳行簡	0.44
+吴西倩	吳西倩	0.44
+周步峰	周步峰	0.44
+董孙奇	董孫奇	0.44
+甘姝丽	甘姝麗	0.44
+江绍祺	江紹祺	0.44
+唐乐琴	唐樂琴	0.44
+韩大伟	韓大偉	0.44
+沈昭华	沈昭華	0.44
+傅立叶	傅立葉	0.44
+李莲英	李蓮英	0.44
+魏荣杰	魏榮傑	0.44
+孙尚香	孫尚香	0.44
+温极限	溫極限	0.44
+林富贵	林富貴	0.44
+张立雄	張立雄	0.44
+沈负暄	沈負暄	0.44
+金百慧	金百慧	0.44
+关注度	關注度	0.44
+马蜂窝	馬蜂窩	0.44
+温庭筠	溫庭筠	0.44
+小王子	小王子	0.44
+汤婷婷	湯婷婷	0.44
+小马过河	小馬過河	0.40
+沈校长	沈校長	0.44
+戚夫人	戚夫人	0.44
+杜存康	杜存康	0.44
+韩国队	韓國隊	0.44
+小金库	小金庫	0.44
+柯壮志	柯壯志	0.44
+黄花梨	黃花梨	0.44
+卫生所	衛生所	0.44
+严重化	嚴重化	0.44
+彭科夫	彭科夫	0.44
+杨术文	楊術文	0.44
+花瓣扣	花瓣扣	0.44
+金属片	金屬片	0.44
+黄玉霄	黃玉霄	0.44
+水果店	水果店	0.44
+王宝钏	王寶钏	0.44
+薛平贵	薛平貴	0.44
+俞伯牙	俞伯牙	0.44
+贺尚卿	賀尚卿	0.44
+王自焕	王自煥	0.44
+金属管	金屬管	0.44
+老黄牛	老黃牛	0.44
+韦若星	韋若星	0.44
+水晶鞋	水晶鞋	0.44
+神仙姐姐	神仙姐姐	0.40
+赵格菲	趙格菲	0.44
+皮凉鞋	皮涼鞋	0.44
+尹秀恩	尹秀恩	0.44
+孙大卫	孫大衛	0.44
+苗丹怡	苗丹怡	0.44
+李梓睿	李梓睿	0.44
+吴品妍	吳品妍	0.44
+马普所	馬普所	0.44
+马克斯	馬克斯	0.44
+水位线	水位線	0.44
+金刚经	金剛經	0.44
+安家费	安家費	0.44
+凤凰酥	鳳凰酥	0.44
+金花茶	金花茶	0.44
+孟连思	孟連思	0.44
+方怡雯	方怡雯	0.44
+江浙菜	江浙菜	0.44
+江绍枫	江紹楓	0.44
+关洵美	關洵美	0.44
+何远骞	何遠騫	0.44
+小马仔	小馬仔	0.44
+知心姐姐	知心姐姐	0.40
+陈诗涵	陳詩涵	0.44
+林长缨	林長纓	0.44
+毕业季	畢業季	0.44
+# END words_new_import_2026_07_09
+
+# BEGIN words_source_import_2026_07_10 (reviewed fiction character)
+苗秀丽	苗秀麗	0.42	miaoxiuli
+叶晨曦	葉晨曦	0.42	yechenxi
+陈虹	陳虹	0.42	chenhong
+林冰萱	林冰萱	0.42	linbingxuan
+王雨轩	王雨軒	0.42	wangyuxuan
+雨轩	雨軒	0.42	yuxuan
+姜罚	姜罰	0.42	jiangfa
+李红娇	李紅嬌	0.42	lihongjiao
+楚杏儿	楚杏兒	0.42	chuxinger
+陆媚儿	陸媚兒	0.42	lumeier
+王小宝	王小寶	0.42	wangxiaobao
+莫心怡	莫心怡	0.42	moxinyi
+蕙彤	蕙彤	0.42	huitong
+尤美	尤美	0.42	youmei
+莫雨	莫雨	0.42	moyu
+杜倩心	杜倩心	0.42	duqianxin
+刘克帆	劉克帆	0.42	liukefan
+宇东	宇東	0.42	yudong
+# END words_source_import_2026_07_10
