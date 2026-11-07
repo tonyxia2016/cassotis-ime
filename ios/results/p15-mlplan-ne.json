@@ -1,0 +1,24 @@
+{
+ "label": "p15-mlplan-ne",
+ "units": "ne",
+ "length": 64,
+ "plan_s": 3.12,
+ "before_mb": 10.7,
+ "after_mb": 32.2,
+ "peak_mb": 176.9,
+ "operations": {
+  "cpu": 8,
+  "ne": 297
+ },
+ "cost_share": {
+  "cpu": 0.21,
+  "ne": 0.79
+ },
+ "off_engine": {
+  "ios18.add@cpu": 1,
+  "ios18.cast@cpu": 4,
+  "ios18.gather@cpu": 1,
+  "ios18.greater_equal@cpu": 1,
+  "select@cpu": 1
+ }
+}

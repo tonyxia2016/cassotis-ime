@@ -212,6 +212,28 @@ final class HostViewController: UIViewController, UITextViewDelegate {
     let data = dataBase.appendingPathComponent("Cassotis", isDirectory: true)
     try? FileManager.default.createDirectory(at: data, withIntermediateDirectories: true)
     status.text = "自测中：\(text)"
+    if options["mode"] == "mlplan" {
+      let url = URL(fileURLWithPath: plugin + "/char_lm/char_lm.mlmodelc")
+      let thread = Thread { [self] in
+        finishSelfTest(ModelProbe.plan(url: url, length: Int(options["length"] ?? "64") ?? 64,
+          units: options["units"] ?? "ne", label: options["label"] ?? "mlplan"))
+      }
+      thread.stackSize = 4 << 20
+      thread.start()
+      return
+    }
+    if options["mode"] == "mltest" {
+      // Core ML alone, from the keyboard's model: no keyboard has to be enabled.
+      let url = URL(fileURLWithPath: plugin + "/char_lm/char_lm.mlmodelc")
+      let lengths = (options["lengths"] ?? "64,128,256").split(separator: ",").compactMap { Int($0) }
+      let thread = Thread { [self] in
+        finishSelfTest(ModelProbe.run(url: url, lengths: lengths, units: options["units"] ?? "ne",
+          label: options["label"] ?? "mltest"))
+      }
+      thread.stackSize = 4 << 20
+      thread.start()
+      return
+    }
     EngineBridge.applyMemoryPolicy(options)
     let thread = Thread { [self] in
       let engine = EngineBridge()

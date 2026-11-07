@@ -22,6 +22,7 @@
 // split into several predictions of whole chains.
 #import <CoreML/CoreML.h>
 #import <Foundation/Foundation.h>
+#include <mach/mach.h>
 
 #include <algorithm>
 #include <array>
@@ -212,6 +213,7 @@ public:
             // A test knob: where Core ML may run the model (default: CPU and Neural Engine).
             const char* units = std::getenv("CASSOTIS_LM_COMPUTE_UNITS");
             const std::string chosen = units ? units : "";
+            explicit_units_ = !chosen.empty();
             units_ = chosen == "gpu" ? MLComputeUnitsCPUAndGPU : chosen == "cpu" ? MLComputeUnitsCPUOnly :
                 chosen == "all" ? MLComputeUnitsAll : MLComputeUnitsCPUAndNeuralEngine;
             NSData* data = [NSData dataWithContentsOfURL:[url_ URLByAppendingPathComponent:@"metadata.json"]];
@@ -288,6 +290,11 @@ public:
     std::mutex& mutex() { return mutex_; }
     // The buffer every function's output backing points into.
     const _Float16* Output() const { return output_.get(); }
+    // CASSOTIS_LM_COMPUTE_UNITS chose where to run: no device checks.
+    bool explicit_units() const { return explicit_units_; }
+    // CharLmOpenModel has found that this device runs the model (callers hold mutex()).
+    bool checked() const { return checked_; }
+    void set_checked() { checked_ = true; }
 
 private:
     static MLMultiArray* Array(NSArray<NSNumber*>* shape, MLMultiArrayDataType type) {
@@ -307,6 +314,8 @@ private:
 
     NSURL* url_ = nil;
     MLComputeUnits units_ = MLComputeUnitsCPUAndNeuralEngine;
+    bool explicit_units_ = false;
+    bool checked_ = false;
     std::vector<int> lengths_;
     std::map<int, std::unique_ptr<CharLmFunction>> functions_;
     std::unique_ptr<_Float16[]> output_;
@@ -476,6 +485,62 @@ std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& i
     return result;
 }
 
+// Only a Neural Engine keeps the weights outside the process and runs the model
+// in milliseconds. Core ML places it there from 16 cores on (A14, M1 and later).
+// An iPhone XS Max (A12, 8 cores) gets a CPU or GPU fallback that unpacks the
+// weights into the process, 100 MB to 1.7 GB for the three functions, and takes
+// 60 to 600 ms for a run of 64 tokens: a keyboard extension would be killed.
+constexpr NSInteger kCharLmMinNeuralEngineCores = 16;
+// What a run of the shortest function may take once it is loaded, as a second
+// check for what the core count does not catch: an iPhone 15 Pro needs about
+// 5 ms and 2 MB, the XS Max fallbacks 60 to 600 ms, or 100 MB and more. The
+// load is not counted: compiling for the Neural Engine takes seconds the first
+// time.
+constexpr double kCharLmCheckMaxMs = 100.0;
+constexpr uint64_t kCharLmCheckMaxGrowth = 40ull << 20;
+
+NSInteger CharLmNeuralEngineCores() {
+    NSInteger cores = 0;
+    for (id<MLComputeDeviceProtocol> device in MLAllComputeDevices())
+        if ([(NSObject*)device isKindOfClass:[MLNeuralEngineComputeDevice class]])
+            cores = std::max(cores, static_cast<MLNeuralEngineComputeDevice*>(device).totalCoreCount);
+    return cores;
+}
+
+uint64_t CharLmFootprint() {
+    task_vm_info_data_t info{};
+    mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_VM_INFO, reinterpret_cast<task_info_t>(&info), &count) != KERN_SUCCESS)
+        return 0;
+    return info.phys_footprint;
+}
+
+// Throws unless this device runs the model on its Neural Engine. Loads only the
+// shortest function and runs it twice, so a device that cannot stops early.
+// Callers hold the model's mutex and an autorelease pool.
+void CharLmCheckDevice(CharLmCoreMlModel& model, size_t vocab) {
+    if (model.checked()) return;
+    if (!model.explicit_units()) {
+        const NSInteger cores = CharLmNeuralEngineCores();
+        if (cores < kCharLmMinNeuralEngineCores)
+            throw std::runtime_error("character LM needs a Neural Engine of " +
+                std::to_string(kCharLmMinNeuralEngineCores) + " cores; this device has " + std::to_string(cores));
+    }
+    model.Function(model.lengths().front());
+    const uint64_t before = CharLmFootprint();
+    std::vector<float> row(vocab);
+    CharLmPredict(model, {CharLmPack(kCharLmBos, 0)}, {-1}, {{0, 0}}, vocab, row.data());
+    const auto started = std::chrono::steady_clock::now();
+    CharLmPredict(model, {CharLmPack(kCharLmBos, 0)}, {-1}, {{0, 0}}, vocab, row.data());
+    const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    const uint64_t after = CharLmFootprint();
+    const uint64_t grown = after > before ? after - before : 0;
+    if (!model.explicit_units() && (ms > kCharLmCheckMaxMs || grown > kCharLmCheckMaxGrowth))
+        throw std::runtime_error("character LM does not run on this device's Neural Engine (a run takes " +
+            std::to_string(static_cast<int>(ms)) + " ms, the runs added " + std::to_string(grown >> 20) + " MB)");
+    model.set_checked();
+}
+
 // The architecture of char_lm.onnx (runtime_manifest.json). The algorithms read
 // these only to size key stores, which here hold chains.
 void CharLmOpenModel(CharLmHandle& h, const std::string& directory) {
@@ -503,6 +568,7 @@ void CharLmOpenModel(CharLmHandle& h, const std::string& directory) {
     // hosts open the model on a loader thread.
     std::lock_guard<std::mutex> lock(h.model->mutex());
     @autoreleasepool {
+        CharLmCheckDevice(*h.model, static_cast<size_t>(h.vocab_size));
         for (int length : h.model->lengths()) {
             CharLmFunction& f = h.model->Function(length);
             if (static_cast<int64_t>(f.logp.shape[2].integerValue) != h.vocab_size)

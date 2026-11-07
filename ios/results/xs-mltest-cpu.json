@@ -1,0 +1,20 @@
+{
+ "label": "xs-mltest-cpu",
+ "units": "cpu",
+ "before_mb": 7.2,
+ "end_mb": 11.2,
+ "peak_mb": 16.4,
+ "available_mb": 2086.8,
+ "functions": [
+  {
+   "length": 64,
+   "load_s": 2.38,
+   "after_load_mb": 8.0,
+   "after_predict_mb": 11.2,
+   "first_ms": 240.5,
+   "median_ms": 214.8,
+   "best_ms": 212.1,
+   "checksum": -579.453
+  }
+ ]
+}

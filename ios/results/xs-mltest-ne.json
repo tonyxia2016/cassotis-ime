@@ -1,0 +1,40 @@
+{
+ "label": "xs-mltest-ne",
+ "units": "ne",
+ "before_mb": 7.1,
+ "end_mb": 1708.7,
+ "peak_mb": 1716.8,
+ "available_mb": 389.3,
+ "functions": [
+  {
+   "length": 64,
+   "load_s": 14.1,
+   "after_load_mb": 30.5,
+   "after_predict_mb": 127.5,
+   "first_ms": 766.5,
+   "median_ms": 599.4,
+   "best_ms": 587.0,
+   "checksum": -578.348
+  },
+  {
+   "length": 128,
+   "load_s": 14.12,
+   "after_load_mb": 323.6,
+   "after_predict_mb": 426.0,
+   "first_ms": 1996.8,
+   "median_ms": 1266.3,
+   "best_ms": 1211.6,
+   "checksum": -578.348
+  },
+  {
+   "length": 256,
+   "load_s": 15.17,
+   "after_load_mb": 1465.9,
+   "after_predict_mb": 1708.7,
+   "first_ms": 3702.5,
+   "median_ms": 3012.3,
+   "best_ms": 2832.1,
+   "checksum": -578.348
+  }
+ ]
+}

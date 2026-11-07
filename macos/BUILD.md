@@ -22,7 +22,7 @@ export CASSOTIS_LEXICON_ROOT="/path/to/cassotis-lexicon"
 
 ### Core ML（可选）
 
-在 macOS 15 及以上，同一个字符模型还可以用 Core ML 在神经网络引擎（ANE）上运行。算法、词表和清单都不变，只是换了推理后端：`src/host/native/nc_char_lm_coreml.mm` 导出与 ONNX Runtime 桥接库同名的 `nc_lm_*` 函数，构建为 `libcassotis_coreml.dylib`。应用里同时有 Core ML 模型和这个库时，引擎优先用 Core ML；系统低于 macOS 15、模型缺失或打不开时，自动退回 ONNX Runtime。选择逻辑见 `src/host/nc_lm_runtime.pas`。
+在 macOS 15 及以上、带至少 16 核神经网络引擎（ANE）的 Mac（M1 及以后）上，同一个字符模型还可以用 Core ML 在 ANE 上运行。算法、词表和清单都不变，只是换了推理后端：`src/host/native/nc_char_lm_coreml.mm` 导出与 ONNX Runtime 桥接库同名的 `nc_lm_*` 函数，构建为 `libcassotis_coreml.dylib`。应用里同时有 Core ML 模型和这个库时，引擎优先用 Core ML。以下情况自动退回 ONNX Runtime：系统低于 macOS 15；没有 16 核 ANE，例如 Intel Mac；模型缺失或打不开。选择逻辑见 `src/host/nc_lm_runtime.pas`。
 
 Core ML 模型由 `char_lm.onnx` 转换而来，转换要用 numpy、onnx 和 coremltools（已验证 coremltools 9.0）。在一个装有它们的 Python 环境里执行：
 

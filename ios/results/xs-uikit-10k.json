@@ -1,0 +1,37 @@
+{"device":"iPhone11,6","os":"18.7.11","full_access":false,"marks":[{"name":"viewDidLoad","mb":5.5,"peak_mb":5.5,"available_mb":71.5},{"name":"viewDidAppear","mb":7.7,"peak_mb":9.9,"available_mb":69.3},{"name":"engineOpen","mb":7.9,"peak_mb":9.9,"available_mb":69.1},{"name":"model","mb":8.1,"peak_mb":9.9,"available_mb":68.9},{"name":"firstKey","mb":8.2,"peak_mb":9.9,"available_mb":68.8},{"name":"firstCommit","mb":9.6,"peak_mb":10.9,"available_mb":67.4}],"run":{
+  "label": "xs-uikit-10k",
+  "before_open_mb": 7.6, "after_open_mb": 7.8, "open_seconds": 0.346,
+  "keys": 10006, "sentences": 365, "first_hits": 136, "first_rate": 0.3726, "deferred": 0,
+  "seconds": 240.0, "p50_ms": 11.86, "p95_ms": 72.31, "p99_ms": 108.40, "worst_ms": 432.5, "mean_ms": 22.85,
+  "ui_p50_ms": 13.05, "ui_p95_ms": 73.76, "ui_p99_ms": 109.78, "ui_worst_ms": 434.3,
+  "end_mb": 14.6, "peak_mb": 17.1, "available_end_mb": 62.4, "available_min_mb": 61.7,
+  "model_state": -1, "model_seconds": 0.01,
+  "polls": 0, "polls_applied": 0, "polls_interrupted": 0, "poll_p50_ms": 0.00, "poll_p95_ms": 0.00, "poll_worst_ms": 0.0,
+  "digest": "87b8ed8b46c2e479",
+  "error": "model: repair: character LM needs a Neural Engine of 16 cores; this device has 8",
+  "samples": [
+    [0, 0.0, 8.1, 9.9, 68.9],
+    [500, 9.8, 13.5, 15.3, 63.5],
+    [1000, 18.6, 14.2, 16.1, 62.8],
+    [1500, 29.5, 14.4, 16.6, 62.6],
+    [2000, 42.0, 14.6, 16.6, 62.4],
+    [2500, 49.7, 15.0, 17.1, 62.0],
+    [3000, 59.6, 14.9, 17.1, 62.1],
+    [3500, 70.2, 14.9, 17.1, 62.1],
+    [4000, 80.9, 14.9, 17.1, 62.1],
+    [4500, 92.8, 15.3, 17.1, 61.7],
+    [5000, 104.2, 14.8, 17.1, 62.2],
+    [5500, 115.7, 14.6, 17.1, 62.4],
+    [6000, 128.4, 14.7, 17.1, 62.3],
+    [6500, 141.3, 14.6, 17.1, 62.4],
+    [7000, 154.6, 14.6, 17.1, 62.4],
+    [7500, 170.0, 14.5, 17.1, 62.5],
+    [8000, 182.8, 14.5, 17.1, 62.5],
+    [8500, 195.5, 14.5, 17.1, 62.5],
+    [9000, 211.8, 14.5, 17.1, 62.5],
+    [9500, 227.8, 14.6, 17.1, 62.4],
+    [10000, 239.9, 14.8, 17.1, 62.2],
+    [10006, 240.0, 14.6, 17.1, 62.4]
+  ]
+}
+}

@@ -10,11 +10,13 @@
 		6611492C4B758144344C1022 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		835A6FF32751BF062E956153 = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		4C576B27E12D6892B285C337 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		2BF423DEFBB15A3F45850399 = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
 		B392A25BED396C4676BFE8F2 = {isa = PBXBuildFile; fileRef = CAD36F85E6A3729FCF7711AA; };
 		DD4DE79EB1C5E91C9E488E12 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
 		4F2209D7C503EAE6C64DE8B1 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		9257539B87ABCB2F8881018E = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		2559B4AC5E028DCB3E200040 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		DD2CD5D29CA7A349B780222C = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
 		F00FC22FCC1F89346C2BB765 = {isa = PBXBuildFile; fileRef = F8C9F204141DC1EEDB4CEEE6; };
 		0D4C05CCE6BF23EB3054DDEF = {isa = PBXBuildFile; fileRef = A44D163741D0D2875FDBABBA; };
 		B28B22193DE88E99813638AF = {isa = PBXBuildFile; fileRef = F50750A379400E3F497E81CD; };
@@ -25,6 +27,7 @@
 		3D3AD054FD76ADDCB2761E47 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		B0E7FCB26F884F2567E47C2D = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		30FC308173F7966D804B3A74 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		F5B8F8BEF5800D5B38A8F9F6 = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
 		00F64A764513A39F7AFE2B29 = {isa = PBXBuildFile; fileRef = CF7A29891B884710B79A0738; };
 		14CCFA34591C361DF1596310 = {isa = PBXBuildFile; fileRef = 5E9AD112AA5E89FCF714AE5D; };
 		650C4B23EE3F2321D576FBD2 = {isa = PBXBuildFile; fileRef = 0A1B0D2671C78350F6D02D18; };
@@ -90,6 +93,7 @@
 		A72A3729DBBBE9B7203F7AA8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = "EngineBridge.mm"; path = "Keyboard/EngineBridge.mm"; sourceTree = SOURCE_ROOT; };
 		E2350F80BEE7A7487DE441D9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "EngineClient.cpp"; path = "../client/EngineClient.cpp"; sourceTree = SOURCE_ROOT; };
 		656ECDE031BD055ED47A1422 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "replay.cpp"; path = "../bench/replay.cpp"; sourceTree = SOURCE_ROOT; };
+		261B2DBA1BD4B06A9D1AF633 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ModelProbe.swift"; path = "Keyboard/ModelProbe.swift"; sourceTree = SOURCE_ROOT; };
 		CAD36F85E6A3729FCF7711AA = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "Keyboard/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
 		14521C62C9E5FB08FAA8E404 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CommandKeyboardController.swift"; path = "Keyboard/CommandKeyboardController.swift"; sourceTree = SOURCE_ROOT; };
 		F8C9F204141DC1EEDB4CEEE6 = {isa = PBXFileReference; lastKnownFileType = file; name = "dict_sc.db"; path = "../build/res/dict_sc.db"; sourceTree = SOURCE_ROOT; };
@@ -139,6 +143,7 @@
 				A72A3729DBBBE9B7203F7AA8,
 				E2350F80BEE7A7487DE441D9,
 				656ECDE031BD055ED47A1422,
+				261B2DBA1BD4B06A9D1AF633,
 				CAD36F85E6A3729FCF7711AA,
 				14521C62C9E5FB08FAA8E404,
 				F8C9F204141DC1EEDB4CEEE6,
@@ -278,6 +283,7 @@
 				6611492C4B758144344C1022,
 				835A6FF32751BF062E956153,
 				4C576B27E12D6892B285C337,
+				2BF423DEFBB15A3F45850399,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,6 +303,7 @@
 				4F2209D7C503EAE6C64DE8B1,
 				9257539B87ABCB2F8881018E,
 				2559B4AC5E028DCB3E200040,
+				DD2CD5D29CA7A349B780222C,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +328,7 @@
 				3D3AD054FD76ADDCB2761E47,
 				B0E7FCB26F884F2567E47C2D,
 				30FC308173F7966D804B3A74,
+				F5B8F8BEF5800D5B38A8F9F6,
 				00F64A764513A39F7AFE2B29,
 				14CCFA34591C361DF1596310,
 				650C4B23EE3F2321D576FBD2,

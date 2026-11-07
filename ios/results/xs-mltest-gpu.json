@@ -1,0 +1,20 @@
+{
+ "label": "xs-mltest-gpu",
+ "units": "gpu",
+ "before_mb": 7.4,
+ "end_mb": 613.5,
+ "peak_mb": 613.6,
+ "available_mb": 1484.5,
+ "functions": [
+  {
+   "length": 64,
+   "load_s": 14.23,
+   "after_load_mb": 279.1,
+   "after_predict_mb": 613.5,
+   "first_ms": 4505.4,
+   "median_ms": 60.7,
+   "best_ms": 54.1,
+   "checksum": -578.152
+  }
+ ]
+}

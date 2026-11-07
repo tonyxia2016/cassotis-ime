@@ -14,7 +14,8 @@ def uid(name):
     return hashlib.md5(name.encode()).hexdigest()[:24].upper()
 
 
-bridge = ["Keyboard/EngineBridge.mm", "../client/EngineClient.cpp", "../bench/replay.cpp"]
+bridge = ["Keyboard/EngineBridge.mm", "../client/EngineClient.cpp", "../bench/replay.cpp",
+          "Keyboard/ModelProbe.swift"]
 fcitx_ui = sorted(os.path.relpath(p) for p in glob.glob("../build/fcitxui/*.swift"))
 targets = {
     "host": dict(

@@ -1,0 +1,65 @@
+{
+ "label": "p15-guard-smoke",
+ "before_open_mb": 11.0,
+ "after_open_mb": 12.0,
+ "open_seconds": 0.151,
+ "keys": 1024,
+ "sentences": 39,
+ "first_hits": 25,
+ "first_rate": 0.641,
+ "deferred": 985,
+ "seconds": 23.0,
+ "p50_ms": 5.04,
+ "p95_ms": 29.86,
+ "p99_ms": 43.63,
+ "worst_ms": 72.3,
+ "mean_ms": 9.44,
+ "ui_p50_ms": 0.0,
+ "ui_p95_ms": 0.0,
+ "ui_p99_ms": 0.0,
+ "ui_worst_ms": 0.0,
+ "end_mb": 507.3,
+ "peak_mb": 534.5,
+ "available_end_mb": 2868.7,
+ "available_min_mb": 2860.4,
+ "model_state": 1,
+ "model_seconds": 12.92,
+ "polls": 985,
+ "polls_applied": 985,
+ "polls_interrupted": 0,
+ "poll_p50_ms": 7.1,
+ "poll_p95_ms": 47.83,
+ "poll_worst_ms": 75.0,
+ "digest": "c6f833992aeda630",
+ "error": "",
+ "samples": [
+  [
+   0,
+   0.0,
+   466.1,
+   466.2,
+   2909.9
+  ],
+  [
+   500,
+   11.2,
+   511.6,
+   534.5,
+   2864.4
+  ],
+  [
+   1000,
+   22.1,
+   515.6,
+   534.5,
+   2860.4
+  ],
+  [
+   1024,
+   23.0,
+   507.3,
+   534.5,
+   2868.7
+  ]
+ ]
+}

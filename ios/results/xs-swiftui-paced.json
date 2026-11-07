@@ -1,0 +1,20 @@
+{"device":"iPhone11,6","os":"18.7.11","full_access":false,"marks":[{"name":"viewDidLoad","mb":5.6,"peak_mb":5.6,"available_mb":71.4},{"name":"viewDidAppear","mb":14.3,"peak_mb":16.5,"available_mb":62.7},{"name":"engineOpen","mb":14.4,"peak_mb":16.5,"available_mb":62.6},{"name":"model","mb":14.6,"peak_mb":16.5,"available_mb":62.4},{"name":"firstKey","mb":14.7,"peak_mb":16.5,"available_mb":62.3},{"name":"firstCommit","mb":17.2,"peak_mb":18.6,"available_mb":59.8}],"run":{
+  "label": "xs-swiftui-paced",
+  "before_open_mb": 14.3, "after_open_mb": 14.4, "open_seconds": 0.348,
+  "keys": 1519, "sentences": 55, "first_hits": 19, "first_rate": 0.3455, "deferred": 0,
+  "seconds": 345.4, "p50_ms": 50.90, "p95_ms": 112.19, "p99_ms": 146.17, "worst_ms": 319.3, "mean_ms": 57.23,
+  "ui_p50_ms": 51.03, "ui_p95_ms": 112.32, "ui_p99_ms": 146.30, "ui_worst_ms": 319.4,
+  "end_mb": 21.4, "peak_mb": 23.8, "available_end_mb": 55.6, "available_min_mb": 55.4,
+  "model_state": -1, "model_seconds": 0.02,
+  "polls": 0, "polls_applied": 0, "polls_interrupted": 0, "poll_p50_ms": 0.00, "poll_p95_ms": 0.00, "poll_worst_ms": 0.0,
+  "digest": "3e67e2a603ca8737",
+  "error": "model: character LM: character LM needs a Neural Engine of 16 cores; this device has 8",
+  "samples": [
+    [0, 0.0, 14.6, 16.5, 62.4],
+    [500, 113.2, 21.6, 23.3, 55.4],
+    [1000, 226.3, 21.5, 23.8, 55.5],
+    [1500, 340.5, 21.2, 23.8, 55.8],
+    [1519, 345.4, 21.4, 23.8, 55.6]
+  ]
+}
+}

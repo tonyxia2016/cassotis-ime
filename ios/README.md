@@ -8,7 +8,7 @@ iOS 键盘扩展。第 0 阶段验证了 Pascal 引擎能放进键盘扩展，�
 
 - macOS、Xcode、Homebrew 的 `fpc`（3.2.2）、Python 3.11+
 - 一个装有 numpy、onnx、coremltools 的 Python 环境，用来把字符模型转成 Core ML（见 `../macos/BUILD.md` 的 Core ML 一节），用 `CASSOTIS_COREML_PYTHON` 指向它
-- 手机系统 iOS 18 以上才能运行模型（多函数 Core ML 模型）；更早的系统上键盘照常工作，只是不用模型
+- 运行模型要 iOS 18 以上，且神经引擎至少 16 核（A14 及以后）。iPhone XS Max（A12）等机型上，键盘照常工作，只是不用模型；见 REPORT-MODEL.md 第 6 节
 - 真机：Apple Development 证书和能覆盖设备的开发 profile。`scripts/build_app.sh` 只在本地签名，不改动开发者账号。默认找钥匙串里的 `Apple Development` 证书和名为 `iOS Team Provisioning Profile: *` 的通配 profile，可用 `CASSOTIS_IDENTITY`、`CASSOTIS_PROFILE` 指定。
 - Xcode 工程里的 bundle ID 是 `com.hustmobile.cassotis.poc*`，团队是 `TR78TGFZDE`。换账号时改 `scripts/gen_xcodeproj.py` 和 `scripts/build_app.sh`。
 
@@ -87,7 +87,9 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 - `lm=0` 不加载字符模型。
 - `defer=0` 让每个按键当场用模型排序。默认是延后：按键先返回只按词库排的候选，键盘空闲时再轮询，取回模型排好的候选。轮询还没结束时来了拼音字母或退格，就中断它；空格、回车、选候选则等它跑完。报告里的 `polls`、`polls_applied`、`polls_interrupted` 和 `poll_*_ms` 记录轮询的次数与耗时。
 - `wait` 是回放前最多等模型就绪的秒数，默认 180；报告里的 `model_state`、`model_seconds` 记录结果。
-- `det=1` 关掉引擎的时间预算。其他命令：`mode=whoami`、`mode=probe`、`mode=idle`、`mode=limit`、`mode=next`、`mode=exit`、`mode=mltest`（直接用 Core ML 加载各长度函数，测加载时间、内存和单次推理时间）。
+- `det=1` 关掉引擎的时间预算。其他命令：`mode=whoami`、`mode=probe`、`mode=idle`、`mode=limit`、`mode=next`、`mode=exit`，以及 `mode=mltest`（直接用 Core ML 加载各长度函数，测加载时间、内存和单次推理时间；`units=ne|cpu|gpu|all`）。
+
+`device_selftest.sh` 也接受 `mode=mltest`，以及 `mode=mlplan`（用 `MLComputePlan` 看算子派到哪个计算单元；`length` 指定函数）。它们在宿主 App 里跑，不需要先启用键盘。手机连了不止一台时，用 `CASSOTIS_DEVICE` 指定。
 
 模型在引擎打开后由后台线程加载，就绪前候选不使用模型。新装的模型第一次加载时，系统要为神经网络引擎编译，约 8 秒；之后每次进程启动约 0.2 秒。
 
