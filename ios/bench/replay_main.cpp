@@ -13,7 +13,7 @@ using namespace cassotis;
 int main(int argc, char **argv) {
     std::string dictionary, user, resources, data, corpus, output, digest, label = "macos";
     ReplayOptions options;
-    uint32_t sentences = 0, holdSeconds = 0;
+    uint32_t sentences = 0, holdSeconds = 0, waitModelSeconds = 0;
     for (int i = 1; i + 1 < argc; i += 2) {
         std::string a = argv[i], v = argv[i + 1];
         if (a == "--dictionary") dictionary = v;
@@ -38,6 +38,8 @@ int main(int argc, char **argv) {
             }
         }
         else if (a == "--hold") holdSeconds = uint32_t(atoi(v.c_str()));
+        // Waits up to this long for the character LM before the replay (0: does not ask).
+        else if (a == "--wait-model") waitModelSeconds = uint32_t(atoi(v.c_str()));
         else if (a == "--loop") options.loop = v == "1";
         else { std::cerr << "unknown option " << a << "\n"; return 2; }
     }
@@ -52,8 +54,22 @@ int main(int argc, char **argv) {
         return 1;
     }
     double openSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    int32_t modelState = -2;
+    double modelSeconds = 0;
+    if (waitModelSeconds) {
+        auto m0 = std::chrono::steady_clock::now();
+        modelState = cassotis_core_model_state(int32_t(waitModelSeconds * 1000));
+        modelSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - m0).count();
+        if (modelState < 0) {
+            char text[1024] = {};
+            cassotis_core_last_error(text, sizeof text);
+            std::cerr << "model unavailable: " << text << "\n";
+        }
+    }
     auto after = memorySnapshot();
     auto result = replay(client, rows, options);
+    result.modelState = modelState;
+    result.modelSeconds = modelSeconds;
     auto json = toJSON(result, label, before, after, openSeconds);
     if (!output.empty()) std::ofstream(output) << json;
     // Summary only: the samples go to the file.

@@ -20,6 +20,22 @@ export CASSOTIS_LEXICON_ROOT="/path/to/cassotis-lexicon"
 
 一个共享 ONNX 字符模型、词表和拼音读音表已随源码提供。共享字符模型以 `char_lm.onnx.000`、`.001`、`.002`、`.003` 分片保存，构建时按顺序原子合并并验证 SHA-256；合并文件不提交到 Git，安装应用仅携带合并模型。`data/runtime-assets.sha256` 记录模型和数据库 schema 的校验值。首次构建会下载官方 ONNX Runtime 1.20.1 arm64 发行包，核对固定 SHA-256 后解压。已安装的输入法无需编译器、Python、联网推理或另外下载模型。
 
+### Core ML（可选）
+
+在 macOS 15 及以上，同一个字符模型还可以用 Core ML 在神经网络引擎（ANE）上运行。算法、词表和清单都不变，只是换了推理后端：`src/host/native/nc_char_lm_coreml.mm` 导出与 ONNX Runtime 桥接库同名的 `nc_lm_*` 函数，构建为 `libcassotis_coreml.dylib`。应用里同时有 Core ML 模型和这个库时，引擎优先用 Core ML；系统低于 macOS 15、模型缺失或打不开时，自动退回 ONNX Runtime。选择逻辑见 `src/host/nc_lm_runtime.pas`。
+
+Core ML 模型由 `char_lm.onnx` 转换而来，转换要用 numpy、onnx 和 coremltools（已验证 coremltools 9.0）。在一个装有它们的 Python 环境里执行：
+
+```sh
+python3 -m venv /path/to/coreml-venv
+/path/to/coreml-venv/bin/pip install numpy onnx coremltools
+CASSOTIS_COREML_PYTHON=/path/to/coreml-venv/bin/python ./scripts/build_coreml_model.sh
+```
+
+输出 `build/coreml/char_lm.mlmodelc`，约 170 MB。完整构建也会调用这个脚本，找不到 coremltools 时只提示并跳过；组包时若有这个模型，就放进 `Cassotis.app/Contents/Resources/models/char_lm/`。模型元数据记录了源 ONNX 的 SHA-256，引擎打开前会与 `runtime_manifest.json` 核对。第一次打开某个模型文件时，系统要为 ANE 编译，约 10–15 秒，之后在 0.2 秒内打开；编译在后台线程进行，期间候选不使用模型。
+
+在 M1 Pro 上，用同一组 615 句语料回放约 1 万键：Core ML 和 ONNX Runtime 的整句首选率分别为 66.0% 和 66.6%，94% 的句子上屏结果相同；单键 P95 分别为 80 ms 和 113 ms；回放进程内存分别为 160 MB 和 396 MB。
+
 繁体字形映射已作为源码表提供，正常构建不需要生成或下载。`tools/build_traditional_chars.py` 可从固定的 OpenCC 上游输入重新生成映射；来源与许可证见 [NOTICE.md](NOTICE.md)。应用同时携带 OpenCC 的 Apache-2.0 许可证。
 
 ## 构建
@@ -39,7 +55,8 @@ export CASSOTIS_LEXICON_ROOT="/path/to/cassotis-lexicon"
 | --- | --- |
 | `build/arm64/Cassotis.app` | 输入法应用，包含引擎、运行库、模型与词库 |
 | `build/arm64/言泉输入法安装器.app` | 图形安装器；打包时加入安装负载 |
-| `build/arm64/bin/` | 引擎、词库导入器、输入源管理工具及推理运行库 |
+| `build/arm64/bin/` | 引擎、词库导入器、输入源管理工具及推理运行库（ONNX Runtime 与 Core ML） |
+| `build/coreml/` | Core ML 模型（`scripts/build_coreml_model.sh`，可选） |
 | `build/dictionaries/` | 简繁 SQLite 数据库及导入记录 |
 | `build/arm64/units/`、`logs/`、`symbols/` | 编译中间文件、日志与调试符号 |
 

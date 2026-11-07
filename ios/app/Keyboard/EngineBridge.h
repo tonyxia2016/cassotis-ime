@@ -19,7 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Before the engine opens; see cassotis_core_set_option.
 + (void)setOption:(NSString *)name value:(int32_t)value;
 // Applies the keyboard's memory policy, then any cache=/sqlite=/mmap=/ondemand=/
-// prewarm= overrides from a run's options.
+// prewarm= overrides from a run's options; lm=0 opens the engine without the
+// character LM, det=1 sets deterministic_search.
 + (void)applyMemoryPolicy:(NSDictionary<NSString *, NSString *> *)options;
 // Returns nil on success, otherwise the error text.
 - (nullable NSString *)openDictionary:(NSString *)dictionary
@@ -32,6 +33,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setLeftContext:(NSString *)text;
 - (void)resetComposition;
 - (void)trim:(int32_t)level;
+// cassotis_core_model_state: starts the character LM's load and waits up to
+// timeoutMs; 1 ready, 0 loading, -1 none (modelError says why). The next
+// replay reports the answer and the wait.
+- (int32_t)waitForModel:(uint32_t)timeoutMs;
+- (NSString *)modelError;
 // Runs replay.cpp and returns its JSON. onKey runs on the engine thread after
 // every key with the result; onSample lets the caller stop the run.
 - (NSString *)replayCorpus:(NSString *)corpus

@@ -14,7 +14,7 @@ uses
     nc_engine_intf,
     nc_dictionary_sqlite,
     nc_user_dictionary,
-    {$IFNDEF CASSOTIS_EMBEDDED}nc_lm_repair_host, nc_char_lm_host,{$ENDIF}
+    nc_lm_repair_host, nc_char_lm_host,
     nc_pinyin_input_diagnostics,
     nc_local_completion_host,
     nc_char_lm, nc_one_key_rerank_host;
@@ -36,6 +36,9 @@ type
         FState: TncEngineState;
         FConfig: TncEngineConfig;
         FLmRepair: IncLongLocalRepair;
+        // The objects behind FLmRepair and FCharLm (those references own them).
+        FLmRepairHost: TncLmRepairHost;
+        FCharLmHost: TncCharLmHost;
         FLocalCompletionHost: TncLocalCompletionHost;
         FCharLm: IncCharLm;
         FOneKeyRerankHost: TncOneKeyRerankHost;
@@ -104,6 +107,13 @@ type
         // Answers a host memory warning: every cache it drops can be rebuilt.
         procedure TrimMemory(const level: Integer);
         procedure CacheCensus(const sink: TncCensusSink);
+        { The character LM and the repair that shares it: 1 when both are ready,
+          0 while they load, -1 when there is none (off, missing or failed).
+          Starts the character LM's load, which otherwise waits for its first
+          use, and waits up to timeout_ms for an answer other than 0. }
+        function ModelState(const timeout_ms: Integer): Integer;
+        // Why ModelState is -1.
+        function ModelError: string;
         function DictionaryReady: Boolean;
         function UserDictionaryReady: Boolean;
         function RemoveUserCandidate(const context_id: QWord;
@@ -119,7 +129,7 @@ uses
     SysUtils,
     nc_config,
     nc_platform_compat,
-    {$IFNDEF CASSOTIS_EMBEDDED}nc_runtime_paths,{$ENDIF}
+    nc_runtime_paths,
     nc_shortcut;
 
 constructor TncEngineService.Create;
@@ -157,10 +167,8 @@ procedure TncEngineService.Initialize(const dictionary_path: string;
 var
     provider: TncSqliteDictionary;
     active_dictionary_path: string;
-    {$IFNDEF CASSOTIS_EMBEDDED}
     runtime_directory: string;
     char_lm_host: TncCharLmHost;
-    {$ENDIF}
 begin
     FContexts := TncEngineContextRegistry.Create;
     FEngine := nil;
@@ -221,18 +229,29 @@ begin
 
     FEngine.set_dictionary_provider(provider);
     FEngine.prewarm_dictionary_caches;
-    {$IFNDEF CASSOTIS_EMBEDDED}
+    {$IFDEF CASSOTIS_EMBEDDED}
+    // The host's resource directory holds char_lm/ (Core ML, linked in).
+    if not g_char_lm_enabled then
+        Exit;
+    runtime_directory := nc_module_directory;
+    {$ELSE}
     runtime_directory := ExtractFileDir(ParamStr(0));
-    FLmRepair := TncLmRepairHost.Create(
+    {$ENDIF}
+    FLmRepairHost := TncLmRepairHost.Create(
         runtime_directory, True);
+    FLmRepair := FLmRepairHost;
     FEngine.set_long_local_repair(FLmRepair);
     char_lm_host := TncCharLmHost.Create(runtime_directory, True);
+    FCharLmHost := char_lm_host;
     FCharLm := char_lm_host;
     FEngine.set_char_lm(FCharLm, True, True);
+    {$IFDEF CASSOTIS_EMBEDDED}
+    if not g_char_lm_async then
+        Exit;
+    {$ENDIF}
     FLocalCompletionHost := TncLocalCompletionHost.Create;
     FLocalCompletionHost.SetCharLm(char_lm_host.background_view);
     FOneKeyRerankHost := TncOneKeyRerankHost.Create(char_lm_host.background_view);
-    {$ENDIF}
 end;
 
 procedure TncEngineService.TrimMemory(const level: Integer);
@@ -247,6 +266,37 @@ begin
         FEngine.cache_census(sink);
 end;
 
+function TncEngineService.ModelState(const timeout_ms: Integer): Integer;
+var
+    started: QWord;
+    char_lm: Integer;
+begin
+    if (FCharLmHost = nil) or (FLmRepairHost = nil) then
+        Exit(-1);
+    started := GetTickCount64;
+    repeat
+        char_lm := FCharLmHost.model_state;
+        if (char_lm < 0) or (FLmRepairHost.last_error <> '') then
+            Exit(-1);
+        if (char_lm = 1) and FLmRepairHost.ready then
+            Exit(1);
+        if (timeout_ms <= 0) or (GetTickCount64 - started >= QWord(timeout_ms)) then
+            Exit(0);
+        Sleep(10);
+    until False;
+end;
+
+function TncEngineService.ModelError: string;
+begin
+    if (FCharLmHost = nil) or (FLmRepairHost = nil) then
+        Exit('no character LM (char_lm off)');
+    if FCharLmHost.model_state < 0 then
+        Exit('character LM: ' + FCharLmHost.last_error);
+    Result := FLmRepairHost.last_error;
+    if Result <> '' then
+        Result := 'repair: ' + Result;
+end;
+
 destructor TncEngineService.Destroy;
 begin
     FOneKeyRerankHost.Free;
@@ -255,6 +305,8 @@ begin
     FInputDiagnostics.Free;
     FLmRepair := nil;
     FCharLm := nil;
+    FLmRepairHost := nil;
+    FCharLmHost := nil;
     FStateStore.Free;
     FContexts.Free;
     inherited Destroy;

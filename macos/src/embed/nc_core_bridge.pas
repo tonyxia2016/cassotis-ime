@@ -20,6 +20,7 @@ procedure cassotis_core_trim(level: LongInt); cdecl;
 procedure cassotis_core_close; cdecl;
 function cassotis_core_set_option(name: PAnsiChar; value: LongInt): LongInt; cdecl;
 function cassotis_core_cache_census(buffer: PAnsiChar; capacity: Cardinal): Cardinal; cdecl;
+function cassotis_core_model_state(timeout_ms: LongInt): LongInt; cdecl;
 
 implementation
 
@@ -176,6 +177,10 @@ begin
         g_compact_queues := value <> 0
     else if key = 'prewarm_short_lookups' then
         g_prewarm_short_lookups := value <> 0
+    else if key = 'char_lm' then
+        g_char_lm_enabled := value <> 0
+    else if key = 'char_lm_async' then
+        g_char_lm_async := value <> 0
     else
         Result := c_err_arg;
 end;
@@ -210,6 +215,26 @@ begin
     except
         on E: Exception do
             set_error(E.ClassName + ': ' + E.Message);
+    end;
+end;
+
+function cassotis_core_model_state(timeout_ms: LongInt): LongInt; cdecl;
+begin
+    try
+        if g_service = nil then
+        begin
+            set_error('engine is not open');
+            Exit(c_err_state);
+        end;
+        Result := g_service.ModelState(timeout_ms);
+        if Result < 0 then
+            set_error(g_service.ModelError);
+    except
+        on E: Exception do
+        begin
+            set_error(E.ClassName + ': ' + E.Message);
+            Result := c_err_exception;
+        end;
     end;
 end;
 

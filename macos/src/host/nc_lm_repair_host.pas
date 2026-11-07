@@ -7,8 +7,9 @@ unit nc_lm_repair_host;
 { Long-sentence repair with the pinyin-conditioned character LM (model
   consolidation, steps 3 and 4). The shared LM in <runtime>\char_lm is also
   trained to rewrite engine drafts: given the typed syllables and the draft it
-  returns a corrected text (nc_lm_correct in the ORT bridge DLL). Both hosts
-  open the same model file, so the bridge keeps one session for them. It took
+  returns a corrected text (nc_lm_correct; ONNX Runtime or Core ML, see
+  nc_lm_runtime). Both hosts open the same model, so the runtime keeps one
+  session for them. It took
   over from the local repair encoders and the pinyin parallel generator.
 
   Pinyin tokens are private-use characters listed in pinyin_readings.json with
@@ -23,8 +24,6 @@ type
     TncLmRepairHost = class(TInterfacedObject, IncLongLocalRepair, IncLongLocalCorrector,
         IncShortPhraseCorrector)
     private type
-        TCreateModel = function(directory: PAnsiChar; intra_threads: Integer;
-            error_text: PAnsiChar; capacity: Integer): Pointer; cdecl;
         TCorrect = function(handle: Pointer; context, draft: PWideChar;
             allowed_code_points: PCardinal; allowed_offsets: PInteger; width: Integer;
             out_text: PWideChar; out_capacity: Integer; out_gain: PSingle;
@@ -102,7 +101,7 @@ type
 
 implementation
 
-uses Math, nc_types, nc_char_lm, nc_platform_compat, fpjson, jsonparser, nc_char_lm_host, nc_io_compat, nc_runtime_paths, nc_sha256;
+uses Math, nc_types, nc_char_lm, nc_platform_compat, fpjson, jsonparser, nc_char_lm_host, nc_io_compat, nc_runtime_paths, nc_lm_runtime;
 
 type TncLmRepairLoader = class(TThread)
     private FOwner: TncLmRepairHost;
@@ -193,15 +192,12 @@ procedure TncLmRepairHost.load;
 const
     required_files: array[0..2] of string = ('char_lm.onnx', 'char_lm_vocab.bin', 'pinyin_readings.json');
 var
-    root, manifest_root, value: TJSONData;
+    root, manifest_root: TJSONData;
     table, readings, homophones, tokens, files, manifest: TJSONObject;
     syllables, list: TJSONArray;
-    folder, name: string;
+    folder, runtime: string;
     items: TArray<string>;
     points: TArray<Cardinal>;
-    create_model: TCreateModel;
-    error_text: array[0..1023] of AnsiChar;
-    folder_utf8: UTF8String;
     i, j: Integer;
 begin
     root := nil;
@@ -217,14 +213,14 @@ begin
         files := manifest.Find('files') as TJSONObject;
         if (files = nil) or (files.Count <> Length(required_files)) then
             raise EInvalidOp.Create('Incomplete pinyin LM manifest');
-        for name in required_files do
-        begin
-            value := files.Find(UTF8Encode(name));
-            if (value = nil) or (value.JSONType <> jtString) then
-                raise EInvalidOp.Create('Missing pinyin LM asset hash');
-            if not SameText(nc_sha256_file(IncludeTrailingPathDelimiter(folder) + name),
-                UTF8Decode(value.AsString)) then raise EInvalidOp.Create('Pinyin LM asset hash mismatch');
-        end;
+        // Checks the vocabulary, the readings and the model, then opens it.
+        m_handle := nc_lm_open_model(folder, files, ['char_lm_vocab.bin', 'pinyin_readings.json'],
+            nc_shared_lm_threads, m_module, runtime);
+        m_destroy := TDestroyModel(nc_lm_symbol(m_module, 'nc_lm_destroy'));
+        m_correct := TCorrect(nc_lm_symbol(m_module, 'nc_lm_correct'));
+        m_correct_with := TCorrectWith(nc_lm_symbol(m_module, 'nc_lm_correct_with'));
+        if not Assigned(m_correct) or not Assigned(m_destroy) then
+            raise EInvalidOp.Create('Pinyin LM runtime must be rebuilt');
         root := GetJSON(UTF8Encode(TncFile.ReadAllText(
             IncludeTrailingPathDelimiter(folder) + 'pinyin_readings.json', TEncoding.UTF8)));
         if not (root is TJSONObject) then raise EInvalidOp.Create('Invalid pinyin LM readings');
@@ -251,20 +247,9 @@ begin
             for i := 0 to list.Count - 1 do points[i] := first_code_point(UTF8Decode(list.Strings[i]));
             m_homophones.AddOrSetValue(UTF8Decode(homophones.Names[j]), Copy(points));
         end;
-        m_module := LoadLibrary(UTF8Encode(nc_runtime_library(ExtractFileDir(ParamStr(0)))));
-        if m_module = 0 then raise EInvalidOp.Create('Pinyin LM runtime unavailable: ' + GetLoadErrorStr);
-        create_model := TCreateModel(GetProcedureAddress(m_module, 'nc_lm_create'));
-        m_correct := TCorrect(GetProcedureAddress(m_module, 'nc_lm_correct'));
-        m_correct_with := TCorrectWith(GetProcedureAddress(m_module, 'nc_lm_correct_with'));
-        m_destroy := TDestroyModel(GetProcedureAddress(m_module, 'nc_lm_destroy'));
-        if not Assigned(create_model) or not Assigned(m_correct) or not Assigned(m_destroy) then
-            raise EInvalidOp.Create('Pinyin LM runtime must be rebuilt');
-        folder_utf8 := UTF8Encode(folder);
-        m_handle := create_model(PAnsiChar(folder_utf8), nc_shared_lm_threads, @error_text[0], Length(error_text));
-        if m_handle = nil then raise EInvalidOp.Create(UTF8Decode(UTF8String(PAnsiChar(@error_text[0]))));
         m_ready := True;
         if GetEnvironmentVariable('CASSOTIS_CHAR_LM_PROFILE') = '1' then
-            WriteLn(StdErr, '[INFO] lm-repair ready; shared character model');
+            WriteLn(StdErr, '[INFO] lm-repair ready; shared character model; runtime=' + runtime);
     except
         on E: Exception do m_error := E.Message;
     end;

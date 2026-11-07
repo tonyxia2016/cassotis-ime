@@ -18,6 +18,7 @@
 		F00FC22FCC1F89346C2BB765 = {isa = PBXBuildFile; fileRef = F8C9F204141DC1EEDB4CEEE6; };
 		0D4C05CCE6BF23EB3054DDEF = {isa = PBXBuildFile; fileRef = A44D163741D0D2875FDBABBA; };
 		B28B22193DE88E99813638AF = {isa = PBXBuildFile; fileRef = F50750A379400E3F497E81CD; };
+		85C5A1B9C4C5BB0985506C7E = {isa = PBXBuildFile; fileRef = 3B3670EDCC24EBAA6468DBEC; };
 		2717A7E6EAC8FA081CE4BF7C = {isa = PBXBuildFile; fileRef = EFEB9515A11F74F58A6EA43A; };
 		F86AA3F57E97781A96C3283A = {isa = PBXBuildFile; fileRef = 387FCD29B10A50D29501F835; };
 		83D0D98AAF83B46C2BF711A3 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
@@ -94,6 +95,7 @@
 		F8C9F204141DC1EEDB4CEEE6 = {isa = PBXFileReference; lastKnownFileType = file; name = "dict_sc.db"; path = "../build/res/dict_sc.db"; sourceTree = SOURCE_ROOT; };
 		A44D163741D0D2875FDBABBA = {isa = PBXFileReference; lastKnownFileType = text; name = "schema.sql"; path = "../build/res/schema.sql"; sourceTree = SOURCE_ROOT; };
 		F50750A379400E3F497E81CD = {isa = PBXFileReference; lastKnownFileType = text; name = "corpus.tsv"; path = "../bench/corpus.tsv"; sourceTree = SOURCE_ROOT; };
+		3B3670EDCC24EBAA6468DBEC = {isa = PBXFileReference; lastKnownFileType = folder; name = "char_lm"; path = "../build/res/char_lm"; sourceTree = SOURCE_ROOT; };
 		EFEB9515A11F74F58A6EA43A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "KeyboardSwiftUI/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
 		387FCD29B10A50D29501F835 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxBackend.swift"; path = "KeyboardSwiftUI/FcitxBackend.swift"; sourceTree = SOURCE_ROOT; };
 		CF7A29891B884710B79A0738 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Bubble.swift"; path = "../build/fcitxui/Bubble.swift"; sourceTree = SOURCE_ROOT; };
@@ -142,6 +144,7 @@
 				F8C9F204141DC1EEDB4CEEE6,
 				A44D163741D0D2875FDBABBA,
 				F50750A379400E3F497E81CD,
+				3B3670EDCC24EBAA6468DBEC,
 				EFEB9515A11F74F58A6EA43A,
 				387FCD29B10A50D29501F835,
 				CF7A29891B884710B79A0738,
@@ -304,6 +307,7 @@
 				F00FC22FCC1F89346C2BB765,
 				0D4C05CCE6BF23EB3054DDEF,
 				B28B22193DE88E99813638AF,
+				85C5A1B9C4C5BB0985506C7E,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -439,6 +443,7 @@
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc;
@@ -463,6 +468,7 @@
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc;
@@ -487,6 +493,7 @@
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.keyboard;
@@ -513,6 +520,7 @@
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.keyboard;
@@ -539,6 +547,7 @@
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.swiftui;
@@ -565,6 +574,7 @@
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.swiftui;

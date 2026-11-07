@@ -1,12 +1,14 @@
 # 言泉输入法 iOS 版
 
-iOS 键盘扩展。目前完成的是第 0 阶段：验证 Pascal 引擎能否放进键盘扩展。结论和全部实测数字见 [REPORT.md](REPORT.md)：四条通过标准在 iPhone 15 Pro 上都已达到。
+iOS 键盘扩展。第 0 阶段验证了 Pascal 引擎能放进键盘扩展，结论和实测数字见 [REPORT.md](REPORT.md)：四条通过标准在 iPhone 15 Pro 上都已达到。第 1 阶段让键盘扩展用上与 macOS 相同的字符模型：模型经 Core ML 在神经网络引擎上运行，见 [REPORT-MODEL.md](REPORT-MODEL.md)。
 
 引擎不在本目录：iOS 与 macOS 编译同一份 `../macos/src`，嵌入用的 C ABI 在 `../macos/src/embed/`。词库数据来自 `../lexicon/`，经 macOS 的构建脚本生成 `dict_sc.db`。
 
 ## 需要什么
 
 - macOS、Xcode、Homebrew 的 `fpc`（3.2.2）、Python 3.11+
+- 一个装有 numpy、onnx、coremltools 的 Python 环境，用来把字符模型转成 Core ML（见 `../macos/BUILD.md` 的 Core ML 一节），用 `CASSOTIS_COREML_PYTHON` 指向它
+- 手机系统 iOS 18 以上才能运行模型（多函数 Core ML 模型）；更早的系统上键盘照常工作，只是不用模型
 - 真机：Apple Development 证书和能覆盖设备的开发 profile。`scripts/build_app.sh` 只在本地签名，不改动开发者账号。默认找钥匙串里的 `Apple Development` 证书和名为 `iOS Team Provisioning Profile: *` 的通配 profile，可用 `CASSOTIS_IDENTITY`、`CASSOTIS_PROFILE` 指定。
 - Xcode 工程里的 bundle ID 是 `com.hustmobile.cassotis.poc*`，团队是 `TR78TGFZDE`。换账号时改 `scripts/gen_xcodeproj.py` 和 `scripts/build_app.sh`。
 
@@ -22,7 +24,8 @@ iOS 键盘扩展。目前完成的是第 0 阶段：验证 Pascal 引擎能否�
 
 ```bash
 ./scripts/build_toolchain.sh          # 拉 FPC 3.2.2 源码，交叉构建 iOS 运行库，约 2 分钟
-./scripts/setup_resources.sh          # 从 ../macos/build/dictionaries 取 dict_sc.db
+CASSOTIS_COREML_PYTHON=/path/to/coreml-venv/bin/python \
+  ./scripts/setup_resources.sh        # 取 dict_sc.db，生成 build/res/char_lm（Core ML 模型，约 170 MB）
 ./scripts/import_fcitx_ui.sh          # 取 fcitx5-ios 的面板源码到 build/fcitxui
 python3 scripts/gen_xcodeproj.py
 CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build_engine.sh ios
@@ -55,7 +58,14 @@ CASSOTIS_VARIANT=macos-cmem CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build
   "tuned:cache_percent=6 sqlite_cache_kib=2048 sqlite_mmap_mib=320 query_path_on_demand=1 prewarm_short_lookups=0"
 ```
 
-回放会给每次运行算一个候选摘要。语料前 300 句在缓存 100% 时应得到 `24ca8ec5e807ec1e`，1 万键在 iOS 配置下应得到 `87b8ed8b46c2e479`，可以用来确认引擎改动有没有改变候选。
+回放会给每次运行算一个候选摘要。语料前 300 句在缓存 100% 时应得到 `24ca8ec5e807ec1e`，1 万键在 iOS 配置下应得到 `87b8ed8b46c2e479`，可以用来确认引擎改动有没有改变候选。这两个摘要是不加载模型时的：比较时加 `--option char_lm=0`。
+
+带模型回放要让资源目录里有 `char_lm/`，并用 `--wait-model 秒数` 等模型就绪后再开始，例如：
+
+```bash
+./build/macos/replay --dictionary ../macos/build/dictionaries/dict_sc.db --resources build/res \
+  --data /tmp/cassotis-data --corpus bench/corpus.tsv --wait-model 120 --output /tmp/coreml.json
+```
 
 ## 真机测量
 
@@ -72,7 +82,9 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 ./scripts/device_selftest.sh selftest "keys=10000"   # 引擎跑在 App 进程里，不需要启用键盘
 ```
 
-回放选项：`keys`、`seconds`、`pace`（微秒）、`every`、`context`、`learning`、`loop`、`ui`。内存策略选项：`cache`、`sqlite`、`mmap`、`ondemand`、`prewarm`。其他命令：`mode=whoami`、`mode=probe`、`mode=idle`、`mode=limit`、`mode=next`、`mode=exit`。
+回放选项：`keys`、`seconds`、`pace`（微秒）、`every`、`context`、`learning`、`loop`、`ui`。内存策略选项：`cache`、`sqlite`、`mmap`、`ondemand`、`prewarm`。模型选项：`lm=0` 不加载字符模型；`wait` 是回放前最多等模型就绪的秒数（默认 180），报告里的 `model_state`、`model_seconds` 记录结果；`det=1` 关掉引擎的时间预算。其他命令：`mode=whoami`、`mode=probe`、`mode=idle`、`mode=limit`、`mode=next`、`mode=exit`、`mode=mltest`（直接用 Core ML 加载各长度函数，测加载时间、内存和单次推理时间）。
+
+模型在引擎打开后由后台线程加载，就绪前候选不使用模型。新装的模型第一次加载时，系统要为神经网络引擎编译，约 8 秒；之后每次进程启动约 0.2 秒。
 
 ## 目录
 

@@ -30,9 +30,17 @@ if [[ -d "$app/Contents/MacOS/Cassotis.dSYM" ]]; then
     mv "$app/Contents/MacOS/Cassotis.dSYM" "$root/build/$arch/symbols/"
 fi
 cp "$bin/cassotis-engine" "$app/Contents/MacOS/"
-cp "$bin/libcassotis_ort.dylib" "$bin/libonnxruntime.1.20.1.dylib" "$app/Contents/Frameworks/"
+cp "$bin/libcassotis_ort.dylib" "$bin/libonnxruntime.1.20.1.dylib" "$bin/libcassotis_coreml.dylib" \
+    "$app/Contents/Frameworks/"
 rsync -a --delete --delete-excluded --exclude='char_lm.onnx.[0-9][0-9][0-9]' --exclude='*.joining' "$root/data/models/" "$app/Contents/Resources/models/"
 python3 -B "$root/scripts/prepare_model_metadata.py" "$app/Contents/Resources/models"
+# The Core ML model (scripts/build_coreml_model.sh), when built: the engine opens
+# it on the Neural Engine and keeps char_lm.onnx with ONNX Runtime as fallback.
+if [[ -d "$root/build/coreml/char_lm.mlmodelc" ]]; then
+    rsync -a --delete "$root/build/coreml/char_lm.mlmodelc/" "$app/Contents/Resources/models/char_lm/char_lm.mlmodelc/"
+else
+    printf 'No Core ML model (scripts/build_coreml_model.sh): the bundle uses ONNX Runtime alone\n'
+fi
 cp "$root/build/dictionaries/dict_sc.db" "$root/build/dictionaries/dict_tc.db" "$app/Contents/Resources/dictionaries/"
 cp "$root/resources/Info.plist" "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" "$app/Contents/Info.plist"
@@ -56,7 +64,7 @@ done
 codesign --force --sign - "$app"
 codesign --verify --deep --strict "$app"
 cmp "$bin/cassotis-engine" "$app/Contents/MacOS/cassotis-engine"
-for library in libcassotis_ort.dylib libonnxruntime.1.20.1.dylib; do
+for library in libcassotis_ort.dylib libonnxruntime.1.20.1.dylib libcassotis_coreml.dylib; do
     cmp "$bin/$library" "$app/Contents/Frameworks/$library"
 done
 printf 'Application built: %s\n' "$app"

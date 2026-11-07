@@ -12,6 +12,7 @@ for arg in "$@"; do
     esac
 done
 "$root/scripts/build_native.sh"
+"$root/scripts/build_coreml_model.sh"
 "$root/scripts/build_fpc.sh"
 python3 -B "$root/scripts/build_dictionaries.py"
 "$root/scripts/build_app.sh"

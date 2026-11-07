@@ -11,7 +11,10 @@ procedure nc_set_host_paths(const resource_directory, data_directory: string);
 function nc_host_data_directory: string;
 function nc_module_directory: string;
 function nc_model_directory(const fallback: string): string;
-function nc_runtime_library(const fallback: string): string;
+{ The nc_lm_* runtime library: libcassotis_ort.dylib (ONNX Runtime) or
+  libcassotis_coreml.dylib (Core ML), from the bundle's Frameworks. }
+function nc_runtime_library(const fallback: string;
+    const name: string = 'libcassotis_ort.dylib'): string;
 
 implementation
 uses SysUtils;
@@ -48,14 +51,14 @@ begin
     else Result := fallback;
 end;
 
-function nc_runtime_library(const fallback: string): string;
+function nc_runtime_library(const fallback: string; const name: string): string;
 var executable_directory, bundled: string;
 begin
     executable_directory := nc_module_directory;
     bundled := ExpandFileName(IncludeTrailingPathDelimiter(executable_directory) +
-        '../Frameworks/libcassotis_ort.dylib');
+        '../Frameworks/' + name);
     if FileExists(bundled) then Exit(bundled);
-    Result := IncludeTrailingPathDelimiter(fallback) + 'libcassotis_ort.dylib';
+    Result := IncludeTrailingPathDelimiter(fallback) + name;
 end;
 
 end.

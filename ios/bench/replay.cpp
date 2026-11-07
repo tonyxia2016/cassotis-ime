@@ -169,7 +169,7 @@ static std::string escaped(const std::string &v) {
 }
 std::string toJSON(const ReplayResult &r, const std::string &label, const MemorySnapshot &beforeOpen,
                    const MemorySnapshot &afterOpen, double openSeconds) {
-    char line[768];
+    char line[1024];
     std::ostringstream o;
     o << "{\n  \"label\": \"" << escaped(label) << "\",\n";
     std::snprintf(line, sizeof line,
@@ -178,11 +178,13 @@ std::string toJSON(const ReplayResult &r, const std::string &label, const Memory
         "  \"seconds\": %.1f, \"p50_ms\": %.2f, \"p95_ms\": %.2f, \"p99_ms\": %.2f, \"worst_ms\": %.1f, \"mean_ms\": %.2f,\n"
         "  \"ui_p50_ms\": %.2f, \"ui_p95_ms\": %.2f, \"ui_p99_ms\": %.2f, \"ui_worst_ms\": %.1f,\n"
         "  \"end_mb\": %.1f, \"peak_mb\": %.1f, \"available_end_mb\": %.1f, \"available_min_mb\": %.1f,\n"
+        "  \"model_state\": %d, \"model_seconds\": %.2f,\n"
         "  \"digest\": \"%016" PRIx64 "\",\n",
         mb(beforeOpen.footprint), mb(afterOpen.footprint), openSeconds,
         r.keys, r.sentences, r.firstHits, r.sentences ? double(r.firstHits) / r.sentences : 0.0, r.deferred,
         r.seconds, r.p50, r.p95, r.p99, r.worst, r.mean, r.uiP50, r.uiP95, r.uiP99, r.uiWorst,
-        mb(r.end.footprint), mb(r.end.footprintPeak), mb(r.end.available), mb(r.minAvailable), r.digest);
+        mb(r.end.footprint), mb(r.end.footprintPeak), mb(r.end.available), mb(r.minAvailable),
+        r.modelState, r.modelSeconds, r.digest);
     o << line;
     o << "  \"error\": \"" << escaped(r.error) << "\",\n  \"samples\": [";
     for (size_t i = 0; i < r.samples.size(); ++i) {

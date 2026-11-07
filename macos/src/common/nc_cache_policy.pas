@@ -33,6 +33,13 @@ var
     g_deterministic_search: Boolean = False;
     // Off reproduces FPC's growing TQueue, to prove the fix changes nothing else.
     g_compact_queues: Boolean = True;
+    // The shared character LM and the repair that uses it (<resources>/char_lm).
+    // Off keeps the engine without models, as before they ran on Core ML.
+    g_char_lm_enabled: Boolean = True;
+    // The LM work whose results a frontend polls for (Tab continuation, one-key
+    // rerank): queued after every key, run on worker threads. A host that does
+    // not poll leaves it off, or it only takes the Neural Engine from the keys.
+    g_char_lm_async: Boolean = False;
 
 function nc_cache_limit(const desktop_limit: Integer): Integer;
 

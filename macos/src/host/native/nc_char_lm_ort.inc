@@ -52,6 +52,7 @@ public:
     CharLmDeadline& operator=(const CharLmDeadline&) = delete;
 };
 
+#ifndef NC_CHAR_LM_COREML
 // Keys and values of tokens kept between graph runs: one buffer per layer in
 // the layout the attention operator reads, [2][heads][capacity][head size]. A
 // run gets the whole buffer as its past and names in its mask the tokens it
@@ -130,6 +131,8 @@ public:
         return past;
     }
 };
+
+#endif  // NC_CHAR_LM_COREML
 
 // The tokens of a handle's earlier scoring calls, as a trie below BOS: each
 // with its log-probability after its ancestors and, in `keys`, what a later
@@ -216,7 +219,11 @@ struct CharLmMemo {
 struct CharLmHandle {
     // Handles opened on the same model share one session (and its weights);
     // each keeps its own lock and buffers.
+#ifdef NC_CHAR_LM_COREML
+    std::shared_ptr<CharLmCoreMlModel> model;
+#else
     std::shared_ptr<Ort::Session> session;
+#endif
     std::unordered_map<uint32_t, int64_t> vocabulary;
     std::vector<uint32_t> code_points;  // token id - 2 -> code point
     std::vector<uint8_t> continuation_allowed;  // per token id
@@ -245,8 +252,13 @@ struct CharLmHandle {
 
 // Sessions by model path, so the shared LM and the repair host load one copy of
 // a model they both use. Guarded by InitializationMutex().
-std::map<std::string, std::weak_ptr<Ort::Session>>& CharLmSessions() {
-    static std::map<std::string, std::weak_ptr<Ort::Session>> value;
+#ifdef NC_CHAR_LM_COREML
+using CharLmShared = CharLmCoreMlModel;
+#else
+using CharLmShared = Ort::Session;
+#endif
+std::map<std::string, std::weak_ptr<CharLmShared>>& CharLmSessions() {
+    static std::map<std::string, std::weak_ptr<CharLmShared>> value;
     return value;
 }
 
@@ -310,6 +322,14 @@ void CharLmAppendUtf16(std::u16string& out, uint32_t cp) {
 
 // Runs the graph. past may be null (no earlier tokens). Returns logp_all, and
 // the per-layer keys and values of the run's tokens when want_presents is set.
+#ifdef NC_CHAR_LM_COREML
+// Defined by the Core ML backend (nc_char_lm_coreml.mm).
+std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& ids,
+    const std::vector<int64_t>& positions, const std::vector<int32_t>& mask,
+    int64_t past_length, std::vector<Ort::Value>* past, bool want_presents,
+    Ort::RunOptions& options);
+void CharLmOpenModel(CharLmHandle& h, const std::string& directory);
+#else
 std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& ids,
     const std::vector<int64_t>& positions, const std::vector<int32_t>& mask,
     int64_t past_length, std::vector<Ort::Value>* past, bool want_presents,
@@ -343,6 +363,8 @@ std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& i
     return h.session->Run(options, input_names.data(), inputs.data(), inputs.size(),
         output_names.data(), output_names.size());
 }
+
+#endif  // NC_CHAR_LM_COREML
 
 // The top_k most probable Han characters after a node (log-probabilities in
 // row, one per token id), best first; ties keep the lower id.
@@ -938,9 +960,15 @@ extern "C" CASSOTIS_EXPORT void* nc_lm_create(
         if (!directory || !*directory) throw std::runtime_error("missing character LM directory");
         FloatingPointMaskGuard fp;
         const std::lock_guard<std::mutex> lock(InitializationMutex());
+#ifndef NC_CHAR_LM_COREML
         Ort::InitApi();
+#endif
         auto h = std::make_unique<CharLmHandle>();
         CharLmLoadVocabulary(directory, *h);
+#ifdef NC_CHAR_LM_COREML
+        (void)intra_threads;  // Core ML schedules its own work.
+        CharLmOpenModel(*h, directory);
+#else
         Ort::SessionOptions options;
         options.SetExecutionMode(ORT_SEQUENTIAL);
         options.SetIntraOpNumThreads(std::max(1, intra_threads));
@@ -981,6 +1009,7 @@ extern "C" CASSOTIS_EXPORT void* nc_lm_create(
             "cassotis_lm_cache", allocator);
         if (!cache || std::string(cache.get()) != "new_tokens")
             throw std::runtime_error("character LM graph is not in the runtime form (export it as int8_static)");
+#endif  // NC_CHAR_LM_COREML
         // CASSOTIS_LM_NO_MEMO=1: every scoring call and correction runs all of its tokens (tests).
         const char* no_memo = std::getenv("CASSOTIS_LM_NO_MEMO");
         h->memo_enabled = !(no_memo && std::strcmp(no_memo, "1") == 0);

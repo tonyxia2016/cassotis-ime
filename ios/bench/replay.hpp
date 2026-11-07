@@ -42,6 +42,10 @@ struct ReplayResult {
     uint64_t digest = 0;
     MemorySnapshot start, end;
     uint64_t minAvailable = 0;
+    // Set by the driver: cassotis_core_model_state before the replay (-2: not
+    // asked) and how long it waited for the model.
+    int32_t modelState = -2;
+    double modelSeconds = 0;
     std::vector<ReplaySample> samples;
     std::string error;
 };

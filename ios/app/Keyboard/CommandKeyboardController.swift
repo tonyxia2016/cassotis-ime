@@ -1,3 +1,4 @@
+import CoreML
 import UIKit
 
 // What both POC keyboards share: the engine on its one thread, the document proxy,
@@ -244,6 +245,13 @@ class CommandKeyboardController: UIInputViewController {
       findLimit(step: number("step", 8), label: options["label"] ?? "limit")
       return
     }
+    if options["mode"] == "mltest" {
+      mlTest(
+        lengths: (options["lengths"] ?? "64,128,256").split(separator: ",").compactMap {
+          Int($0)
+        }, units: options["units"] ?? "ne", label: options["label"] ?? "mltest")
+      return
+    }
     if options["mode"] == "idle" {
       idle(seconds: number("seconds", 600), label: options["label"] ?? "idle", options: options)
       return
@@ -259,7 +267,17 @@ class CommandKeyboardController: UIInputViewController {
     let ui = number("ui", 1) == 1
     let corpus = resourceDirectory + "/corpus.tsv"
     let digest = Self.dataDirectory + "/digest-\(label).txt"
+    let model = number("lm", 1) == 1
+    let wait = number("wait", 180)
     withEngine(options: options, learning: learning) {
+      if model {
+        // The model loads on its own thread; a run measures it ready.
+        let state = Self.engine.wait(forModel: UInt32(wait * 1000))
+        Self.mark("model")
+        NSLog(
+          "cassotis model state %d, footprint %.1f MB %@", state,
+          Double(EngineBridge.footprint()) / 1_048_576, Self.engine.modelError())
+      }
       var firstKey = true
       var firstCommit = true
       let onKey: ((CassotisKeyResult) -> Void)? =
@@ -316,6 +334,92 @@ class CommandKeyboardController: UIInputViewController {
           + "\"available_mb\":\(Self.megabytes(EngineBridge.available()))}"
         DispatchQueue.main.sync { self.report(line) }
         Thread.sleep(forTimeInterval: 0.4)
+      }
+    }
+  }
+
+  private static var heldModels: [MLModel] = []
+
+  /// Loads the Core ML character LM one function (sequence length) at a time and
+  /// reports what each costs this process: load time, footprint, prediction time.
+  /// The checksum is the sum of the log-probabilities of a fixed synthetic chain;
+  /// scripts/char_lm_coreml.py prints the Mac's value for the same input.
+  private func mlTest(lengths: [Int], units: String, label: String) {
+    let url = URL(fileURLWithPath: resourceDirectory).appendingPathComponent("char_lm/char_lm.mlmodelc")
+    Self.thread.run {
+      var rows: [String] = []
+      let before = EngineBridge.footprint()
+      for length in lengths {
+        guard #available(iOS 18.0, *) else { break }
+        let configuration = MLModelConfiguration()
+        switch units {
+        case "gpu": configuration.computeUnits = .cpuAndGPU
+        case "cpu": configuration.computeUnits = .cpuOnly
+        case "all": configuration.computeUnits = .all
+        default: configuration.computeUnits = .cpuAndNeuralEngine
+        }
+        configuration.functionName = "len\(length)"
+        do {
+          let started = CFAbsoluteTimeGetCurrent()
+          let model = try MLModel(contentsOf: url, configuration: configuration)
+          let load = CFAbsoluteTimeGetCurrent() - started
+          let loaded = EngineBridge.footprint()
+          let count = NSNumber(value: length)
+          let ids = try MLMultiArray(shape: [1, count], dataType: .int32)
+          let positions = try MLMultiArray(shape: [1, count], dataType: .int32)
+          let mask = try MLMultiArray(shape: [1, 1, count, count], dataType: .float16)
+          let idValues = ids.dataPointer.bindMemory(to: Int32.self, capacity: length)
+          let placeValues = positions.dataPointer.bindMemory(to: Int32.self, capacity: length)
+          for i in 0..<length {
+            idValues[i] = Int32(2 + (i * 37) % 12000)
+            placeValues[i] = Int32(min(i, 255))
+          }
+          idValues[0] = 0
+          let maskValues = mask.dataPointer.bindMemory(to: UInt16.self, capacity: length * length)
+          let open = Float16(0).bitPattern
+          let closed = Float16(-30000).bitPattern
+          let rowStride = mask.strides[2].intValue
+          for r in 0..<length {
+            for c in 0..<length { maskValues[r * rowStride + c] = c <= r ? open : closed }
+          }
+          let input = try MLDictionaryFeatureProvider(dictionary: [
+            "ids": ids, "positions": positions, "mask": mask,
+          ])
+          var output = try model.prediction(from: input)
+          var times: [Double] = []
+          for _ in 0..<7 {
+            let start = CFAbsoluteTimeGetCurrent()
+            output = try model.prediction(from: input)
+            times.append((CFAbsoluteTimeGetCurrent() - start) * 1000)
+          }
+          times.sort()
+          var checksum = 0.0
+          if let logp = output.featureValue(for: "logp_all")?.multiArrayValue {
+            for i in 0..<(min(length, 64) - 1) {
+              let next = NSNumber(value: Int(idValues[i + 1]))
+              checksum += logp[[0, NSNumber(value: i), next]].doubleValue
+            }
+          }
+          Self.heldModels.append(model)
+          rows.append(
+            "{\"length\":\(length),\"load_s\":\(String(format: "%.2f", load)),"
+              + "\"after_load_mb\":\(Self.megabytes(loaded)),"
+              + "\"after_predict_mb\":\(Self.megabytes(EngineBridge.footprint())),"
+              + "\"median_ms\":\(String(format: "%.1f", times[times.count / 2])),"
+              + "\"best_ms\":\(String(format: "%.1f", times[0])),"
+              + "\"checksum\":\(String(format: "%.3f", checksum))}")
+        } catch {
+          rows.append("{\"length\":\(length),\"error\":\"\(error.localizedDescription)\"}")
+        }
+      }
+      let json =
+        "{\"label\":\"\(label)\",\"units\":\"\(units)\","
+        + "\"before_mb\":\(Self.megabytes(before)),\"end_mb\":\(Self.megabytes(EngineBridge.footprint())),"
+        + "\"peak_mb\":\(Self.megabytes(EngineBridge.footprintPeak())),"
+        + "\"available_mb\":\(Self.megabytes(EngineBridge.available())),\"functions\":[\(rows.joined(separator: ","))]}"
+      DispatchQueue.main.async {
+        self.report(self.envelope(json))
+        self.running = false
       }
     }
   }

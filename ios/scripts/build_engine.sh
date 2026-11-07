@@ -53,6 +53,20 @@ if ! "$ppc" "${args[@]}" "$engine/embed/cassotis_core.lpr" >"$out/fpc.log" 2>&1;
     exit 1
 fi
 
+# The Core ML runtime of the character LM (nc_lm_*, see nc_lm_runtime.pas): the
+# engine links it where the desktop build loads libcassotis_ort.dylib. With
+# -fcxx-modules the object asks the linker for CoreML and Foundation itself;
+# the host links libc++. APIs newer than the deployment target are guarded.
+case "$platform" in
+    ios) target="arm64-apple-ios${CASSOTIS_MIN_IOS:-15.0}" ;;
+    ios-sim) target="arm64-apple-ios${CASSOTIS_MIN_IOS:-15.0}-simulator" ;;
+    macos) target="arm64-apple-macos11.0" ;;
+esac
+printf '[clang %s] nc_char_lm_coreml\n' "$variant"
+xcrun clang++ -target "$target" -isysroot "$sdk" -std=c++20 -fobjc-arc -fmodules -fcxx-modules \
+    -O2 -g -Wall -Wextra -Werror -ffp-contract=off -fvisibility=hidden \
+    -c "$engine/host/native/nc_char_lm_coreml.mm" -o "$out/nc_char_lm_coreml.o"
+
 # -Cn leaves the linker's script behind: its object list is the archive's content.
-python3 -B "$root/scripts/archive_from_linkres.py" "$out" "$out/libcassotis_core.a"
+python3 -B "$root/scripts/archive_from_linkres.py" "$out" "$out/libcassotis_core.a" "$out/nc_char_lm_coreml.o"
 ls -la "$out/libcassotis_core.a"

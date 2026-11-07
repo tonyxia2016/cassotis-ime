@@ -25,7 +25,8 @@ targets = {
     "kb": dict(
         name="CassotisKeyboard", ext="appex", ptype="com.apple.product-type.app-extension",
         sources=["Keyboard/KeyboardViewController.swift", "Keyboard/CommandKeyboardController.swift"] + bridge,
-        resources=["../build/res/dict_sc.db", "../build/res/schema.sql", "../bench/corpus.tsv"],
+        resources=["../build/res/dict_sc.db", "../build/res/schema.sql", "../bench/corpus.tsv",
+                   "../build/res/char_lm"],
         bundle="com.hustmobile.cassotis.poc.keyboard", plist="Keyboard/Info.plist",
         header="Keyboard/Keyboard-Bridging-Header.h"),
     "sui": dict(
@@ -157,6 +158,7 @@ for key, t in targets.items():
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
 					"-liconv",
+					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = {t["bundle"]};

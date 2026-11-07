@@ -29,6 +29,13 @@ static CassotisKeyResult *wrap(const Result &r) {
     EngineClient _client;
     MemorySnapshot _beforeOpen, _afterOpen;
     double _openSeconds;
+    int32_t _modelState;
+    double _modelSeconds;
+    std::string _modelError;
+}
+- (instancetype)init {
+    if ((self = [super init])) _modelState = -2;
+    return self;
 }
 + (uint64_t)footprint { return memorySnapshot().footprint; }
 + (uint64_t)footprintPeak { return memorySnapshot().footprintPeak; }
@@ -44,6 +51,8 @@ static CassotisKeyResult *wrap(const Result &r) {
     cassotis_core_set_option("sqlite_mmap_mib", number(@"mmap", 320));
     cassotis_core_set_option("query_path_on_demand", number(@"ondemand", 1));
     cassotis_core_set_option("prewarm_short_lookups", number(@"prewarm", 0));
+    cassotis_core_set_option("char_lm", number(@"lm", 1));
+    cassotis_core_set_option("deterministic_search", number(@"det", 0));
 }
 
 - (NSString *)openDictionary:(NSString *)dictionary userDictionary:(NSString *)userDictionary
@@ -82,6 +91,19 @@ static CassotisKeyResult *wrap(const Result &r) {
     cassotis_core_trim(level);
     malloc_zone_pressure_relief(nullptr, 0);  // hand the freed pages back at once
 }
+- (int32_t)waitForModel:(uint32_t)timeoutMs {
+    auto t0 = std::chrono::steady_clock::now();
+    _modelState = cassotis_core_model_state(int32_t(timeoutMs));
+    _modelSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    _modelError.clear();
+    if (_modelState < 0) {
+        char text[1024] = {};
+        cassotis_core_last_error(text, sizeof text);
+        _modelError = text;
+    }
+    return _modelState;
+}
+- (NSString *)modelError { return ns(_modelError); }
 
 - (NSString *)replayCorpus:(NSString *)corpus label:(NSString *)label maxKeys:(uint32_t)maxKeys
                 maxSeconds:(uint64_t)maxSeconds paceMicros:(uint32_t)paceMicros sampleEvery:(uint32_t)sampleEvery
@@ -103,6 +125,9 @@ static CassotisKeyResult *wrap(const Result &r) {
     };
     auto rows = loadCorpus(corpus.UTF8String);
     auto result = replay(_client, rows, options, progress);
+    result.modelState = _modelState;
+    result.modelSeconds = _modelSeconds;
+    if (result.error.empty() && _modelState < 0 && _modelState != -2) result.error = "model: " + _modelError;
     return ns(toJSON(result, label.UTF8String, _beforeOpen, _afterOpen, _openSeconds));
 }
 @end

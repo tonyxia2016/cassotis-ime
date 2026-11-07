@@ -31,9 +31,17 @@ xcrun clang++ -arch "$arch" -mmacosx-version-min=14.0 -std=c++20 -O2 -g \
     -Wl,-install_name,@rpath/libcassotis_ort.dylib \
     -Wl,-rpath,@loader_path -o "$bin/libcassotis_ort.dylib"
 cp "$ort/libonnxruntime.1.20.1.dylib" "$bin/"
+# The same nc_lm_* functions on Core ML (char_lm.mlmodelc on the Neural Engine,
+# see src/host/nc_lm_runtime.pas). It needs no third-party library.
+printf '[C++ %s] Core ML bridge\n' "$arch"
+xcrun clang++ -arch "$arch" -mmacosx-version-min=14.0 -std=c++20 -O2 -g \
+    -fobjc-arc -fmodules -fcxx-modules \
+    -Wall -Wextra -Werror -ffp-contract=off -fvisibility=hidden -dynamiclib \
+    "$root/src/host/native/nc_char_lm_coreml.mm" \
+    -Wl,-install_name,@rpath/libcassotis_coreml.dylib -o "$bin/libcassotis_coreml.dylib"
 # Apply consistent ad hoc signatures before bundle assembly. The
 # linker's initial signature differs from codesign's application signature.
-for library in libcassotis_ort.dylib libonnxruntime.1.20.1.dylib; do
+for library in libcassotis_ort.dylib libonnxruntime.1.20.1.dylib libcassotis_coreml.dylib; do
     codesign --force --sign - "$bin/$library"
 done
 ln -sfn "$root/data/models/char_lm" "$bin/char_lm"

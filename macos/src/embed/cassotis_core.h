@@ -37,11 +37,24 @@ void cassotis_core_trim(int32_t level);
 void cassotis_core_close(void);
 
 // Set before cassotis_core_open: cache_percent (100 = macOS bounds),
-// sqlite_cache_kib, sqlite_mmap_mib, query_path_on_demand, prewarm_short_lookups.
+// sqlite_cache_kib, sqlite_mmap_mib, query_path_on_demand, prewarm_short_lookups,
+// char_lm (1, the default: load <resource_dir>/char_lm with Core ML on a
+// background thread; candidates are unchanged until it is ready; 0: no model),
+// char_lm_async (0, the default: no Tab continuation or one-key rerank, whose
+// results a host must poll for; 1: queue them after every key, as on macOS).
+// The Core ML runtime (macos/src/host/native/nc_char_lm_coreml.mm) is in the
+// archive; the host links CoreML.framework and libc++.
 int32_t cassotis_core_set_option(const char *name, int32_t value);
 
 // "name=entries\n" per engine container; returns the full byte length.
 uint32_t cassotis_core_cache_census(char *buffer, uint32_t capacity);
+
+// The character LM and the repair that shares it: 1 ready, 0 still loading,
+// -1 none (char_lm off, or the load failed: cassotis_core_last_error says why).
+// The model loads on a background thread the first time it is needed; this
+// call starts it and waits up to timeout_ms (0: does not wait). The first load
+// of a new model file compiles it for the Neural Engine (seconds).
+int32_t cassotis_core_model_state(int32_t timeout_ms);
 
 #ifdef __cplusplus
 }

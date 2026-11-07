@@ -1,8 +1,8 @@
 unit nc_char_lm_host;
 
 { Host side of the shared character LM:
-  IncCharLm over nc_lm_* in libcassotis_ort.dylib. The model
-  lives in <runtime>/char_lm; any load failure
+  IncCharLm over nc_lm_* (ONNX Runtime or Core ML, see nc_lm_runtime). The
+  model lives in <runtime>/char_lm; any load failure
   leaves the model unavailable and every ranking unchanged.
 
   One session serves the engine thread (long and short rerank, latency
@@ -23,8 +23,6 @@ type
     TncCharLmHost = class(TInterfacedObject, IncCharLm, IncCharLmNext, IncCharLmQuery,
         IncCharLmContinue)
     private type
-        TCreateModel = function(directory: PAnsiChar; intra_threads: Integer;
-            error_text: PAnsiChar; capacity: Integer): Pointer; cdecl;
         TScoreTexts = function(handle: Pointer; context: PWideChar; texts: PPWideChar;
             count, min_count, max_nodes: Integer; out_logp: PSingle; timeout_ms: Integer;
             error_text: PAnsiChar; capacity: Integer): Integer; cdecl;
@@ -46,7 +44,7 @@ type
         m_threads, m_timeout_ms: Integer;
         m_loader: TThread;
         m_signal: TEvent;
-        m_ready, m_stopping: Integer;
+        m_ready, m_stopping, m_failed: Integer;
         m_module: TLibHandle;
         m_handle: Pointer;
         m_score: TScoreTexts;
@@ -87,6 +85,9 @@ type
             intra_threads: Integer = 0; timeout_ms: Integer = 100);
         destructor Destroy; override;
         function char_lm_ready: Boolean;
+        { 1 ready, 0 not loaded yet (the load starts on first use or on this
+          call), -1 failed (last_error). }
+        function model_state: Integer;
         function score_texts(const context: string; const texts: TArray<string>;
             const min_count, max_nodes: Integer; out logp: TArray<Single>): Integer;
         function score_texts_background(const context: string; const texts: TArray<string>;
@@ -129,7 +130,7 @@ function nc_shared_lm_threads: Integer;
 
 implementation
 
-uses fpjson, jsonparser, nc_runtime_paths, nc_sha256, nc_io_compat;
+uses fpjson, jsonparser, nc_runtime_paths, nc_io_compat, nc_lm_runtime;
 
 // The same hardware policy is used by repair, foreground and background work.
 function sysctlbyname(name: PAnsiChar; oldp: Pointer; oldlenp: PSizeUInt;
@@ -378,12 +379,9 @@ procedure TncCharLmHost.load;
 const
     required_files: array[0..1] of string = ('char_lm.onnx', 'char_lm_vocab.bin');
 var
-    root, hash_value: TJSONData;
+    root: TJSONData;
     manifest, files: TJSONObject;
-    folder, name, path: string;
-    folder_utf8: UTF8String;
-    create_model: TCreateModel;
-    error_text: array[0..1023] of AnsiChar;
+    folder, runtime: string;
 begin
     root := nil;
     try
@@ -400,41 +398,34 @@ begin
         files := TJSONObject(manifest.Find('files'));
         if files.Count < Length(required_files) then
             raise EInvalidOp.Create('Incomplete character LM manifest');
-        for name in required_files do
-        begin
-            hash_value := files.Find(UTF8Encode(name));
-            if (hash_value = nil) or (hash_value.JSONType <> jtString) then
-                raise EInvalidOp.Create('Missing character LM asset hash');
-            path := IncludeTrailingPathDelimiter(folder) + name;
-            if not SameText(nc_sha256_file(path), UTF8Decode(hash_value.AsString)) then
-                raise EInvalidOp.Create('Character LM asset hash mismatch');
-        end;
-        m_module := LoadLibrary(UTF8Encode(nc_runtime_library(ExtractFileDir(ParamStr(0)))));
-        if m_module = 0 then
-            raise EInvalidOp.Create('Character LM runtime unavailable: ' + GetLoadErrorStr);
-        create_model := TCreateModel(GetProcedureAddress(m_module, 'nc_lm_create'));
-        m_score := TScoreTexts(GetProcedureAddress(m_module, 'nc_lm_score'));
-        m_score_next := TScoreTextsNext(GetProcedureAddress(m_module, 'nc_lm_score_next'));
-        m_destroy := TDestroyModel(GetProcedureAddress(m_module, 'nc_lm_destroy'));
-        m_continue := TContinueText(GetProcedureAddress(m_module, 'nc_lm_continue'));
-        m_score_query := TScoreTextsQuery(GetProcedureAddress(m_module, 'nc_lm_score_next_query'));
-        if not Assigned(create_model) or not Assigned(m_score) or not Assigned(m_destroy) then
+        // Checks the vocabulary and the model, then opens it with Core ML or ONNX Runtime.
+        m_handle := nc_lm_open_model(folder, files, ['char_lm_vocab.bin'], m_threads, m_module, runtime);
+        m_destroy := TDestroyModel(nc_lm_symbol(m_module, 'nc_lm_destroy'));
+        m_score := TScoreTexts(nc_lm_symbol(m_module, 'nc_lm_score'));
+        m_score_next := TScoreTextsNext(nc_lm_symbol(m_module, 'nc_lm_score_next'));
+        m_continue := TContinueText(nc_lm_symbol(m_module, 'nc_lm_continue'));
+        m_score_query := TScoreTextsQuery(nc_lm_symbol(m_module, 'nc_lm_score_next_query'));
+        if not Assigned(m_score) or not Assigned(m_destroy) then
             raise EInvalidOp.Create('Character LM runtime must be rebuilt');
-        folder_utf8 := UTF8Encode(folder);
-        FillChar(error_text, SizeOf(error_text), 0);
-        m_handle := create_model(PAnsiChar(folder_utf8), m_threads, @error_text[0], Length(error_text));
-        if m_handle = nil then
-            raise EInvalidOp.Create(UTF8Decode(UTF8String(PAnsiChar(@error_text[0]))));
         InterlockedExchange(m_ready, 1);
-        log_model_state(Format('ready; threads=%d; deadline_ms=%d', [m_threads, m_timeout_ms]));
+        log_model_state(Format('ready; runtime=%s; threads=%d; deadline_ms=%d',
+            [runtime, m_threads, m_timeout_ms]));
     except
         on E: Exception do
         begin
             m_error := E.Message;
+            InterlockedExchange(m_failed, 1);
             log_model_state('unavailable; keeping baseline: ' + m_error);
         end;
     end;
     root.Free;
+end;
+
+function TncCharLmHost.model_state: Integer;
+begin
+    if char_lm_ready then Exit(1);
+    if InterlockedCompareExchange(m_failed, 0, 0) = 1 then Exit(-1);
+    Result := 0;
 end;
 
 function TncCharLmHost.char_lm_ready: Boolean;
