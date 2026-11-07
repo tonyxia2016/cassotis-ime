@@ -1,0 +1,12 @@
+English word recognition data
+
+Alan Beale's 12Dicts, packaged by Kevin Atkinson.
+The upstream alt12dicts directory declares its files public domain.
+Source: https://github.com/en-wl/wordlist/tree/b22230cc5250887737fdefe9ca4c9d9d01230eaa/alt12dicts
+Source file: 2of12full.txt
+SHA-256: 76dc8ed76ada4d4d0a67ffc2b81499a5c8a25f3f741df2f3a3d9bb438bf6eaf2
+
+Cassotis uses a filtered list and derived letter-sequence tables for local
+English recognition. The generated table also includes spellings and broad
+frequency bands counted in the project's language-model corpora. Corpus
+passages and training tools are not included.
