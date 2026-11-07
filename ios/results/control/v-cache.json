@@ -1,0 +1,15 @@
+{
+  "label": "v-cache",
+  "before_open_mb": 5.8, "after_open_mb": 15.5, "open_seconds": 0.339,
+  "keys": 15607, "sentences": 388, "first_hits": 187, "first_rate": 0.4820, "deferred": 0,
+  "seconds": 252.2, "p50_ms": 8.45, "p95_ms": 46.86, "p99_ms": 78.74, "worst_ms": 390.6, "mean_ms": 16.16,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 30.7, "peak_mb": 35.8, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "digest": "7f8a9ebd4b1a202b",
+  "error": "",
+  "samples": [
+    [0, 0.0, 15.5, 15.5, 0.0],
+    [10000, 155.8, 29.3, 33.3, 0.0],
+    [15607, 252.2, 30.7, 35.8, 0.0]
+  ]
+}

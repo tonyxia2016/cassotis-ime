@@ -1,0 +1,16 @@
+{"device":"iPhone16,1","os":"27.2","full_access":false,"marks":[{"name":"viewDidLoad","mb":6.6,"peak_mb":6.6,"available_mb":170.4},{"name":"viewDidAppear","mb":15.7,"peak_mb":17.8,"available_mb":161.3},{"name":"engineOpen","mb":15.7,"peak_mb":17.8,"available_mb":161.3},{"name":"firstKey","mb":15.7,"peak_mb":17.8,"available_mb":161.3},{"name":"firstCommit","mb":18.0,"peak_mb":20.0,"available_mb":159.0}],"run":{
+  "label": "kb-learn-smoke",
+  "before_open_mb": 15.5, "after_open_mb": 15.7, "open_seconds": 0.253,
+  "keys": 609, "sentences": 23, "first_hits": 13, "first_rate": 0.5652, "deferred": 0,
+  "seconds": 10.2, "p50_ms": 9.41, "p95_ms": 53.86, "p99_ms": 73.92, "worst_ms": 85.7, "mean_ms": 16.53,
+  "ui_p50_ms": 9.69, "ui_p95_ms": 53.90, "ui_p99_ms": 73.95, "ui_worst_ms": 85.7,
+  "end_mb": 22.6, "peak_mb": 25.8, "available_end_mb": 154.4, "available_min_mb": 154.4,
+  "digest": "e4bf6d303e6b360e",
+  "error": "",
+  "samples": [
+    [0, 0.0, 15.7, 17.8, 161.3],
+    [500, 8.7, 22.2, 24.6, 154.8],
+    [609, 10.2, 22.6, 25.8, 154.4]
+  ]
+}
+}

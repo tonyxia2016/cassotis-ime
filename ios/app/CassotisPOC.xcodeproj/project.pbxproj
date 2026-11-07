@@ -1,0 +1,618 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+		33A034409ACA1D42DCE26C10 = {isa = PBXBuildFile; fileRef = 55F92844BD96512B0E32F2BF; };
+		6611492C4B758144344C1022 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
+		835A6FF32751BF062E956153 = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
+		4C576B27E12D6892B285C337 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		B392A25BED396C4676BFE8F2 = {isa = PBXBuildFile; fileRef = CAD36F85E6A3729FCF7711AA; };
+		DD4DE79EB1C5E91C9E488E12 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
+		4F2209D7C503EAE6C64DE8B1 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
+		9257539B87ABCB2F8881018E = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
+		2559B4AC5E028DCB3E200040 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		F00FC22FCC1F89346C2BB765 = {isa = PBXBuildFile; fileRef = F8C9F204141DC1EEDB4CEEE6; };
+		0D4C05CCE6BF23EB3054DDEF = {isa = PBXBuildFile; fileRef = A44D163741D0D2875FDBABBA; };
+		B28B22193DE88E99813638AF = {isa = PBXBuildFile; fileRef = F50750A379400E3F497E81CD; };
+		2717A7E6EAC8FA081CE4BF7C = {isa = PBXBuildFile; fileRef = EFEB9515A11F74F58A6EA43A; };
+		F86AA3F57E97781A96C3283A = {isa = PBXBuildFile; fileRef = 387FCD29B10A50D29501F835; };
+		83D0D98AAF83B46C2BF711A3 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
+		3D3AD054FD76ADDCB2761E47 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
+		B0E7FCB26F884F2567E47C2D = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
+		30FC308173F7966D804B3A74 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		00F64A764513A39F7AFE2B29 = {isa = PBXBuildFile; fileRef = CF7A29891B884710B79A0738; };
+		14CCFA34591C361DF1596310 = {isa = PBXBuildFile; fileRef = 5E9AD112AA5E89FCF714AE5D; };
+		650C4B23EE3F2321D576FBD2 = {isa = PBXBuildFile; fileRef = 0A1B0D2671C78350F6D02D18; };
+		A6F2C4212917E2842670F187 = {isa = PBXBuildFile; fileRef = 946EE76D0F804BC56EDE3B03; };
+		21621B2AA20FDCF73D1DB52B = {isa = PBXBuildFile; fileRef = 7FAAC6C210C866A207A4BAFA; };
+		3970EF68E824458F78AFD8FA = {isa = PBXBuildFile; fileRef = 0B54778783A7CFAAAC0D3562; };
+		51515E949E308E1456BA9776 = {isa = PBXBuildFile; fileRef = 821E4EFA96A5A65D5E23726A; };
+		8277C4725DE3BF821DEE8EF5 = {isa = PBXBuildFile; fileRef = 17340016B0AA416D12F65D01; };
+		CBD4C5CDA65F8A48CCD58B45 = {isa = PBXBuildFile; fileRef = B8647C580D5A474176B17D37; };
+		292907C2CF109DB23AC942BA = {isa = PBXBuildFile; fileRef = 66144080F8D949BF8D2AE923; };
+		2E6A75BA2F79AD51651A1FDB = {isa = PBXBuildFile; fileRef = 940298F8FB3D4FE5C289D15E; };
+		09EC6E4F177F60AE33362255 = {isa = PBXBuildFile; fileRef = 4ECBABC8B87867977E1205FF; };
+		75A529C562E70C1D96D93608 = {isa = PBXBuildFile; fileRef = DAA48B7882404BF02760A447; };
+		11AFBEEFAAB0FFFDE0D12B21 = {isa = PBXBuildFile; fileRef = C3BD6ACFBF35922FBE6D1E9E; };
+		E13960F4B16C67B0ABB9DD5C = {isa = PBXBuildFile; fileRef = 8E4630BEC480B4AB8556C7F9; };
+		B74D2E0DA6AF8C609EB4F7D0 = {isa = PBXBuildFile; fileRef = 8FD25C25183C5166A24DD8EB; };
+		BE602FC7ABA6CB4B33EB4FB2 = {isa = PBXBuildFile; fileRef = D45FDA0D8417C9FE5E9E0A3C; };
+		E81ABEFE5DAAA59D86B2C3C3 = {isa = PBXBuildFile; fileRef = 23197D98605E1468AE4AFEC4; };
+		8CE9AE443B598AF53A9629C0 = {isa = PBXBuildFile; fileRef = 61163A297E76434A17CEE84D; };
+		C82C35E51730BC3E421905CC = {isa = PBXBuildFile; fileRef = 1D9D39930B4A99F40C51D1B7; };
+		EBC1059B636F4647B13EFE74 = {isa = PBXBuildFile; fileRef = 08DDF4FCDBE4954F3CFE64D8; };
+		233CDAF7293B699281E85986 = {isa = PBXBuildFile; fileRef = 5D892C065DF5326698EB4124; };
+		AEBD71DFE47AEA30F8DCC26C = {isa = PBXBuildFile; fileRef = 3B8D08D4A428E0F15E034822; };
+		B11D6E69859AB4561CC2C5E6 = {isa = PBXBuildFile; fileRef = B7E0B4B5AEB5797B780659CF; };
+		812B6A1F83633FC067D6F114 = {isa = PBXBuildFile; fileRef = D39A6653E78CCBB31039C919; };
+		04812FBEDE275FA148D1C1C0 = {isa = PBXBuildFile; fileRef = D656C72F74E1E818B20C700B; };
+		06F87E879D4F3D8497931638 = {isa = PBXBuildFile; fileRef = B172E7578F33146BB6E050F4; };
+		1A2D8FF6DA4BF5941BEBD678 = {isa = PBXBuildFile; fileRef = 891C62EBB6507A807BB2C246; };
+		0E4EFF2C38C3CAEB7869F5BE = {isa = PBXBuildFile; fileRef = 6B0B8883A046E683C352BB78; };
+		68C86244A706EF5412316888 = {isa = PBXBuildFile; fileRef = 409A1C304288A757398FEB68; };
+		0ED75F5269B73FF1F1AE62F7 = {isa = PBXBuildFile; fileRef = E98C161A42C3F8433503ECB6; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B669E4F2559CABE55B60B678 = {isa = PBXBuildFile; fileRef = 6244DB8E6A95F6A4A7D37EC2; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+
+		28CD571E684FA12739CDE353 = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595;
+			proxyType = 1;
+			remoteGlobalIDString = AB2B7698E4959560834B579F;
+			remoteInfo = CassotisKeyboard;
+		};
+		8C5F386A4C0C0D7635450D9C = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595;
+			proxyType = 1;
+			remoteGlobalIDString = F09F46E7C5D52C137A70D2F7;
+			remoteInfo = CassotisKeyboardSwiftUI;
+		};
+
+		269605D45C104F12CBCDC8FB = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0ED75F5269B73FF1F1AE62F7,
+				B669E4F2559CABE55B60B678,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		55F92844BD96512B0E32F2BF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AppDelegate.swift"; path = "Host/AppDelegate.swift"; sourceTree = SOURCE_ROOT; };
+		A72A3729DBBBE9B7203F7AA8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = "EngineBridge.mm"; path = "Keyboard/EngineBridge.mm"; sourceTree = SOURCE_ROOT; };
+		E2350F80BEE7A7487DE441D9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "EngineClient.cpp"; path = "../client/EngineClient.cpp"; sourceTree = SOURCE_ROOT; };
+		656ECDE031BD055ED47A1422 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "replay.cpp"; path = "../bench/replay.cpp"; sourceTree = SOURCE_ROOT; };
+		CAD36F85E6A3729FCF7711AA = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "Keyboard/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
+		14521C62C9E5FB08FAA8E404 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CommandKeyboardController.swift"; path = "Keyboard/CommandKeyboardController.swift"; sourceTree = SOURCE_ROOT; };
+		F8C9F204141DC1EEDB4CEEE6 = {isa = PBXFileReference; lastKnownFileType = file; name = "dict_sc.db"; path = "../build/res/dict_sc.db"; sourceTree = SOURCE_ROOT; };
+		A44D163741D0D2875FDBABBA = {isa = PBXFileReference; lastKnownFileType = text; name = "schema.sql"; path = "../build/res/schema.sql"; sourceTree = SOURCE_ROOT; };
+		F50750A379400E3F497E81CD = {isa = PBXFileReference; lastKnownFileType = text; name = "corpus.tsv"; path = "../bench/corpus.tsv"; sourceTree = SOURCE_ROOT; };
+		EFEB9515A11F74F58A6EA43A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "KeyboardSwiftUI/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
+		387FCD29B10A50D29501F835 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxBackend.swift"; path = "KeyboardSwiftUI/FcitxBackend.swift"; sourceTree = SOURCE_ROOT; };
+		CF7A29891B884710B79A0738 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Bubble.swift"; path = "../build/fcitxui/Bubble.swift"; sourceTree = SOURCE_ROOT; };
+		5E9AD112AA5E89FCF714AE5D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Candidate.swift"; path = "../build/fcitxui/Candidate.swift"; sourceTree = SOURCE_ROOT; };
+		0A1B0D2671C78350F6D02D18 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateBar.swift"; path = "../build/fcitxui/CandidateBar.swift"; sourceTree = SOURCE_ROOT; };
+		946EE76D0F804BC56EDE3B03 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateTabActionColumn.swift"; path = "../build/fcitxui/CandidateTabActionColumn.swift"; sourceTree = SOURCE_ROOT; };
+		7FAAC6C210C866A207A4BAFA = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ClipboardSuggestion.swift"; path = "../build/fcitxui/ClipboardSuggestion.swift"; sourceTree = SOURCE_ROOT; };
+		0B54778783A7CFAAAC0D3562 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Color.swift"; path = "../build/fcitxui/Color.swift"; sourceTree = SOURCE_ROOT; };
+		821E4EFA96A5A65D5E23726A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ContextMenu.swift"; path = "../build/fcitxui/ContextMenu.swift"; sourceTree = SOURCE_ROOT; };
+		17340016B0AA416D12F65D01 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Dialog.swift"; path = "../build/fcitxui/Dialog.swift"; sourceTree = SOURCE_ROOT; };
+		B8647C580D5A474176B17D37 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DocumentInfo.swift"; path = "../build/fcitxui/DocumentInfo.swift"; sourceTree = SOURCE_ROOT; };
+		66144080F8D949BF8D2AE923 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Edit.swift"; path = "../build/fcitxui/Edit.swift"; sourceTree = SOURCE_ROOT; };
+		940298F8FB3D4FE5C289D15E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxProtocol.swift"; path = "../build/fcitxui/FcitxProtocol.swift"; sourceTree = SOURCE_ROOT; };
+		4ECBABC8B87867977E1205FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Key.swift"; path = "../build/fcitxui/Key.swift"; sourceTree = SOURCE_ROOT; };
+		DAA48B7882404BF02760A447 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyModifier.swift"; path = "../build/fcitxui/KeyModifier.swift"; sourceTree = SOURCE_ROOT; };
+		C3BD6ACFBF35922FBE6D1E9E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Keyboard.swift"; path = "../build/fcitxui/Keyboard.swift"; sourceTree = SOURCE_ROOT; };
+		8E4630BEC480B4AB8556C7F9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Numpad.swift"; path = "../build/fcitxui/Numpad.swift"; sourceTree = SOURCE_ROOT; };
+		8FD25C25183C5166A24DD8EB = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ReturnBar.swift"; path = "../build/fcitxui/ReturnBar.swift"; sourceTree = SOURCE_ROOT; };
+		D45FDA0D8417C9FE5E9E0A3C = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ScrollMetrics.swift"; path = "../build/fcitxui/ScrollMetrics.swift"; sourceTree = SOURCE_ROOT; };
+		23197D98605E1468AE4AFEC4 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Shadow.swift"; path = "../build/fcitxui/Shadow.swift"; sourceTree = SOURCE_ROOT; };
+		61163A297E76434A17CEE84D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "StatusArea.swift"; path = "../build/fcitxui/StatusArea.swift"; sourceTree = SOURCE_ROOT; };
+		1D9D39930B4A99F40C51D1B7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Symbol.swift"; path = "../build/fcitxui/Symbol.swift"; sourceTree = SOURCE_ROOT; };
+		08DDF4FCDBE4954F3CFE64D8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Sync.swift"; path = "../build/fcitxui/Sync.swift"; sourceTree = SOURCE_ROOT; };
+		5D892C065DF5326698EB4124 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Toast.swift"; path = "../build/fcitxui/Toast.swift"; sourceTree = SOURCE_ROOT; };
+		3B8D08D4A428E0F15E034822 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Toolbar.swift"; path = "../build/fcitxui/Toolbar.swift"; sourceTree = SOURCE_ROOT; };
+		B7E0B4B5AEB5797B780659CF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "VirtualKeyboard.swift"; path = "../build/fcitxui/VirtualKeyboard.swift"; sourceTree = SOURCE_ROOT; };
+		D39A6653E78CCBB31039C919 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "WrapLayout.swift"; path = "../build/fcitxui/WrapLayout.swift"; sourceTree = SOURCE_ROOT; };
+		D656C72F74E1E818B20C700B = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "height.swift"; path = "../build/fcitxui/height.swift"; sourceTree = SOURCE_ROOT; };
+		B172E7578F33146BB6E050F4 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "keyboardui.swift"; path = "../build/fcitxui/keyboardui.swift"; sourceTree = SOURCE_ROOT; };
+		891C62EBB6507A807BB2C246 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "logging.swift"; path = "../build/fcitxui/logging.swift"; sourceTree = SOURCE_ROOT; };
+		6B0B8883A046E683C352BB78 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ui.swift"; path = "../build/fcitxui/ui.swift"; sourceTree = SOURCE_ROOT; };
+		409A1C304288A757398FEB68 = {isa = PBXFileReference; lastKnownFileType = folder; name = "share"; path = "../build/fcitxui-res/share"; sourceTree = SOURCE_ROOT; };
+		0A02BCB7CA811FAE15FCC5C3 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CassotisPOC.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E98C161A42C3F8433503ECB6 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CassotisKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		6244DB8E6A95F6A4A7D37EC2 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CassotisKeyboardSwiftUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+
+		DB0F6F37EBEB6EA094891243 = {
+			isa = PBXGroup;
+			children = (
+				55F92844BD96512B0E32F2BF,
+				A72A3729DBBBE9B7203F7AA8,
+				E2350F80BEE7A7487DE441D9,
+				656ECDE031BD055ED47A1422,
+				CAD36F85E6A3729FCF7711AA,
+				14521C62C9E5FB08FAA8E404,
+				F8C9F204141DC1EEDB4CEEE6,
+				A44D163741D0D2875FDBABBA,
+				F50750A379400E3F497E81CD,
+				EFEB9515A11F74F58A6EA43A,
+				387FCD29B10A50D29501F835,
+				CF7A29891B884710B79A0738,
+				5E9AD112AA5E89FCF714AE5D,
+				0A1B0D2671C78350F6D02D18,
+				946EE76D0F804BC56EDE3B03,
+				7FAAC6C210C866A207A4BAFA,
+				0B54778783A7CFAAAC0D3562,
+				821E4EFA96A5A65D5E23726A,
+				17340016B0AA416D12F65D01,
+				B8647C580D5A474176B17D37,
+				66144080F8D949BF8D2AE923,
+				940298F8FB3D4FE5C289D15E,
+				4ECBABC8B87867977E1205FF,
+				DAA48B7882404BF02760A447,
+				C3BD6ACFBF35922FBE6D1E9E,
+				8E4630BEC480B4AB8556C7F9,
+				8FD25C25183C5166A24DD8EB,
+				D45FDA0D8417C9FE5E9E0A3C,
+				23197D98605E1468AE4AFEC4,
+				61163A297E76434A17CEE84D,
+				1D9D39930B4A99F40C51D1B7,
+				08DDF4FCDBE4954F3CFE64D8,
+				5D892C065DF5326698EB4124,
+				3B8D08D4A428E0F15E034822,
+				B7E0B4B5AEB5797B780659CF,
+				D39A6653E78CCBB31039C919,
+				D656C72F74E1E818B20C700B,
+				B172E7578F33146BB6E050F4,
+				891C62EBB6507A807BB2C246,
+				6B0B8883A046E683C352BB78,
+				409A1C304288A757398FEB68,
+				86024CAD1E83101D97359D73,
+			);
+			sourceTree = "<group>";
+		};
+		86024CAD1E83101D97359D73 = {
+			isa = PBXGroup;
+			children = (
+				0A02BCB7CA811FAE15FCC5C3,
+				E98C161A42C3F8433503ECB6,
+				6244DB8E6A95F6A4A7D37EC2,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+
+		859C4E89CA27655AFD1D4218 = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 30E592B6DAB99D60AAC9651C;
+			buildPhases = (
+				11C587374EEE809C249C154A,
+				B5A3A94139EC3DCFD949BDB1,
+				269605D45C104F12CBCDC8FB,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				29EF7459858F50DD95430F09,
+				D54CF5C4A6ECC100B45CE317,
+			);
+			name = CassotisPOC;
+			productName = CassotisPOC;
+			productReference = 0A02BCB7CA811FAE15FCC5C3;
+			productType = "com.apple.product-type.application";
+		};
+		AB2B7698E4959560834B579F = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BDEB25E0568A456517D1831B;
+			buildPhases = (
+				F28886A2D30209892201CAC5,
+				9FA3C1A2D3B3758F99DF8276,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CassotisKeyboard;
+			productName = CassotisKeyboard;
+			productReference = E98C161A42C3F8433503ECB6;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F09F46E7C5D52C137A70D2F7 = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0B29DA0A62990EE549F35511;
+			buildPhases = (
+				31CE22FFB0C5808F67AB168B,
+				459ACE52D312985FF6E55236,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CassotisKeyboardSwiftUI;
+			productName = CassotisKeyboardSwiftUI;
+			productReference = 6244DB8E6A95F6A4A7D37EC2;
+			productType = "com.apple.product-type.app-extension";
+		};
+
+		46F86FAA6BBF9AC94A7E4595 = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = D6CC5DBF7A7165B9E249B3D6;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = DB0F6F37EBEB6EA094891243;
+			productRefGroup = 86024CAD1E83101D97359D73;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				859C4E89CA27655AFD1D4218,
+				AB2B7698E4959560834B579F,
+				F09F46E7C5D52C137A70D2F7,
+			);
+		};
+
+		11C587374EEE809C249C154A = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				33A034409ACA1D42DCE26C10,
+				6611492C4B758144344C1022,
+				835A6FF32751BF062E956153,
+				4C576B27E12D6892B285C337,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B5A3A94139EC3DCFD949BDB1 = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F28886A2D30209892201CAC5 = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B392A25BED396C4676BFE8F2,
+				DD4DE79EB1C5E91C9E488E12,
+				4F2209D7C503EAE6C64DE8B1,
+				9257539B87ABCB2F8881018E,
+				2559B4AC5E028DCB3E200040,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FA3C1A2D3B3758F99DF8276 = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F00FC22FCC1F89346C2BB765,
+				0D4C05CCE6BF23EB3054DDEF,
+				B28B22193DE88E99813638AF,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		31CE22FFB0C5808F67AB168B = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2717A7E6EAC8FA081CE4BF7C,
+				F86AA3F57E97781A96C3283A,
+				83D0D98AAF83B46C2BF711A3,
+				3D3AD054FD76ADDCB2761E47,
+				B0E7FCB26F884F2567E47C2D,
+				30FC308173F7966D804B3A74,
+				00F64A764513A39F7AFE2B29,
+				14CCFA34591C361DF1596310,
+				650C4B23EE3F2321D576FBD2,
+				A6F2C4212917E2842670F187,
+				21621B2AA20FDCF73D1DB52B,
+				3970EF68E824458F78AFD8FA,
+				51515E949E308E1456BA9776,
+				8277C4725DE3BF821DEE8EF5,
+				CBD4C5CDA65F8A48CCD58B45,
+				292907C2CF109DB23AC942BA,
+				2E6A75BA2F79AD51651A1FDB,
+				09EC6E4F177F60AE33362255,
+				75A529C562E70C1D96D93608,
+				11AFBEEFAAB0FFFDE0D12B21,
+				E13960F4B16C67B0ABB9DD5C,
+				B74D2E0DA6AF8C609EB4F7D0,
+				BE602FC7ABA6CB4B33EB4FB2,
+				E81ABEFE5DAAA59D86B2C3C3,
+				8CE9AE443B598AF53A9629C0,
+				C82C35E51730BC3E421905CC,
+				EBC1059B636F4647B13EFE74,
+				233CDAF7293B699281E85986,
+				AEBD71DFE47AEA30F8DCC26C,
+				B11D6E69859AB4561CC2C5E6,
+				812B6A1F83633FC067D6F114,
+				04812FBEDE275FA148D1C1C0,
+				06F87E879D4F3D8497931638,
+				1A2D8FF6DA4BF5941BEBD678,
+				0E4EFF2C38C3CAEB7869F5BE,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		459ACE52D312985FF6E55236 = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				68C86244A706EF5412316888,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		29EF7459858F50DD95430F09 = {
+			isa = PBXTargetDependency;
+			target = AB2B7698E4959560834B579F;
+			targetProxy = 28CD571E684FA12739CDE353;
+		};
+		D54CF5C4A6ECC100B45CE317 = {
+			isa = PBXTargetDependency;
+			target = F09F46E7C5D52C137A70D2F7;
+			targetProxy = 8C5F386A4C0C0D7635450D9C;
+		};
+
+		A1380B9374BC7F9EF1350CD4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = TR78TGFZDE;
+				ENABLE_BITCODE = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				"CASSOTIS_ENGINE[sdk=iphoneos*]" = ios;
+				"CASSOTIS_ENGINE[sdk=iphonesimulator*]" = "ios-sim";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		6F040E4F02057F18F3AC0E47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = TR78TGFZDE;
+				ENABLE_BITCODE = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				"CASSOTIS_ENGINE[sdk=iphoneos*]" = ios;
+				"CASSOTIS_ENGINE[sdk=iphonesimulator*]" = "ios-sim";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_OPTIMIZATION_LEVEL = s;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		FC123EDB1C57C884EEE916AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../macos/src/embed",
+					"$(SRCROOT)/../client",
+					"$(SRCROOT)/../bench",
+					"$(SRCROOT)/Keyboard",
+				);
+				INFOPLIST_FILE = Host/Info.plist;
+				OTHER_LDFLAGS = (
+					"-force_load",
+					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
+					"-lsqlite3",
+					"-liconv",
+					"-Wl,-no_fixup_chains",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc;
+				PRODUCT_NAME = CassotisPOC;
+				SWIFT_OBJC_BRIDGING_HEADER = "Host/Host-Bridging-Header.h";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+			};
+			name = Debug;
+		};
+		34727E1F28D711FC1E63CBC9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../macos/src/embed",
+					"$(SRCROOT)/../client",
+					"$(SRCROOT)/../bench",
+					"$(SRCROOT)/Keyboard",
+				);
+				INFOPLIST_FILE = Host/Info.plist;
+				OTHER_LDFLAGS = (
+					"-force_load",
+					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
+					"-lsqlite3",
+					"-liconv",
+					"-Wl,-no_fixup_chains",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc;
+				PRODUCT_NAME = CassotisPOC;
+				SWIFT_OBJC_BRIDGING_HEADER = "Host/Host-Bridging-Header.h";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+			};
+			name = Release;
+		};
+		84AC799C5FF695FFC68F5B46 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../macos/src/embed",
+					"$(SRCROOT)/../client",
+					"$(SRCROOT)/../bench",
+					"$(SRCROOT)/Keyboard",
+				);
+				INFOPLIST_FILE = Keyboard/Info.plist;
+				OTHER_LDFLAGS = (
+					"-force_load",
+					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
+					"-lsqlite3",
+					"-liconv",
+					"-Wl,-no_fixup_chains",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.keyboard;
+				PRODUCT_NAME = CassotisKeyboard;
+				SWIFT_OBJC_BRIDGING_HEADER = "Keyboard/Keyboard-Bridging-Header.h";
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		8C4C4F1025A55EAF9E191150 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../macos/src/embed",
+					"$(SRCROOT)/../client",
+					"$(SRCROOT)/../bench",
+					"$(SRCROOT)/Keyboard",
+				);
+				INFOPLIST_FILE = Keyboard/Info.plist;
+				OTHER_LDFLAGS = (
+					"-force_load",
+					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
+					"-lsqlite3",
+					"-liconv",
+					"-Wl,-no_fixup_chains",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.keyboard;
+				PRODUCT_NAME = CassotisKeyboard;
+				SWIFT_OBJC_BRIDGING_HEADER = "Keyboard/Keyboard-Bridging-Header.h";
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		69B9AD27745402B07A562F1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../macos/src/embed",
+					"$(SRCROOT)/../client",
+					"$(SRCROOT)/../bench",
+					"$(SRCROOT)/Keyboard",
+				);
+				INFOPLIST_FILE = KeyboardSwiftUI/Info.plist;
+				OTHER_LDFLAGS = (
+					"-force_load",
+					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
+					"-lsqlite3",
+					"-liconv",
+					"-Wl,-no_fixup_chains",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.swiftui;
+				PRODUCT_NAME = CassotisKeyboardSwiftUI;
+				SWIFT_OBJC_BRIDGING_HEADER = "KeyboardSwiftUI/Keyboard-Bridging-Header.h";
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		FE30DA4C6A599252490D7C6D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/../../macos/src/embed",
+					"$(SRCROOT)/../client",
+					"$(SRCROOT)/../bench",
+					"$(SRCROOT)/Keyboard",
+				);
+				INFOPLIST_FILE = KeyboardSwiftUI/Info.plist;
+				OTHER_LDFLAGS = (
+					"-force_load",
+					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
+					"-lsqlite3",
+					"-liconv",
+					"-Wl,-no_fixup_chains",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.swiftui;
+				PRODUCT_NAME = CassotisKeyboardSwiftUI;
+				SWIFT_OBJC_BRIDGING_HEADER = "KeyboardSwiftUI/Keyboard-Bridging-Header.h";
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+
+		D6CC5DBF7A7165B9E249B3D6 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1380B9374BC7F9EF1350CD4,
+				6F040E4F02057F18F3AC0E47,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		30E592B6DAB99D60AAC9651C = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC123EDB1C57C884EEE916AC,
+				34727E1F28D711FC1E63CBC9,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BDEB25E0568A456517D1831B = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84AC799C5FF695FFC68F5B46,
+				8C4C4F1025A55EAF9E191150,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0B29DA0A62990EE549F35511 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				69B9AD27745402B07A562F1D,
+				FE30DA4C6A599252490D7C6D,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595;
+}

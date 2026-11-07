@@ -1,0 +1,15 @@
+{
+  "label": "v-sqlite",
+  "before_open_mb": 5.8, "after_open_mb": 15.5, "open_seconds": 0.338,
+  "keys": 15607, "sentences": 388, "first_hits": 187, "first_rate": 0.4820, "deferred": 0,
+  "seconds": 239.2, "p50_ms": 7.74, "p95_ms": 45.23, "p99_ms": 75.58, "worst_ms": 398.6, "mean_ms": 15.33,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 77.4, "peak_mb": 77.5, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "digest": "06aaf95508d73e68",
+  "error": "",
+  "samples": [
+    [0, 0.0, 15.5, 15.5, 0.0],
+    [10000, 147.3, 74.2, 74.5, 0.0],
+    [15607, 239.2, 77.4, 77.5, 0.0]
+  ]
+}

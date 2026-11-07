@@ -1,0 +1,15 @@
+{
+  "label": "v-query",
+  "before_open_mb": 5.8, "after_open_mb": 10.0, "open_seconds": 0.317,
+  "keys": 15607, "sentences": 388, "first_hits": 187, "first_rate": 0.4820, "deferred": 0,
+  "seconds": 240.1, "p50_ms": 7.77, "p95_ms": 45.86, "p99_ms": 75.62, "worst_ms": 389.2, "mean_ms": 15.39,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 75.3, "peak_mb": 80.1, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "digest": "06aaf95508d73e68",
+  "error": "",
+  "samples": [
+    [0, 0.0, 10.0, 10.1, 0.0],
+    [10000, 147.8, 67.8, 71.8, 0.0],
+    [15607, 240.1, 75.3, 80.1, 0.0]
+  ]
+}

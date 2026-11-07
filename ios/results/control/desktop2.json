@@ -1,0 +1,17 @@
+{
+  "label": "desktop2",
+  "before_open_mb": 5.8, "after_open_mb": 16.3, "open_seconds": 0.396,
+  "keys": 30004, "sentences": 740, "first_hits": 334, "first_rate": 0.4514, "deferred": 0,
+  "seconds": 443.6, "p50_ms": 7.54, "p95_ms": 43.41, "p99_ms": 71.46, "worst_ms": 386.3, "mean_ms": 14.78,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 97.6, "peak_mb": 101.3, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "digest": "af69799e07acca78",
+  "error": "",
+  "samples": [
+    [0, 0.0, 16.3, 16.4, 0.0],
+    [10000, 142.4, 71.6, 75.6, 0.0],
+    [20000, 293.1, 89.0, 92.3, 0.0],
+    [30000, 443.5, 97.6, 101.3, 0.0],
+    [30004, 443.6, 97.6, 101.3, 0.0]
+  ]
+}

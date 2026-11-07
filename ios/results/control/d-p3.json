@@ -1,0 +1,17 @@
+{
+  "label": "d-p3",
+  "before_open_mb": 5.9, "after_open_mb": 7.1, "open_seconds": 0.222,
+  "keys": 30004, "sentences": 740, "first_hits": 334, "first_rate": 0.4514, "deferred": 0,
+  "seconds": 508.7, "p50_ms": 8.93, "p95_ms": 49.21, "p99_ms": 81.79, "worst_ms": 638.1, "mean_ms": 16.95,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 21.4, "peak_mb": 22.9, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "digest": "555b04dda810e185",
+  "error": "",
+  "samples": [
+    [0, 0.0, 7.1, 7.2, 0.0],
+    [10000, 158.7, 18.8, 19.2, 0.0],
+    [20000, 326.7, 20.2, 20.8, 0.0],
+    [30000, 508.5, 21.4, 22.9, 0.0],
+    [30004, 508.7, 21.4, 22.9, 0.0]
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "label": "d-tuned",
+  "before_open_mb": 5.9, "after_open_mb": 7.1, "open_seconds": 0.222,
+  "keys": 30004, "sentences": 740, "first_hits": 334, "first_rate": 0.4514, "deferred": 0,
+  "seconds": 483.2, "p50_ms": 8.55, "p95_ms": 46.48, "p99_ms": 77.15, "worst_ms": 944.3, "mean_ms": 16.10,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 25.1, "peak_mb": 25.8, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "digest": "555b04dda810e185",
+  "error": "",
+  "samples": [
+    [0, 0.0, 7.1, 7.2, 0.0],
+    [10000, 152.0, 21.3, 21.6, 0.0],
+    [20000, 312.9, 22.6, 23.0, 0.0],
+    [30000, 483.0, 25.1, 25.8, 0.0],
+    [30004, 483.2, 25.1, 25.8, 0.0]
+  ]
+}

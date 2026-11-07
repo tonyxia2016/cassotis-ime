@@ -1,0 +1,10 @@
+toolchain/
+build/
+DerivedData/
+*.o
+*.ppu
+*.a
+*.xcuserstate
+xcuserdata/
+.DS_Store
+results/*.console
