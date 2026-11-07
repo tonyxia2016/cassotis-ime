@@ -24,8 +24,6 @@ end;
 function nc_runtime_library(const fallback: string): string;
 var executable_directory, bundled: string;
 begin
-    Result := GetEnvironmentVariable('CASSOTIS_RUNTIME_LIBRARY');
-    if Result <> '' then Exit;
     executable_directory := ExtractFileDir(ParamStr(0));
     bundled := ExpandFileName(IncludeTrailingPathDelimiter(executable_directory) +
         '../Frameworks/libcassotis_ort.dylib');

@@ -64,8 +64,6 @@ static std::string utf8(NSString *s) {
     return data?std::string((const char *)data.bytes,data.length):std::string();
 }
 NSString *CassotisSocketPath(void) {
-    NSString *override=NSProcessInfo.processInfo.environment[@"CASSOTIS_SOCKET"];
-    if(override.length) return override;
     return [[NSTemporaryDirectory() stringByAppendingPathComponent:@"CassotisIME-v1"] stringByAppendingPathComponent:@"engine.sock"];
 }
 void CassotisStartEngine(void) {
@@ -74,8 +72,7 @@ void CassotisStartEngine(void) {
     lastAttempt=CFAbsoluteTimeGetCurrent();
     cassotis::EngineClient existing;
     if(existing.connect(utf8(CassotisSocketPath()))) return;
-    NSString *override=NSProcessInfo.processInfo.environment[@"CASSOTIS_ENGINE_EXECUTABLE"];
-    NSString *exe=override?:[NSBundle.mainBundle.executablePath.stringByDeletingLastPathComponent stringByAppendingPathComponent:@"cassotis-engine"];
+    NSString *exe=[NSBundle.mainBundle.executablePath.stringByDeletingLastPathComponent stringByAppendingPathComponent:@"cassotis-engine"];
     if(![NSFileManager.defaultManager isExecutableFileAtPath:exe]) return;
     NSString *directory=[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/CassotisIME"];
     [NSFileManager.defaultManager createDirectoryAtPath:directory withIntermediateDirectories:YES

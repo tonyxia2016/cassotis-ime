@@ -159,7 +159,6 @@ function GetSqliteLibraryCandidates(const preferred_path: string):
     TncSqliteStringArray;
 var
     module_directory: string;
-    environment_path: string;
 
     procedure AddCandidate(const candidate: string);
     var
@@ -179,8 +178,6 @@ var
 begin
     Result := nil;
     AddCandidate(preferred_path);
-    environment_path := GetEnvironmentVariable('CASSOTIS_SQLITE_LIBRARY');
-    AddCandidate(environment_path);
     module_directory := GetModuleDirectory;
 
     {$IFDEF WINDOWS}
