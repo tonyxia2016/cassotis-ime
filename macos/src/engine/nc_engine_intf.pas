@@ -10,6 +10,7 @@ uses
     SysUtils,
     Math,
     Classes,
+    nc_cache_policy,
     nc_io_compat,
     Generics.Collections,
     Generics.Defaults,
@@ -1320,6 +1321,8 @@ type
             out candidates_rebuilt: Boolean): Boolean;
         procedure reload_dictionary_if_needed;
         procedure prewarm_dictionary_caches;
+        procedure trim_memory(const level: Integer);
+        procedure cache_census(const sink: TncCensusSink);
         procedure set_external_left_context(const left_context: string;
             const document_key: string = '';
             const document_snapshot: string = '');
@@ -1482,6 +1485,7 @@ uses
     nc_tab_exact_fallback;
 
 const
+    c_session_latest_text_limit = 8192;
     c_suppress_nonlexicon_complete_long_candidates = True;
     c_long_sentence_exact_min_syllables = 3;
     c_long_sentence_complete_candidate_display_limit = 2;
@@ -1625,6 +1629,10 @@ var
     scaled_budget_ms: UInt64;
 begin
     normalized_scale := EnsureRange(scale_percent, 25, 1000);
+    if g_deterministic_search then
+    begin
+        Exit((work_limit > 0) and (work_count >= work_limit));
+    end;
     case mode of
         sbm_deterministic:
             begin
@@ -6218,6 +6226,18 @@ begin
     end;
 end;
 
+procedure TncEngine.trim_memory(const level: Integer);
+begin
+    invalidate_dictionary_lookup_caches;
+    if m_lookup_text_units_cache <> nil then m_lookup_text_units_cache.Clear;
+    if m_lookup_text_unit_count_cache <> nil then m_lookup_text_unit_count_cache.Clear;
+    if m_full_pinyin_key_cache <> nil then m_full_pinyin_key_cache.Clear;
+    if m_dictionary is TncSqliteDictionary then
+    begin
+        TncSqliteDictionary(m_dictionary).trim_caches(level);
+    end;
+end;
+
 procedure TncEngine.prewarm_dictionary_caches;
 var
     sqlite_dict: TncSqliteDictionary;
@@ -6231,7 +6251,10 @@ begin
     end;
 
     sqlite_dict := TncSqliteDictionary(m_dictionary);
-    sqlite_dict.prewarm_short_lookup_caches;
+    if g_prewarm_short_lookups then
+    begin
+        sqlite_dict.prewarm_short_lookup_caches;
+    end;
 
     if m_config.dictionary_variant = dv_traditional then
     begin
@@ -142006,7 +142029,7 @@ begin
     if (text <> '') and (m_lookup_text_unit_count_cache <> nil) then
     begin
         if m_lookup_text_unit_count_cache.Count >=
-            c_text_unit_count_cache_limit then
+            nc_cache_limit(c_text_unit_count_cache_limit) then
         begin
             m_lookup_text_unit_count_cache.Clear;
         end;
@@ -147474,7 +147497,7 @@ begin
         Result := False;
         if m_full_pinyin_key_cache <> nil then
         begin
-            if m_full_pinyin_key_cache.Count >= c_full_pinyin_key_cache_limit then
+            if m_full_pinyin_key_cache.Count >= nc_cache_limit(c_full_pinyin_key_cache_limit) then
             begin
                 m_full_pinyin_key_cache.Clear;
             end;
@@ -147491,7 +147514,7 @@ begin
             Result := False;
             if m_full_pinyin_key_cache <> nil then
             begin
-                if m_full_pinyin_key_cache.Count >= c_full_pinyin_key_cache_limit then
+                if m_full_pinyin_key_cache.Count >= nc_cache_limit(c_full_pinyin_key_cache_limit) then
                 begin
                     m_full_pinyin_key_cache.Clear;
                 end;
@@ -147505,7 +147528,7 @@ begin
     Result := SameText(reconstructed, normalized_value);
     if m_full_pinyin_key_cache <> nil then
     begin
-        if m_full_pinyin_key_cache.Count >= c_full_pinyin_key_cache_limit then
+        if m_full_pinyin_key_cache.Count >= nc_cache_limit(c_full_pinyin_key_cache_limit) then
         begin
             m_full_pinyin_key_cache.Clear;
         end;
@@ -147924,7 +147947,7 @@ begin
         if m_effective_pinyin_parse_cache <> nil then
         begin
             if m_effective_pinyin_parse_cache.Count >=
-                c_effective_pinyin_parse_cache_limit then
+                nc_cache_limit(c_effective_pinyin_parse_cache_limit) then
             begin
                 m_effective_pinyin_parse_cache.Clear;
             end;
@@ -148054,7 +148077,7 @@ begin
         Result := list.ToArray;
         if m_lookup_text_units_cache <> nil then
         begin
-            if m_lookup_text_units_cache.Count >= c_text_units_cache_limit then
+            if m_lookup_text_units_cache.Count >= nc_cache_limit(c_text_units_cache_limit) then
             begin
                 m_lookup_text_units_cache.Clear;
             end;
@@ -154408,7 +154431,7 @@ begin
     m_session_text_order.Enqueue(text_key);
     while m_session_text_order.Count > c_session_text_history_limit do
     begin
-        evict_text := m_session_text_order.Dequeue;
+        evict_text := nc_dequeue(m_session_text_order);
         if not m_session_text_counts.TryGetValue(evict_text, count) then
         begin
             Continue;
@@ -154463,13 +154486,18 @@ begin
     end;
     if m_session_query_latest_text <> nil then
     begin
+        // Grew by about 24 entries per 1,000 keys with no bound at all.
+        if m_session_query_latest_text.Count >= c_session_latest_text_limit then
+        begin
+            m_session_query_latest_text.Clear;
+        end;
         m_session_query_latest_text.AddOrSetValue(normalize_pinyin_text(query_key), Trim(text));
     end;
 
     m_session_query_choice_order.Enqueue(key);
     while m_session_query_choice_order.Count > c_session_query_history_limit do
     begin
-        evict_key := m_session_query_choice_order.Dequeue;
+        evict_key := nc_dequeue(m_session_query_choice_order);
         if not m_session_query_choice_counts.TryGetValue(evict_key, count) then
         begin
             Continue;
@@ -154535,7 +154563,7 @@ begin
     m_session_query_path_choice_order.Enqueue(key);
     while m_session_query_path_choice_order.Count > c_session_query_path_history_limit do
     begin
-        evict_key := m_session_query_path_choice_order.Dequeue;
+        evict_key := nc_dequeue(m_session_query_path_choice_order);
         if not m_session_query_path_choice_counts.TryGetValue(evict_key, count) then
         begin
             Continue;
@@ -154600,7 +154628,7 @@ begin
     m_session_query_path_penalty_order.Enqueue(key);
     while m_session_query_path_penalty_order.Count > c_session_query_path_history_limit do
     begin
-        evict_key := m_session_query_path_penalty_order.Dequeue;
+        evict_key := nc_dequeue(m_session_query_path_penalty_order);
         if not m_session_query_path_penalty_counts.TryGetValue(evict_key, count) then
         begin
             Continue;
@@ -154654,7 +154682,7 @@ begin
 
     while m_session_ranked_query_path_order.Count > c_session_ranked_query_path_history_limit do
     begin
-        evict_key := m_session_ranked_query_path_order.Dequeue;
+        evict_key := nc_dequeue(m_session_ranked_query_path_order);
         m_session_ranked_query_paths.Remove(evict_key);
         m_session_ranked_query_path_scores.Remove(evict_key);
     end;
@@ -154726,6 +154754,14 @@ begin
             end;
             if m_session_context_query_latest_text <> nil then
             begin
+                // No order queue evicts from this table. An entry whose choice
+                // left m_session_context_query_choice_last_seen (at most 384
+                // live) no longer counts, so nearly all of a full table is dead.
+                // Session memory, not a memo: its bound does not scale.
+                if m_session_context_query_latest_text.Count >= c_session_latest_text_limit then
+                begin
+                    m_session_context_query_latest_text.Clear;
+                end;
                 m_session_context_query_latest_text.AddOrSetValue(
                     build_context_query_scope_key(
                     context_variants[variant_idx], normalized_query),
@@ -154758,7 +154794,7 @@ begin
 
     while m_session_context_query_choice_order.Count > c_session_context_query_history_limit do
     begin
-        evict_key := m_session_context_query_choice_order.Dequeue;
+        evict_key := nc_dequeue(m_session_context_query_choice_order);
         if not m_session_context_query_choice_counts.TryGetValue(evict_key, count) then
         begin
             Continue;
@@ -154807,7 +154843,7 @@ begin
 
     while m_phrase_context_order.Count > c_phrase_context_history_limit do
     begin
-        evict_key := m_phrase_context_order.Dequeue;
+        evict_key := nc_dequeue(m_phrase_context_order);
         if not m_phrase_context_pairs.TryGetValue(evict_key, count) then
         begin
             Continue;
@@ -154970,7 +155006,7 @@ begin
         m_context_order.Enqueue(key);
         while m_context_order.Count > c_context_history_limit do
         begin
-            evict_key := m_context_order.Dequeue;
+            evict_key := nc_dequeue(m_context_order);
             if m_context_pairs.TryGetValue(evict_key, count) then
             begin
                 Dec(count);
@@ -189523,5 +189559,8 @@ begin
         normalize_page_and_selection;
     end;
 end;
+
+
+{$I nc_cache_census_engine.inc}
 
 end.

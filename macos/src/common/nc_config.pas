@@ -19,6 +19,7 @@ implementation
 
 uses
     SysUtils,
+    nc_runtime_paths,
     nc_shortcut;
 
 function nc_normalize_punctuation_ascii_symbols(const value: string): string;
@@ -33,7 +34,9 @@ end;
 function get_user_data_path(const file_name: string): string;
 var directory: string;
 begin
-    directory := GetEnvironmentVariable('CASSOTIS_DATA_DIRECTORY');
+    directory := nc_host_data_directory;
+    if directory = '' then
+        directory := GetEnvironmentVariable('CASSOTIS_DATA_DIRECTORY');
     if directory = '' then
         directory := IncludeTrailingPathDelimiter(GetEnvironmentVariable('HOME')) +
             'Library/Application Support/CassotisIME';
@@ -43,7 +46,9 @@ end;
 function get_install_data_path(const file_name: string): string;
 var directory: string;
 begin
-    directory := ExtractFileDir(ExpandFileName(ParamStr(0)));
+    directory := nc_module_directory;
+    Result := IncludeTrailingPathDelimiter(directory) + file_name;
+    if FileExists(Result) then Exit;
     Result := ExpandFileName(IncludeTrailingPathDelimiter(directory) +
         '../Resources/dictionaries/' + file_name);
     if not FileExists(Result) then

@@ -8,7 +8,8 @@ interface
 
 uses
     SysUtils,
-    Dynlibs;
+    {$IFNDEF CASSOTIS_EMBEDDED}Dynlibs,{$ENDIF}
+    nc_runtime_paths;
 
 type
     Psqlite3 = Pointer;
@@ -42,7 +43,9 @@ type
 
     TncSqliteLib = class
     private
+        {$IFNDEF CASSOTIS_EMBEDDED}
         FLibraryHandle: TLibHandle;
+        {$ENDIF}
         FLoaded: Boolean;
         FLoadedPath: string;
         FOpenV2: Tsqlite3_open_v2;
@@ -60,7 +63,9 @@ type
         FClearBindings: Tsqlite3_clear_bindings;
         FErrmsg: Tsqlite3_errmsg;
         FExec: Tsqlite3_exec;
+        {$IFNDEF CASSOTIS_EMBEDDED}
         function LoadProc(const name: AnsiString): Pointer;
+        {$ENDIF}
         procedure ResetProcs;
     public
         constructor Create;
@@ -150,9 +155,39 @@ const
 
 implementation
 
+{$IFDEF CASSOTIS_EMBEDDED}
+{ iOS gives a process no reason to look for SQLite by path: the extension links
+  it. The symbols keep the exact signatures of the Tsqlite3_* types above. }
+{$LINKLIB sqlite3}
+function sqlite3_open_v2(filename: PAnsiChar; out db: Psqlite3; flags: Integer;
+    vfs: PAnsiChar): Integer; cdecl; external;
+function sqlite3_close(db: Psqlite3): Integer; cdecl; external;
+function sqlite3_prepare_v2(db: Psqlite3; sql: PAnsiChar; nbyte: Integer;
+    out stmt: Psqlite3_stmt; tail: PPAnsiChar): Integer; cdecl; external;
+function sqlite3_step(stmt: Psqlite3_stmt): Integer; cdecl; external;
+function sqlite3_finalize(stmt: Psqlite3_stmt): Integer; cdecl; external;
+function sqlite3_bind_text(stmt: Psqlite3_stmt; idx: Integer; text: PAnsiChar;
+    n: Integer; destructor_callback: Pointer): Integer; cdecl; external;
+function sqlite3_bind_int(stmt: Psqlite3_stmt; idx: Integer;
+    value: Integer): Integer; cdecl; external;
+function sqlite3_bind_int64(stmt: Psqlite3_stmt; idx: Integer;
+    value: Int64): Integer; cdecl; external;
+function sqlite3_column_text(stmt: Psqlite3_stmt;
+    idx: Integer): PAnsiChar; cdecl; external;
+function sqlite3_column_int(stmt: Psqlite3_stmt;
+    idx: Integer): Integer; cdecl; external;
+function sqlite3_column_int64(stmt: Psqlite3_stmt;
+    idx: Integer): Int64; cdecl; external;
+function sqlite3_reset(stmt: Psqlite3_stmt): Integer; cdecl; external;
+function sqlite3_clear_bindings(stmt: Psqlite3_stmt): Integer; cdecl; external;
+function sqlite3_errmsg(db: Psqlite3): PAnsiChar; cdecl; external;
+function sqlite3_exec(db: Psqlite3; sql: PAnsiChar; callback: Pointer;
+    argument: Pointer; error_message: PPAnsiChar): Integer; cdecl; external;
+{$ENDIF}
+
 function GetModuleDirectory: string;
 begin
-    Result := ExtractFileDir(ExpandFileName(ParamStr(0)));
+    Result := nc_module_directory;
 end;
 
 function GetSqliteLibraryCandidates(const preferred_path: string):
@@ -201,7 +236,9 @@ end;
 constructor TncSqliteLib.Create;
 begin
     inherited Create;
+    {$IFNDEF CASSOTIS_EMBEDDED}
     FLibraryHandle := NilHandle;
+    {$ENDIF}
     FLoaded := False;
     FLoadedPath := '';
     ResetProcs;
@@ -232,15 +269,37 @@ begin
     FExec := nil;
 end;
 
+{$IFNDEF CASSOTIS_EMBEDDED}
 function TncSqliteLib.LoadProc(const name: AnsiString): Pointer;
 begin
     Result := GetProcedureAddress(FLibraryHandle, name);
 end;
+{$ENDIF}
 
 function TncSqliteLib.Load(const library_name: string): Boolean;
 begin
     if FLoaded then
         Exit(True);
+    {$IFDEF CASSOTIS_EMBEDDED}
+    FOpenV2 := @sqlite3_open_v2;
+    FClose := @sqlite3_close;
+    FPrepareV2 := @sqlite3_prepare_v2;
+    FStep := @sqlite3_step;
+    FFinalize := @sqlite3_finalize;
+    FBindText := @sqlite3_bind_text;
+    FBindInt := @sqlite3_bind_int;
+    FBindInt64 := @sqlite3_bind_int64;
+    FColumnText := @sqlite3_column_text;
+    FColumnInt := @sqlite3_column_int;
+    FColumnInt64 := @sqlite3_column_int64;
+    FReset := @sqlite3_reset;
+    FClearBindings := @sqlite3_clear_bindings;
+    FErrmsg := @sqlite3_errmsg;
+    FExec := @sqlite3_exec;
+    FLoaded := True;
+    FLoadedPath := 'linked';
+    Result := True;
+    {$ELSE}
     FLibraryHandle := LoadLibrary(library_name);
     if FLibraryHandle = NilHandle then
         Exit(False);
@@ -278,13 +337,16 @@ begin
     FLoaded := True;
     FLoadedPath := library_name;
     Result := True;
+    {$ENDIF}
 end;
 
 procedure TncSqliteLib.Unload;
 begin
+    {$IFNDEF CASSOTIS_EMBEDDED}
     if FLibraryHandle <> NilHandle then
         UnloadLibrary(FLibraryHandle);
     FLibraryHandle := NilHandle;
+    {$ENDIF}
     FLoaded := False;
     FLoadedPath := '';
     ResetProcs;

@@ -8,15 +8,16 @@ interface
 
 uses
     nc_types,
+    nc_cache_policy,
     nc_engine_contract,
     nc_engine_context,
     nc_engine_intf,
     nc_dictionary_sqlite,
     nc_user_dictionary,
-    nc_lm_repair_host,
+    {$IFNDEF CASSOTIS_EMBEDDED}nc_lm_repair_host, nc_char_lm_host,{$ENDIF}
     nc_pinyin_input_diagnostics,
     nc_local_completion_host,
-    nc_char_lm, nc_char_lm_host, nc_one_key_rerank_host;
+    nc_char_lm, nc_one_key_rerank_host;
 
 const
     c_engine_error_unknown_context = 1;
@@ -100,6 +101,9 @@ type
             expected_comment: string): TncEngineResult; override;
         function ContextCount: Integer;
         procedure ClearContexts;
+        // Answers a host memory warning: every cache it drops can be rebuilt.
+        procedure TrimMemory(const level: Integer);
+        procedure CacheCensus(const sink: TncCensusSink);
         function DictionaryReady: Boolean;
         function UserDictionaryReady: Boolean;
         function RemoveUserCandidate(const context_id: QWord;
@@ -115,6 +119,7 @@ uses
     SysUtils,
     nc_config,
     nc_platform_compat,
+    {$IFNDEF CASSOTIS_EMBEDDED}nc_runtime_paths,{$ENDIF}
     nc_shortcut;
 
 constructor TncEngineService.Create;
@@ -152,8 +157,10 @@ procedure TncEngineService.Initialize(const dictionary_path: string;
 var
     provider: TncSqliteDictionary;
     active_dictionary_path: string;
+    {$IFNDEF CASSOTIS_EMBEDDED}
     runtime_directory: string;
     char_lm_host: TncCharLmHost;
+    {$ENDIF}
 begin
     FContexts := TncEngineContextRegistry.Create;
     FEngine := nil;
@@ -214,6 +221,7 @@ begin
 
     FEngine.set_dictionary_provider(provider);
     FEngine.prewarm_dictionary_caches;
+    {$IFNDEF CASSOTIS_EMBEDDED}
     runtime_directory := ExtractFileDir(ParamStr(0));
     FLmRepair := TncLmRepairHost.Create(
         runtime_directory, True);
@@ -224,6 +232,19 @@ begin
     FLocalCompletionHost := TncLocalCompletionHost.Create;
     FLocalCompletionHost.SetCharLm(char_lm_host.background_view);
     FOneKeyRerankHost := TncOneKeyRerankHost.Create(char_lm_host.background_view);
+    {$ENDIF}
+end;
+
+procedure TncEngineService.TrimMemory(const level: Integer);
+begin
+    if FEngine <> nil then
+        FEngine.trim_memory(level);
+end;
+
+procedure TncEngineService.CacheCensus(const sink: TncCensusSink);
+begin
+    if FEngine <> nil then
+        FEngine.cache_census(sink);
 end;
 
 destructor TncEngineService.Destroy;

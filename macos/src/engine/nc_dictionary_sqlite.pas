@@ -12,6 +12,7 @@ uses
     DateUtils,
     Generics.Collections,
     Generics.Defaults,
+    nc_cache_policy,
 
     nc_io_compat,
     nc_platform_compat,
@@ -115,6 +116,7 @@ type
         m_stmt_base_query_path_bonus: Psqlite3_stmt;
         m_stmt_exact_pair_path_evidence: Psqlite3_stmt;
         m_stmt_lm_transition_query: Psqlite3_stmt;
+        m_stmt_query_path_query: Psqlite3_stmt;
         m_stmt_compound_tail_support: Psqlite3_stmt;
         m_stmt_compound_tail_prefix_support: Psqlite3_stmt;
         m_stmt_compound_tail_prefix_range_support: Psqlite3_stmt;
@@ -271,6 +273,7 @@ type
         function base_exact_pinyin_may_exist(const pinyin: string): Boolean;
         procedure load_base_query_path_pinyin_cache;
         procedure load_query_path_bonus_cache;
+        procedure load_query_path_query(const normalized_query: string);
         function base_query_path_pinyin_may_exist(
             const query_key: string): Boolean;
         procedure load_lm_transition_query(const normalized_query: string);
@@ -437,6 +440,10 @@ type
         function get_lm_transition_bonus(const query_key: string; const encoded_path: string): Integer; override;
         function get_exact_pair_path_evidence(const query_key: string;
             out results: TncPairPathEvidenceList): Boolean; override;
+        procedure cache_census(const sink: TncCensusSink);
+        // Answers a memory warning. Level 0 drops lookup results, level 1 every
+        // memo table that can be read again from the database.
+        procedure trim_caches(const level: Integer);
         function get_char_lm_text_scores(const texts: TArray<string>;
             out scores: TArray<Integer>): Boolean; override;
         function get_char_lm_suffix_scores(const texts: TArray<string>;
@@ -479,7 +486,11 @@ type
 
 implementation
 
-uses nc_chinese_script;
+uses nc_chinese_script, nc_runtime_paths;
+
+const
+    // The two popularity memos had no bound and grew about 2 entries per key.
+    c_popularity_cache_limit = 65536;
 
 function starts_with_text(const value: string; const prefix: string;
     const ignore_case: Boolean = False): Boolean;
@@ -2654,6 +2665,7 @@ begin
     m_stmt_base_query_path_bonus := nil;
     m_stmt_exact_pair_path_evidence := nil;
     m_stmt_lm_transition_query := nil;
+    m_stmt_query_path_query := nil;
     m_stmt_compound_tail_support := nil;
     m_stmt_compound_tail_prefix_support := nil;
     m_stmt_compound_tail_prefix_range_support := nil;
@@ -3273,7 +3285,7 @@ var
         end;
 
         while m_fuzzy_lookup_result_cache.Count >=
-            c_fuzzy_result_cache_limit do
+            nc_cache_limit(c_fuzzy_result_cache_limit) do
         begin
             if (m_fuzzy_lookup_result_cache_order = nil) or
                 (m_fuzzy_lookup_result_cache_order.Count = 0) then
@@ -3281,7 +3293,7 @@ var
                 m_fuzzy_lookup_result_cache.Clear;
                 Break;
             end;
-            evicted_cache_key := m_fuzzy_lookup_result_cache_order.Dequeue;
+            evicted_cache_key := nc_dequeue(m_fuzzy_lookup_result_cache_order);
             m_fuzzy_lookup_result_cache.Remove(evicted_cache_key);
         end;
         m_fuzzy_lookup_result_cache.AddOrSetValue(cache_key,
@@ -3678,7 +3690,7 @@ begin
     Result := Length(results) > 0;
     if m_prefix_lookup_result_cache <> nil then
     begin
-        if m_prefix_lookup_result_cache.Count >= c_result_cache_limit then
+        if m_prefix_lookup_result_cache.Count >= nc_cache_limit(c_result_cache_limit) then
         begin
             m_prefix_lookup_result_cache.Clear;
         end;
@@ -3811,7 +3823,7 @@ begin
     end;
     if m_word_completion_cache <> nil then
     begin
-        if m_word_completion_cache.Count >= c_cache_limit then
+        if m_word_completion_cache.Count >= nc_cache_limit(c_cache_limit) then
             m_word_completion_cache.Clear;
         m_word_completion_cache.AddOrSetValue(cache_key, Copy(results, 0, Length(results)));
     end;
@@ -3875,7 +3887,7 @@ begin
     end;
     if m_next_character_cache <> nil then
     begin
-        if m_next_character_cache.Count >= c_cache_limit then
+        if m_next_character_cache.Count >= nc_cache_limit(c_cache_limit) then
             m_next_character_cache.Clear;
         m_next_character_cache.AddOrSetValue(cache_key, Copy(characters, 0, Length(characters)));
     end;
@@ -3954,7 +3966,7 @@ begin
     end;
     if m_word_completion_cache <> nil then
     begin
-        if m_word_completion_cache.Count >= c_cache_limit then
+        if m_word_completion_cache.Count >= nc_cache_limit(c_cache_limit) then
             m_word_completion_cache.Clear;
         m_word_completion_cache.AddOrSetValue(cache_key, Copy(results, 0, Length(results)));
     end;
@@ -4150,7 +4162,7 @@ begin
     end;
     if m_mixed_abbreviation_cache <> nil then
     begin
-        if m_mixed_abbreviation_cache.Count >= c_cache_limit then
+        if m_mixed_abbreviation_cache.Count >= nc_cache_limit(c_cache_limit) then
             m_mixed_abbreviation_cache.Clear;
         m_mixed_abbreviation_cache.AddOrSetValue(query_key, Copy(results, 0, Length(results)));
     end;
@@ -4231,7 +4243,7 @@ begin
     finally
         if stmt <> nil then m_base_connection.finalize(stmt);
     end;
-    if m_candidate_prefix_completion_cache.Count >= c_cache_limit then
+    if m_candidate_prefix_completion_cache.Count >= nc_cache_limit(c_cache_limit) then
         m_candidate_prefix_completion_cache.Clear;
     m_candidate_prefix_completion_cache.AddOrSetValue(key, Copy(results));
     Result := Length(results) > 0;
@@ -5238,7 +5250,7 @@ var
         begin
             Exit;
         end;
-        if m_one_key_completion_cache.Count >= c_result_cache_limit then
+        if m_one_key_completion_cache.Count >= nc_cache_limit(c_result_cache_limit) then
         begin
             m_one_key_completion_cache.Clear;
             if m_one_key_completion_extra_cache <> nil then
@@ -5599,7 +5611,7 @@ begin
 
     if m_long_one_key_completion_cache <> nil then
     begin
-        if m_long_one_key_completion_cache.Count >= c_result_cache_limit then
+        if m_long_one_key_completion_cache.Count >= nc_cache_limit(c_result_cache_limit) then
         begin
             m_long_one_key_completion_cache.Clear;
         end;
@@ -5680,7 +5692,7 @@ begin
 
     if m_long_one_key_completion_cache <> nil then
     begin
-        if m_long_one_key_completion_cache.Count >= c_result_cache_limit then
+        if m_long_one_key_completion_cache.Count >= nc_cache_limit(c_result_cache_limit) then
         begin
             m_long_one_key_completion_cache.Clear;
         end;
@@ -5806,7 +5818,7 @@ begin
     if m_one_key_completion_competition_cache <> nil then
     begin
         if m_one_key_completion_competition_cache.Count >=
-            c_result_cache_limit then
+            nc_cache_limit(c_result_cache_limit) then
         begin
             m_one_key_completion_competition_cache.Clear;
         end;
@@ -5950,7 +5962,7 @@ begin
     if m_one_key_completion_pair_audit_cache <> nil then
     begin
         if m_one_key_completion_pair_audit_cache.Count >=
-            c_result_cache_limit then
+            nc_cache_limit(c_result_cache_limit) then
         begin
             m_one_key_completion_pair_audit_cache.Clear;
         end;
@@ -6022,7 +6034,7 @@ begin
 
     if m_short_promotion_cache <> nil then
     begin
-        if m_short_promotion_cache.Count >= c_result_cache_limit then
+        if m_short_promotion_cache.Count >= nc_cache_limit(c_result_cache_limit) then
         begin
             m_short_promotion_cache.Clear;
         end;
@@ -6235,7 +6247,7 @@ begin
 
     if m_exact_text_prefix_cache <> nil then
     begin
-        if m_exact_text_prefix_cache.Count >= c_cache_limit then
+        if m_exact_text_prefix_cache.Count >= nc_cache_limit(c_cache_limit) then
         begin
             m_exact_text_prefix_cache.Clear;
         end;
@@ -6503,8 +6515,9 @@ begin
     // Long-sentence search performs many small indexed reads. Mapping the
     // immutable base dictionary avoids repeatedly copying those pages through
     // SQLite's small default page cache while the OS can share mapped pages.
-    m_base_connection.exec('PRAGMA mmap_size=134217728;');
-    m_base_connection.exec('PRAGMA cache_size=-8192;');
+    m_base_connection.exec(Format('PRAGMA mmap_size=%d;',
+        [Int64(g_sqlite_mmap_mib) * 1048576]));
+    m_base_connection.exec(Format('PRAGMA cache_size=-%d;', [g_sqlite_cache_kib]));
     m_base_connection.exec('PRAGMA temp_store=MEMORY;');
 end;
 
@@ -6627,11 +6640,83 @@ begin
     end;
 end;
 
+// The paths of one query, read when the query is first asked about, as
+// load_lm_transition_query does for transitions. Keeps the 23,600 rows of
+// dict_base_query_path out of the heap of a keyboard extension (5 MB at open).
+// m_base_query_path_pinyin_cache then remembers every query asked about: True if
+// it has rows, which is what the whole-table read would have answered.
+procedure TncSqliteDictionary.load_query_path_query(const normalized_query: string);
+const
+    query_sql =
+        'SELECT path_text, weight FROM dict_base_query_path WHERE query_pinyin = ?1';
+var
+    step_result: Integer;
+    normalized_path: string;
+    weight: Integer;
+    present: Boolean;
+begin
+    if (not m_base_ready) or (m_base_connection = nil) or
+        (m_query_path_bonus_cache = nil) or
+        (m_base_query_path_pinyin_cache = nil) then
+    begin
+        Exit;
+    end;
+    if m_base_query_path_pinyin_cache.Count >= nc_cache_limit(16384) then
+    begin
+        m_base_query_path_pinyin_cache.Clear;
+        m_query_path_bonus_cache.Clear;
+    end;
+    present := False;
+    if m_stmt_query_path_query = nil then
+    begin
+        // The table is optional for compatibility with older dictionaries.
+        if not m_base_connection.prepare(query_sql, m_stmt_query_path_query) then
+        begin
+            m_stmt_query_path_query := nil;
+            m_base_query_path_pinyin_cache.AddOrSetValue(normalized_query, False);
+            Exit;
+        end;
+    end;
+    if (not m_base_connection.reset(m_stmt_query_path_query)) or
+        (not m_base_connection.clear_bindings(m_stmt_query_path_query)) or
+        (not m_base_connection.BindText(m_stmt_query_path_query, 1, normalized_query)) then
+    begin
+        Exit;
+    end;
+    step_result := m_base_connection.step(m_stmt_query_path_query);
+    while step_result = SQLITE_ROW do
+    begin
+        present := True;
+        normalized_path := Trim(m_base_connection.ColumnText(m_stmt_query_path_query, 0));
+        weight := m_base_connection.ColumnInt(m_stmt_query_path_query, 1);
+        if (normalized_path <> '') and (weight > 0) then
+        begin
+            m_query_path_bonus_cache.AddOrSetValue(normalized_query + #1 + normalized_path,
+                calc_base_query_segment_path_bonus(weight));
+        end;
+        step_result := m_base_connection.step(m_stmt_query_path_query);
+    end;
+    m_base_query_path_pinyin_cache.AddOrSetValue(normalized_query, present);
+end;
+
 function TncSqliteDictionary.base_query_path_pinyin_may_exist(
     const query_key: string): Boolean;
 var
     present: Boolean;
 begin
+    if g_query_path_on_demand then
+    begin
+        if m_defer_optional_model_loads or (m_base_query_path_pinyin_cache = nil) then
+        begin
+            Exit(False);
+        end;
+        if not m_base_query_path_pinyin_cache.TryGetValue(query_key, present) then
+        begin
+            load_query_path_query(query_key);
+            present := m_base_query_path_pinyin_cache.TryGetValue(query_key, present) and present;
+        end;
+        Exit(present);
+    end;
     if m_defer_optional_model_loads and
         (not m_base_query_path_pinyin_cache_loaded) then
     begin
@@ -6658,6 +6743,7 @@ const
     query_sql =
         'SELECT path_text, weight FROM dict_base_lm_transition WHERE query_pinyin = ?1';
     c_lm_transition_cache_limit = 200000;
+    c_lm_transition_query_limit = 65536;
 var
     step_result: Integer;
     normalized_path: string;
@@ -6669,7 +6755,8 @@ begin
     begin
         Exit;
     end;
-    if m_lm_transition_bonus_cache.Count >= c_lm_transition_cache_limit then
+    if (m_lm_transition_bonus_cache.Count >= nc_cache_limit(c_lm_transition_cache_limit)) or
+        (m_lm_transition_loaded_queries.Count >= nc_cache_limit(c_lm_transition_query_limit)) then
     begin
         m_lm_transition_bonus_cache.Clear;
         m_lm_transition_loaded_queries.Clear;
@@ -6768,7 +6855,7 @@ end;
 
 function TncSqliteDictionary.get_module_dir: string;
 begin
-    Result := ExtractFilePath(ExpandFileName(ParamStr(0)));
+    Result := IncludeTrailingPathDelimiter(nc_module_directory);
 end;
 
 function TncSqliteDictionary.find_schema_path: string;
@@ -7941,7 +8028,7 @@ begin
     finally
         if m_exact_base_entry_cache <> nil then
         begin
-            if m_exact_base_entry_cache.Count >= c_entry_cache_limit then
+            if m_exact_base_entry_cache.Count >= nc_cache_limit(c_entry_cache_limit) then
             begin
                 m_exact_base_entry_cache.Clear;
             end;
@@ -8011,7 +8098,7 @@ begin
     finally
         if m_normalized_base_entry_cache <> nil then
         begin
-            if m_normalized_base_entry_cache.Count >= c_entry_cache_limit then
+            if m_normalized_base_entry_cache.Count >= nc_cache_limit(c_entry_cache_limit) then
             begin
                 m_normalized_base_entry_cache.Clear;
             end;
@@ -8168,7 +8255,7 @@ begin
             if stmt <> nil then m_base_connection.finalize(stmt);
         end;
     end;
-    if m_user_script_cache.Count >= 4096 then m_user_script_cache.Clear;
+    if m_user_script_cache.Count >= nc_cache_limit(4096) then m_user_script_cache.Clear;
     m_user_script_cache.AddOrSetValue(key, Result);
 end;
 
@@ -8204,7 +8291,7 @@ begin
     finally
         if stmt <> nil then m_user_connection.finalize(stmt);
     end;
-    if m_user_storage_text_cache.Count >= 4096 then m_user_storage_text_cache.Clear;
+    if m_user_storage_text_cache.Count >= nc_cache_limit(4096) then m_user_storage_text_cache.Clear;
     m_user_storage_text_cache.AddOrSetValue(key, Result);
 end;
 
@@ -8253,7 +8340,7 @@ begin
     finally
         if m_explicit_user_entry_cache <> nil then
         begin
-            if m_explicit_user_entry_cache.Count >= c_entry_cache_limit then
+            if m_explicit_user_entry_cache.Count >= nc_cache_limit(c_entry_cache_limit) then
             begin
                 m_explicit_user_entry_cache.Clear;
             end;
@@ -8631,7 +8718,7 @@ begin
 
     if m_literal_lookup_result_cache <> nil then
     begin
-        if m_literal_lookup_result_cache.Count >= c_result_cache_limit then
+        if m_literal_lookup_result_cache.Count >= nc_cache_limit(c_result_cache_limit) then
         begin
             m_literal_lookup_result_cache.Clear;
         end;
@@ -8681,7 +8768,7 @@ begin
 
     if m_literal_user_entry_cache <> nil then
     begin
-        if m_literal_user_entry_cache.Count >= c_entry_cache_limit then
+        if m_literal_user_entry_cache.Count >= nc_cache_limit(c_entry_cache_limit) then
         begin
             m_literal_user_entry_cache.Clear;
         end;
@@ -8879,7 +8966,7 @@ begin
         normalize_canonical_pinyin_key(stored_pinyin));
     if m_pinyin_shape_cache <> nil then
     begin
-        if m_pinyin_shape_cache.Count >= c_cache_limit then
+        if m_pinyin_shape_cache.Count >= nc_cache_limit(c_cache_limit) then
         begin
             m_pinyin_shape_cache.Clear;
         end;
@@ -9958,7 +10045,7 @@ begin
         if m_admin_place_query_syllable_count_cache <> nil then
         begin
             if m_admin_place_query_syllable_count_cache.Count >=
-                c_prefix_cache_limit then
+                nc_cache_limit(c_prefix_cache_limit) then
             begin
                 m_admin_place_query_syllable_count_cache.Clear;
             end;
@@ -10012,7 +10099,7 @@ begin
 
         if m_admin_place_longer_prefix_cache <> nil then
         begin
-            if m_admin_place_longer_prefix_cache.Count >= c_prefix_cache_limit then
+            if m_admin_place_longer_prefix_cache.Count >= nc_cache_limit(c_prefix_cache_limit) then
             begin
                 m_admin_place_longer_prefix_cache.Clear;
             end;
@@ -10129,6 +10216,10 @@ begin
         begin
             if m_contains_popularity_cache <> nil then
             begin
+                if m_contains_popularity_cache.Count >= nc_cache_limit(c_popularity_cache_limit) then
+                begin
+                    m_contains_popularity_cache.Clear;
+                end;
                 m_contains_popularity_cache.AddOrSetValue(token, Result);
             end;
             Exit;
@@ -10164,6 +10255,10 @@ begin
 
     if m_contains_popularity_cache <> nil then
     begin
+        if m_contains_popularity_cache.Count >= nc_cache_limit(c_popularity_cache_limit) then
+        begin
+            m_contains_popularity_cache.Clear;
+        end;
         m_contains_popularity_cache.AddOrSetValue(token, Result);
     end;
 end;
@@ -10223,6 +10318,10 @@ begin
 
     if m_prefix_popularity_cache <> nil then
     begin
+        if m_prefix_popularity_cache.Count >= nc_cache_limit(c_popularity_cache_limit) then
+        begin
+            m_prefix_popularity_cache.Clear;
+        end;
         m_prefix_popularity_cache.AddOrSetValue(prefix, Result);
     end;
 end;
@@ -11321,7 +11420,10 @@ begin
             if not m_defer_optional_model_loads then
             begin
                 load_base_exact_pinyin_bloom;
-                load_query_path_bonus_cache;
+                if not g_query_path_on_demand then
+                begin
+                    load_query_path_bonus_cache;
+                end;
             end;
         end;
     end;
@@ -11445,6 +11547,11 @@ begin
     begin
         m_base_connection.finalize(m_stmt_exact_pair_path_evidence);
         m_stmt_exact_pair_path_evidence := nil;
+    end;
+    if (m_stmt_query_path_query <> nil) and (m_base_connection <> nil) then
+    begin
+        m_base_connection.finalize(m_stmt_query_path_query);
+        m_stmt_query_path_query := nil;
     end;
     if (m_stmt_lm_transition_query <> nil) and (m_base_connection <> nil) then
     begin
@@ -11875,6 +11982,40 @@ begin
     if m_candidate_penalty_pinyin_loaded_cache <> nil then
     begin
         m_candidate_penalty_pinyin_loaded_cache.Clear;
+    end;
+end;
+
+procedure TncSqliteDictionary.trim_caches(const level: Integer);
+begin
+    clear_dictionary_lookup_caches;
+    if level <= 0 then
+    begin
+        Exit;
+    end;
+    if m_char_lm_entry_cache <> nil then m_char_lm_entry_cache.Clear;
+    if m_char_lm_cache_order <> nil then m_char_lm_cache_order.Clear;
+    if m_char_lm_text_score_cache <> nil then m_char_lm_text_score_cache.Clear;
+    if m_char_lm_text_score_cache_order <> nil then m_char_lm_text_score_cache_order.Clear;
+    if m_char_lm_short_context_text_score_cache <> nil then
+        m_char_lm_short_context_text_score_cache.Clear;
+    if m_char_lm_short_context_text_score_cache_order <> nil then
+        m_char_lm_short_context_text_score_cache_order.Clear;
+    if m_contains_popularity_cache <> nil then m_contains_popularity_cache.Clear;
+    if m_prefix_popularity_cache <> nil then m_prefix_popularity_cache.Clear;
+    if (m_lm_transition_bonus_cache <> nil) and (m_lm_transition_loaded_queries <> nil) then
+    begin
+        m_lm_transition_bonus_cache.Clear;
+        m_lm_transition_loaded_queries.Clear;
+    end;
+    if g_query_path_on_demand and (m_query_path_bonus_cache <> nil) and
+        (m_base_query_path_pinyin_cache <> nil) then
+    begin
+        m_query_path_bonus_cache.Clear;
+        m_base_query_path_pinyin_cache.Clear;
+    end;
+    if not m_short_lookup_cache_prewarmed then
+    begin
+        if m_single_char_weight_cache <> nil then m_single_char_weight_cache.Clear;
     end;
 end;
 
@@ -12392,7 +12533,7 @@ begin
     end;
     if m_exact_component_lookup_cache <> nil then
     begin
-        while m_exact_component_lookup_cache.Count >= c_component_cache_limit do
+        while m_exact_component_lookup_cache.Count >= nc_cache_limit(c_component_cache_limit) do
         begin
             if (m_exact_component_lookup_cache_order = nil) or
                 (m_exact_component_lookup_cache_order.Count = 0) then
@@ -12400,7 +12541,7 @@ begin
                 m_exact_component_lookup_cache.Clear;
                 Break;
             end;
-            evicted_cache_key := m_exact_component_lookup_cache_order.Dequeue;
+            evicted_cache_key := nc_dequeue(m_exact_component_lookup_cache_order);
             m_exact_component_lookup_cache.Remove(evicted_cache_key);
         end;
         m_exact_component_lookup_cache.AddOrSetValue(cache_key,
@@ -13045,7 +13186,7 @@ begin
     end;
     if m_exact_lookup_result_cache <> nil then
     begin
-        while m_exact_lookup_result_cache.Count >= c_result_cache_limit do
+        while m_exact_lookup_result_cache.Count >= nc_cache_limit(c_result_cache_limit) do
         begin
             if (m_exact_lookup_result_cache_order = nil) or
                 (m_exact_lookup_result_cache_order.Count = 0) then
@@ -13053,7 +13194,7 @@ begin
                 m_exact_lookup_result_cache.Clear;
                 Break;
             end;
-            evicted_cache_key := m_exact_lookup_result_cache_order.Dequeue;
+            evicted_cache_key := nc_dequeue(m_exact_lookup_result_cache_order);
             m_exact_lookup_result_cache.Remove(evicted_cache_key);
         end;
         m_exact_lookup_result_cache.AddOrSetValue(cache_query_key,
@@ -15925,7 +16066,7 @@ begin
     end;
     if m_lookup_result_cache <> nil then
     begin
-        while m_lookup_result_cache.Count >= c_result_cache_limit do
+        while m_lookup_result_cache.Count >= nc_cache_limit(c_result_cache_limit) do
         begin
             if (m_lookup_result_cache_order = nil) or
                 (m_lookup_result_cache_order.Count = 0) then
@@ -15933,7 +16074,7 @@ begin
                 m_lookup_result_cache.Clear;
                 Break;
             end;
-            evicted_cache_key := m_lookup_result_cache_order.Dequeue;
+            evicted_cache_key := nc_dequeue(m_lookup_result_cache_order);
             m_lookup_result_cache.Remove(evicted_cache_key);
         end;
         m_lookup_result_cache.AddOrSetValue(LowerCase(pinyin),
@@ -17241,7 +17382,15 @@ begin
     end;
 
     cache_key := normalized_query + #1 + normalized_path;
-    if not m_query_path_bonus_cache_loaded then
+    if g_query_path_on_demand then
+    begin
+        if (m_base_query_path_pinyin_cache <> nil) and
+            (not m_base_query_path_pinyin_cache.ContainsKey(normalized_query)) then
+        begin
+            load_query_path_query(normalized_query);
+        end;
+    end
+    else if not m_query_path_bonus_cache_loaded then
     begin
         load_query_path_bonus_cache;
     end;
@@ -17527,13 +17676,13 @@ begin
         Exit;
     end;
 
-    while entry_cache.Count >= c_cache_max_entries do
+    while entry_cache.Count >= nc_cache_limit(c_cache_max_entries) do
     begin
         if cache_order.Count <= 0 then
         begin
             Exit;
         end;
-        evicted_ngram := cache_order.Dequeue;
+        evicted_ngram := nc_dequeue(cache_order);
         entry_cache.Remove(evicted_ngram);
     end;
     entry_cache.Add(ngram, entry);
@@ -17581,13 +17730,13 @@ begin
         score_cache.AddOrSetValue(cache_key, score);
         Exit;
     end;
-    while score_cache.Count >= cache_max_entries do
+    while score_cache.Count >= nc_cache_limit(cache_max_entries) do
     begin
         if cache_order.Count <= 0 then
         begin
             Exit;
         end;
-        evicted_key := cache_order.Dequeue;
+        evicted_key := nc_dequeue(cache_order);
         score_cache.Remove(evicted_key);
     end;
     score_cache.Add(cache_key, score);
@@ -19664,10 +19813,13 @@ begin
     end;
     if m_word_frequency_cache <> nil then
     begin
-        if m_word_frequency_cache.Count >= c_cache_limit then
+        if m_word_frequency_cache.Count >= nc_cache_limit(c_cache_limit) then
             m_word_frequency_cache.Clear;
         m_word_frequency_cache.AddOrSetValue(text_key, Result);
     end;
 end;
+
+
+{$I nc_cache_census_dictionary.inc}
 
 end.
