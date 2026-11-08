@@ -96,7 +96,8 @@ final class KeyboardViewController: CommandKeyboardController {
     if sender.tag < candidates.count { pickCandidate(sender.tag) }
   }
 
-  override func showCandidates(_ candidates: [String], preedit: String) {
+  // Five buttons, no scrolling: the measurement floor needs no more.
+  override func showCandidates(_ candidates: [String], preedit: String, more: Bool) {
     self.candidates = candidates
     for (index, button) in candidateButtons.enumerated() {
       if index < candidates.count {

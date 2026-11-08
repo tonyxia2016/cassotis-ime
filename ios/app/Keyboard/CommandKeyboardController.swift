@@ -17,6 +17,7 @@ final class EngineThread {
   private let condition = NSCondition()
   private var jobs: [() -> Void] = []
   private var idle: (() -> Void)?
+  private var later: [() -> Void] = []
   private var idleRunning = false
   private var idleInterrupted = false
   private var thread: Thread?
@@ -51,6 +52,15 @@ final class EngineThread {
     condition.unlock()
   }
 
+  /// Lowest priority, after the poll: reading more candidates for a list the user
+  /// scrolls, so that neither keys nor the model's ranking wait for it.
+  func runAfterIdle(_ job: @escaping () -> Void) {
+    condition.lock()
+    later.append(job)
+    condition.signal()
+    condition.unlock()
+  }
+
   /// On the engine thread, in the idle job: whether a key interrupted it.
   func idleWasInterrupted() -> Bool {
     condition.lock()
@@ -61,16 +71,19 @@ final class EngineThread {
   private func loop() {
     while true {
       condition.lock()
-      while jobs.isEmpty && idle == nil { condition.wait() }
+      while jobs.isEmpty && idle == nil && later.isEmpty { condition.wait() }
       let job: () -> Void
-      let isIdle = jobs.isEmpty
-      if isIdle {
-        job = idle!
+      var isIdle = false
+      if !jobs.isEmpty {
+        job = jobs.removeFirst()
+      } else if let poll = idle {
+        job = poll
         idle = nil
+        isIdle = true
         idleRunning = true
         idleInterrupted = false
       } else {
-        job = jobs.removeFirst()
+        job = later.removeFirst()
       }
       condition.unlock()
       autoreleasepool(invoking: job)
@@ -102,12 +115,18 @@ class CommandKeyboardController: UIInputViewController {
   private(set) var preedit = ""
   /// The last result drawn, for mode=type's report.
   private var lastResult = CassotisKeyResult()
+  /// The list on screen: the result's candidates, then what scrolling read.
+  private(set) var shownCandidates: [String] = []
+  private var candidateGeneration = 0
 
   /// Where dict_sc.db, schema.sql and corpus.tsv live for this extension.
   var resourceDirectory: String { Bundle.main.resourcePath ?? "" }
 
   func buildKeyboard() {}
-  func showCandidates(_ candidates: [String], preedit: String) {}
+  /// more: further pages follow, which loadCandidates reads when the list scrolls.
+  func showCandidates(_ candidates: [String], preedit: String, more: Bool) {}
+  /// The next part of the list on screen; end: there is nothing after it.
+  func appendCandidates(_ candidates: [String], end: Bool) {}
 
   static func mark(_ name: String) {
     marks.append(
@@ -169,6 +188,9 @@ class CommandKeyboardController: UIInputViewController {
     EngineBridge.applyMemoryPolicy(options)
     let resources = resourceDirectory
     let data = Self.dataDirectory
+    // Typing opens with no options and gets the mode it left; a run starts in
+    // Chinese, whatever the phone was last used for.
+    let mode = options.isEmpty ? Self.rememberedMode : 0
     Self.thread.run {
       let dictionary = resources + "/dict_sc.db"
       let user = learning ? data + "/user_dict.db" : ""
@@ -181,6 +203,7 @@ class CommandKeyboardController: UIInputViewController {
         return
       }
       Self.engineState = 2
+      if mode != 0 { Self.engine.setInputMode(Int32(mode)) }
       Self.mark("engineOpen")
       NSLog("cassotis engine open, footprint %.1f MB", Double(EngineBridge.footprint()) / 1_048_576)
       work()
@@ -217,26 +240,99 @@ class CommandKeyboardController: UIInputViewController {
     let edits = text.count == 1 && text.unicodeScalars.allSatisfy {
       ("a"..."z").contains($0) || $0 == "'"
     }
+    let digit = text.count == 1 && text.unicodeScalars.allSatisfy { ("0"..."9").contains($0) }
     let context = contextForKey()
+    let preceding = text == "." && preedit.isEmpty ? precedingDigit() : 0
     withEngine(interruptsPoll: edits) {
       Self.syncContext(context)
-      let result = Self.engine.pressText(text)
-      DispatchQueue.main.async { self.apply(result) }
+      // A digit typed on screen is a digit: the composition is committed first
+      // instead of the digit picking a candidate as on a hardware keyboard.
+      if digit && Self.engine.digitsSelect, let committed = Self.engine.commitComposition() {
+        DispatchQueue.main.async { self.apply(committed) }
+      }
+      var result = Self.engine.pressText(text, precedingDigit: preceding)
+      // What the engine passes on (English mode, say) the keyboard types itself,
+      // as macOS leaves it to the application; anything composed goes first.
+      let passThrough = !result.handled && result.commit.isEmpty
+      if passThrough && Self.engine.composing, let committed = Self.engine.commitComposition() {
+        result = committed
+      }
+      DispatchQueue.main.async {
+        self.apply(result)
+        if passThrough { self.textDocumentProxy.insertText(text) }
+      }
       if result.pending { self.pollWhenIdle() }
     }
   }
 
+  /// The ASCII digit right before the caret, for '.' after a number; full-width
+  /// digits count as theirs. 0 when there is none.
+  private func precedingDigit() -> UInt16 {
+    guard let last = textDocumentProxy.documentContextBeforeInput?.unicodeScalars.last else {
+      return 0
+    }
+    if ("0"..."9").contains(last) { return UInt16(last.value) }
+    if (0xFF10...0xFF19).contains(last.value) { return UInt16(last.value - 0xFF10 + 0x30) }
+    return 0
+  }
+
   func pressSpecial(_ code: UInt16, fallback: String?) {
-    let composing = !preedit.isEmpty
     let context = contextForKey()
     withEngine(interruptsPoll: code == 1) {  // 1: backspace
       Self.syncContext(context)
       let result = Self.engine.pressSpecial(code)
+      // Space or return with nothing composed: the engine leaves it to the field.
+      let passThrough = !result.handled && result.commit.isEmpty && result.preedit.isEmpty
       DispatchQueue.main.async {
-        if !composing, let fallback { self.textDocumentProxy.insertText(fallback) }
         self.apply(result)
+        if passThrough, let fallback { self.textDocumentProxy.insertText(fallback) }
       }
       if result.pending { self.pollWhenIdle() }
+    }
+  }
+
+  /// Commits what is composed with its first candidates, as macOS does when focus
+  /// moves: before a symbol from the panel, a switch of mode, and the like.
+  func commitComposition() {
+    guard Self.engineState != 0 else { return }
+    withEngine {
+      guard let result = Self.engine.commitComposition() else { return }
+      DispatchQueue.main.async { self.apply(result) }
+    }
+  }
+
+  /// Text from outside the engine (a symbol, a forwarded key), after every key and
+  /// commit already queued, so it lands in the order it was typed.
+  func insertAfterKeys(_ text: String) {
+    guard Self.engineState != 0 else {
+      textDocumentProxy.insertText(text)
+      return
+    }
+    Self.thread.run { DispatchQueue.main.async { self.textDocumentProxy.insertText(text) } }
+  }
+
+  // MARK: - Input mode
+
+  /// 0 Chinese, 1 English. The engine does not save it (macOS remembers it per
+  /// application), so the keyboard does, in its own defaults.
+  static var rememberedMode: Int {
+    get { UserDefaults.standard.integer(forKey: "cassotis.inputMode") }
+    set { UserDefaults.standard.set(newValue, forKey: "cassotis.inputMode") }
+  }
+
+  /// The mode changed or is known: subclasses show it (the space bar's label).
+  func showInputMode(_ mode: Int) {}
+
+  func setInputMode(_ mode: Int) {
+    Self.rememberedMode = mode
+    showInputMode(mode)
+    guard Self.engineState != 0 else { return }  // applied when the engine opens
+    withEngine {
+      if let committed = Self.engine.commitComposition() {
+        DispatchQueue.main.async { self.apply(committed) }
+      }
+      Self.engine.setInputMode(Int32(mode))
+      DispatchQueue.main.async { self.apply(CassotisKeyResult()) }
     }
   }
 
@@ -258,11 +354,30 @@ class CommandKeyboardController: UIInputViewController {
     }
   }
 
+  /// index counts the whole list on screen, scrolled pages included.
   func pickCandidate(_ index: Int) {
     withEngine {
-      let result = Self.engine.select(Int32(index))
+      guard let result = Self.engine.selectCandidate(Int32(index)) else { return }
       DispatchQueue.main.async { self.apply(result) }
       if result.pending { self.pollWhenIdle() }
+    }
+  }
+
+  /// The list on screen scrolled near its end: candidates from start on. Read when
+  /// the engine thread has nothing else to do; dropped if the list changed.
+  func loadCandidates(_ start: Int, _ count: Int) {
+    guard Self.engineState == 2 else { return }
+    let generation = candidateGeneration
+    Self.thread.runAfterIdle { [weak self] in
+      var end = ObjCBool(false)
+      let more = Self.engine.candidates(from: Int32(start), count: Int32(count), end: &end)
+      DispatchQueue.main.async {
+        guard let self, generation == self.candidateGeneration,
+          start == self.shownCandidates.count
+        else { return }
+        self.shownCandidates.append(contentsOf: more)
+        self.appendCandidates(more, end: end.boolValue || more.isEmpty)
+      }
     }
   }
 
@@ -286,7 +401,9 @@ class CommandKeyboardController: UIInputViewController {
         preedit, selectedRange: NSRange(location: (preedit as NSString).length, length: 0))
       if preedit.isEmpty { textDocumentProxy.unmarkText() }
     }
-    showCandidates(result.candidates, preedit: preedit)
+    candidateGeneration &+= 1
+    shownCandidates = result.candidates
+    showCandidates(result.candidates, preedit: preedit, more: result.pages > result.page + 1)
   }
 
   // MARK: - Commands from the host
@@ -449,22 +566,31 @@ class CommandKeyboardController: UIInputViewController {
   /// Types keys through the same calls as the keys on screen and reports what a user
   /// would see: the document, the composition and candidates left at the end, the
   /// user dictionary, and with debug=1 the left context the engine ranked with.
-  ///   keys    a–z, ' and punctuation as typed; _ space, < backspace, ~ return,
-  ///           #N the Nth candidate on screen
+  ///   keys    a–z, digits, ' and punctuation as typed; _ space, < backspace,
+  ///           ~ return, #N the Nth candidate of the list (scrolled part included),
+  ///           + scroll the list to its end so that it reads the next page,
+  ///           {en} {zh} switch the mode, {reset} the panel's resetInput,
+  ///           {sym:X} X from the panel's symbol grid
   ///   prefix  text inserted first, as if typed earlier (no spaces)
   ///   pace    milliseconds between keys (default 300, enough for the model's poll)
   ///   learning=0 opens the engine without the user dictionary
   private func typeKeys(_ options: [String: String]) {
     let label = options["label"] ?? "type"
     let pace = Double(options["pace"].flatMap(Int.init) ?? 300) / 1000
+    let savedMode = Self.rememberedMode
     let debug = options["debug"] == "1"
     var tokens: [String] = []
     let characters = Array(options["keys"] ?? "")
     var index = 0
     while index < characters.count {
-      if characters[index] == "#", index + 1 < characters.count, characters[index + 1].isNumber {
-        tokens.append("#" + String(characters[index + 1]))
-        index += 2
+      if characters[index] == "{", let close = characters[index...].firstIndex(of: "}") {
+        tokens.append(String(characters[index...close]))
+        index = close + 1
+      } else if characters[index] == "#", index + 1 < characters.count, characters[index + 1].isNumber {
+        var end = index + 1
+        while end < characters.count, characters[end].isNumber { end += 1 }
+        tokens.append("#" + String(characters[(index + 1)..<end]))
+        index = end
       } else {
         tokens.append(String(characters[index]))
         index += 1
@@ -480,6 +606,13 @@ class CommandKeyboardController: UIInputViewController {
       case "_": pressSpecial(5, fallback: " ")
       case "<": pressDelete()
       case "~": pressSpecial(3, fallback: "\n")
+      case "+": loadCandidates(shownCandidates.count, 9)  // the list scrolled to its end
+      case "{en}": setInputMode(1)
+      case "{zh}": setInputMode(0)
+      case "{reset}": commitComposition()  // what the panel's resetInput does
+      case let symbol where symbol.hasPrefix("{sym:"):  // a symbol from the panel's grid
+        commitComposition()
+        insertAfterKeys(String(symbol.dropFirst(5).dropLast()))
       default:
         if token.hasPrefix("#"), let number = Int(token.dropFirst()), number > 0 {
           pickCandidate(number - 1)
@@ -498,17 +631,19 @@ class CommandKeyboardController: UIInputViewController {
         "label": label, "keys": tokens.count,
         "document": (textDocumentProxy.documentContextBeforeInput ?? "")
           + (textDocumentProxy.documentContextAfterInput ?? ""),
-        "preedit": preedit, "candidates": result.candidates,
-        "user_dict_bytes": size,
+        "preedit": preedit, "candidates": shownCandidates,
+        "pages": result.pages, "user_dict_bytes": size,
       ]
       if debug {
         report["debug_context"] = result.debugContext
         report["debug_context_reported"] = result.debugContextReported
       }
+      Self.rememberedMode = savedMode  // {en} and {zh} must not change the phone's keyboard
       Self.thread.run {
         if debug { Self.engine.setDebugMode(false) }
         let state = Self.engine.wait(forModel: 0)
         report["model_state"] = state
+        report["mode"] = Self.engine.inputMode()
         DispatchQueue.main.async {
           let data = (try? JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])) ?? Data()
           self.report(self.envelope(String(data: data, encoding: .utf8) ?? "{}"))

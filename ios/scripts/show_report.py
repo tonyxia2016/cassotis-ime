@@ -16,7 +16,8 @@ if "idle_samples" in r:
 if "document" in r:  # mode=type
     print(f"{r['label']}  {j['device']} iOS {j['os']}  keys {r['keys']}  model {r.get('model_state')}  user_dict {r['user_dict_bytes']} bytes")
     print(f"  document {r['document']!r}")
-    print(f"  preedit {r['preedit']!r}  candidates {r['candidates'][:9]}")
+    shown = r["candidates"]
+    print(f"  preedit {r['preedit']!r}  {len(shown)} candidates of {r.get('pages', '?')} pages: {shown[:12]}{' …' if len(shown) > 12 else ''}")
     if "debug_context" in r:
         print(f"  context {r['debug_context']!r} reported={r['debug_context_reported']}")
     sys.exit()

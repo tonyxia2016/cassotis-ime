@@ -2,6 +2,7 @@
 #include "EngineClient.hpp"
 #include "cassotis_core.h"
 #include "replay.hpp"
+#include <algorithm>
 #include <chrono>
 #include <malloc/malloc.h>
 
@@ -23,6 +24,8 @@ static CassotisKeyResult *wrap(const Result &r) {
     NSMutableArray<NSString *> *list = [NSMutableArray arrayWithCapacity:r.candidates.size()];
     for (const auto &c : r.candidates) [list addObject:ns(c.text)];
     o.candidates = list;
+    o.page = r.page;
+    o.pages = r.pages;
     o.debugContext = r.debugContextEnabled ? ns(r.debugContext) : @"";
     o.debugContextReported = r.debugContextEnabled && r.debugContextReported;
     return o;
@@ -30,7 +33,13 @@ static CassotisKeyResult *wrap(const Result &r) {
 
 @implementation EngineBridge {
     EngineClient _client;
-    BOOL _composing;
+    BOOL _composing, _digitsSelect;
+    // The scrolling list (engine thread only): the last result's page, then the
+    // pages read after it. _first is that result's page, _read how many pages
+    // _list holds, _size a full page (0 when there is one page).
+    std::vector<std::string> _list;
+    int32_t _first, _read, _pageCount, _size, _enginePage;
+    uint64_t _revision;
     MemorySnapshot _beforeOpen, _afterOpen;
     double _openSeconds;
     int32_t _modelState;
@@ -74,31 +83,117 @@ static CassotisKeyResult *wrap(const Result &r) {
     return nil;
 }
 - (BOOL)composing { return _composing; }
+- (BOOL)digitsSelect { return _digitsSelect; }
+// A result the keyboard draws: what is composed, and a new scrolling list.
+- (void)track:(const Result &)r {
+    _composing = !r.preedit.empty();
+    _digitsSelect = _composing && r.selectionKeys == "123456789";
+    _list.clear();
+    for (const auto &c : r.candidates) _list.push_back(c.text);
+    _first = r.page;
+    _read = 1;
+    _pageCount = r.pages;
+    _enginePage = r.page;
+    _size = r.pages > r.page + 1 ? int32_t(r.candidates.size()) : 0;
+    _revision = r.candidateRevision;
+}
+- (void)forget {
+    _composing = _digitsSelect = NO;
+    _list.clear();
+    _first = _enginePage = _pageCount = _size = 0;
+    _read = 1;
+    _revision = 0;
+}
 // Every key goes through here, so composing follows the engine. A failed
 // transaction leaves nothing composed: EngineClient disconnects on errors.
 - (CassotisKeyResult *)keyResult:(const Key &)k label:(const char *)label {
     try {
         Result r = _client.key(k);
-        _composing = !r.preedit.empty();
+        [self track:r];
         return wrap(r);
     } catch (const std::exception &e) {
         NSLog(@"%s: %s", label, e.what());
-        _composing = NO;
+        [self forget];
         return [CassotisKeyResult new];
     }
 }
+- (NSArray<NSString *> *)candidatesFrom:(int32_t)start count:(int32_t)count end:(BOOL *)end {
+    while (_size > 0 && _revision && int32_t(_list.size()) < start + count &&
+           _first + _read < _pageCount) {
+        int32_t next = _first + _read;
+        Result r;
+        try { r = _client.candidatePages(_revision, next, std::min(3, _pageCount - next)); }
+        catch (const std::exception &e) { NSLog(@"pages: %s", e.what()); [self forget]; break; }
+        int32_t before = _read;
+        for (const auto &page : r.candidatePages) {
+            if (page.page != _first + _read) break;
+            for (const auto &c : page.candidates) _list.push_back(c.text);
+            ++_read;
+        }
+        // The list changed under us, or the engine has no copy of that page:
+        // what is here is all there will be.
+        if (!r.handled || _read == before) _pageCount = _first + _read;
+    }
+    if (end) *end = _first + _read >= _pageCount;
+    NSMutableArray<NSString *> *more = [NSMutableArray array];
+    for (size_t i = size_t(std::max(0, start)); i < _list.size(); ++i) [more addObject:ns(_list[i])];
+    return more;
+}
+- (CassotisKeyResult *)selectCandidate:(int32_t)index {
+    int32_t page = _first, slot = index;
+    if (_size > 0) { page = _first + index / _size; slot = index % _size; }
+    if (index < 0 || slot >= 9 || page >= std::max(_pageCount, 1)) return nil;
+    try {
+        // Picking from a later page is navigation, so the paging keys are right here.
+        while (_enginePage != page) {
+            Key k; k.special = _enginePage < page ? 14 : 13;  // page down : page up
+            Result r = _client.key(k);
+            if (r.page == _enginePage) return nil;
+            _enginePage = r.page;
+        }
+    } catch (const std::exception &e) { NSLog(@"page: %s", e.what()); [self forget]; return nil; }
+    Key k; k.text = std::to_string(slot + 1);
+    return [self keyResult:k label:"select"];
+}
 - (CassotisKeyResult *)pressText:(NSString *)text {
+    return [self pressText:text precedingDigit:0];
+}
+- (CassotisKeyResult *)pressText:(NSString *)text precedingDigit:(uint16_t)digit {
     Key k; k.text = text.UTF8String;
+    if (digit >= '0' && digit <= '9') k.precedingDigit = digit;
     return [self keyResult:k label:"key"];
+}
+- (CassotisKeyResult *)commitComposition {
+    if (!_composing) return nil;
+    std::string committed, previous;
+    Result r;
+    try {
+        for (int i = 0; i < 128; ++i) {
+            Key k; k.special = 5;  // space takes the first candidate, segment by segment
+            r = _client.key(k);
+            committed += r.commit;
+            [self track:r];
+            if (r.preedit.empty() || r.preedit == previous) break;
+            previous = r.preedit;
+        }
+    } catch (const std::exception &e) { NSLog(@"commit: %s", e.what()); [self forget]; r = Result(); }
+    r.commit = committed;
+    return wrap(r);
+}
+- (int32_t)inputMode {
+    try { return _client.state(false).mode; }
+    catch (const std::exception &e) { NSLog(@"mode: %s", e.what()); return -1; }
+}
+- (void)setInputMode:(int32_t)mode {
+    try {
+        State s = _client.state(false);
+        if (s.mode != uint8_t(mode)) { s.mode = uint8_t(mode); _client.setState(s); }
+    } catch (const std::exception &e) { NSLog(@"mode: %s", e.what()); }
+    [self forget];
 }
 - (CassotisKeyResult *)pressSpecial:(uint16_t)special {
     Key k; k.special = special;
     return [self keyResult:k label:"key"];
-}
-- (CassotisKeyResult *)selectIndex:(int32_t)index {
-    // The digit keys pick from the visible page, as on a hardware keyboard.
-    Key k; k.text = std::to_string(index + 1);
-    return [self keyResult:k label:"select"];
 }
 - (void)setLeftContext:(NSString *)text {
     // The cursor counts UTF-16 units, as Length does in the engine and as the
@@ -109,13 +204,13 @@ static CassotisKeyResult *wrap(const Result &r) {
     } catch (const std::exception &e) { NSLog(@"context: %s", e.what()); }
 }
 - (void)resetComposition {
-    _composing = NO;
+    [self forget];
     try { _client.reset(); } catch (const std::exception &e) { NSLog(@"reset: %s", e.what()); }
 }
 - (CassotisKeyResult *)poll {
     try {
         Result r = _client.poll();
-        if (r.handled) _composing = !r.preedit.empty();
+        if (r.handled) [self track:r];
         return wrap(r);
     } catch (const std::exception &e) { NSLog(@"poll: %s", e.what()); return [CassotisKeyResult new]; }
 }

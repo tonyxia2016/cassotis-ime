@@ -12,6 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) BOOL handled;
 // The engine has more for this key: poll when idle (char_lm_deferred).
 @property(nonatomic) BOOL pending;
+// The engine's candidate page and page count: more pages follow when
+// pages > page + 1 (candidatesFrom:count:end: reads them).
+@property(nonatomic) int32_t page;
+@property(nonatomic) int32_t pages;
 // With the engine's debug mode on: the left context it ranked with, and whether
 // the host reported any. Test runs read these; typing never turns debug on.
 @property(nonatomic, copy) NSString *debugContext;
@@ -38,13 +42,35 @@ NS_ASSUME_NONNULL_BEGIN
                                  data:(NSString *)data;
 - (CassotisKeyResult *)pressText:(NSString *)text;
 - (CassotisKeyResult *)pressSpecial:(uint16_t)special;
-- (CassotisKeyResult *)selectIndex:(int32_t)index;
+// The candidates of the last result, then the pages after it, as one list that
+// scrolls: candidates start..start+count, reading pages from the engine as
+// needed (read-only, so space still takes the first one and the deferred
+// model ranking still applies). end: nothing after these.
+- (NSArray<NSString *> *)candidatesFrom:(int32_t)start count:(int32_t)count end:(BOOL *)end;
+// Picks the index-th candidate of that list: pages the engine there if it is
+// past the first page, then presses its digit. nil when the engine could not
+// reach that page, so nothing changed.
+- (nullable CassotisKeyResult *)selectCandidate:(int32_t)index;
 // The text before the caret, for context ranking and learning; nil when the
 // host does not report it (a secure field, say), which clears the old one.
 - (void)setLeftContext:(nullable NSString *)text;
 // Whether the last result left a composition open, as the engine sees it. The
 // main thread's copy lags while keys are queued.
 @property(nonatomic, readonly) BOOL composing;
+// Whether a digit would pick a candidate now (composing, 1–9 select). A digit on
+// the screen is meant as a digit, so the keyboard commits the composition first;
+// quick input that reads digits (selection keys abcd or none) keeps them.
+@property(nonatomic, readonly) BOOL digitsSelect;
+// precedingDigit: the ASCII digit before the caret, or 0, so that '.' after a
+// digit stays a decimal point (decimal_period_after_digit).
+- (CassotisKeyResult *)pressText:(NSString *)text precedingDigit:(uint16_t)digit;
+// Commits what is composed, as macOS does when focus moves: space until nothing
+// is left. The result's commit holds all of it; nil when nothing was composed.
+- (nullable CassotisKeyResult *)commitComposition;
+// The engine's input mode: 0 Chinese, 1 English; -1 when it cannot say.
+- (int32_t)inputMode;
+// Switches it; the engine drops the composition, so commit that first.
+- (void)setInputMode:(int32_t)mode;
 - (void)resetComposition;
 // The candidates of the last key, ranked with the character LM; handled is NO
 // when there is nothing new (a newer key, or nothing was pending).

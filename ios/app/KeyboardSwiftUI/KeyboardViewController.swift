@@ -27,6 +27,18 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     super.viewWillAppear(animated)
     vm.setReturnKeyType(textDocumentProxy.returnKeyType)
     vm.setDisplayMode(.initial)
+    showInputMode(Self.rememberedMode)
+  }
+
+  /// Long-pressing the globe key lists these (getInputMethods); the space bar
+  /// shows the current one's name.
+  nonisolated static let inputMethods: [(name: String, display: String, language: String)] = [
+    ("cassotis-pinyin", "拼音", "zh_CN"), ("cassotis-english", "英文", "en"),
+  ]
+
+  override func showInputMode(_ mode: Int) {
+    let index = mode == 1 ? 1 : 0
+    setCurrentInputMethodAsync(program, inputContext, Self.inputMethods[index].name)
   }
 
   override func buildKeyboard() {
@@ -56,10 +68,16 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     vm.clearInputPanel()
   }
 
-  override func showCandidates(_ candidates: [String], preedit: String) {
+  /// Bulk mode: one list that scrolls, in the bar and in the expanded grid. Near its
+  /// end the panel calls scroll() (FcitxBackend), which reads the engine's next pages.
+  override func showCandidates(_ candidates: [String], preedit: String, more: Bool) {
     setCandidatesAsync(
-      program, inputContext, "", "", 0, candidates, 0, false, !preedit.isEmpty, "[]", false,
-      false, true)
+      program, inputContext, "", "", 0, candidates, candidates.isEmpty ? -1 : 0, true,
+      !preedit.isEmpty, "[]", false, false, !more)
+  }
+
+  override func appendCandidates(_ candidates: [String], end: Bool) {
+    scrollAsync(program, inputContext, candidates, end)
   }
 
   // MARK: FcitxProtocol
@@ -82,12 +100,14 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     }
   }
 
-  func forwardKey(_ key: String, _ code: String) { textDocumentProxy.insertText(key) }
-  func carriageReturn() { textDocumentProxy.insertText("\n") }
-  func resetInput() { resetComposition() }
+  // The panel resets before a forwarded key or a symbol from its grid: commit what
+  // is composed (macOS does so when focus moves), then the text, in that order.
+  func forwardKey(_ key: String, _ code: String) { insertAfterKeys(key) }
+  func carriageReturn() { insertAfterKeys("\n") }
+  func resetInput() { commitComposition() }
   func triggerUnicode() {}
   func triggerQuickPhrase() {}
-  func commitString(_ string: String) { textDocumentProxy.insertText(string) }
+  func commitString(_ string: String) { insertAfterKeys(string) }
   func deleteSurroundingText(_ offset: Int, _ size: Int) {}
   func setPreedit(_ preedit: String, _ cursor: Int) {}
   func cut() {}
@@ -96,7 +116,9 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
   func undo() {}
   func redo() {}
   func globe() { advanceToNextInputMode() }
-  func setCurrentInputMethod(_ inputMethod: String) {}
+  func setCurrentInputMethod(_ inputMethod: String) {
+    setInputMode(inputMethod == Self.inputMethods[1].name ? 1 : 0)
+  }
   func terminateExtension() { exit(0) }
   func slideBackspace(_ step: Int) {}
   func syncConfig() {}

@@ -44,11 +44,19 @@ func getCandidateActions(_ inputContext: String, _ index: Int32) -> String { "[]
 func activateCandidateAction(_ inputContext: String, _ index: Int32, _ id: Int32) {}
 func activateCandidateTabAction(_ inputContext: String, _ id: Int32) {}
 func activateStatusAreaAction(_ inputContext: String, _ id: Int32) {}
-func scroll(_ inputContext: String, _ start: Int32, _ count: Int32) {}
+func scroll(_ inputContext: String, _ start: Int32, _ count: Int32) {
+  KeyboardViewController.current?.loadCandidates(Int(start), Int(count))
+}
 func page(_ inputContext: String, _ next: Bool) {}
 
 // Fcitx
-func getInputMethods() -> String { "[]" }
+func getInputMethods() -> String {
+  let list = KeyboardViewController.inputMethods.map {
+    ["name": $0.name, "displayName": $0.display, "languageCode": $0.language]
+  }
+  let data = (try? JSONSerialization.data(withJSONObject: list)) ?? Data("[]".utf8)
+  return String(decoding: data, as: UTF8.self)
+}
 func isClipboardSuggestionEnabled() -> Bool { false }
 func isClipboardMaskSensitiveEnabled() -> Bool { false }
 func getClipboardSuggestionTimeout() -> Int32 { 0 }
