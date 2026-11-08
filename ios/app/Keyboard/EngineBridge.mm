@@ -23,11 +23,14 @@ static CassotisKeyResult *wrap(const Result &r) {
     NSMutableArray<NSString *> *list = [NSMutableArray arrayWithCapacity:r.candidates.size()];
     for (const auto &c : r.candidates) [list addObject:ns(c.text)];
     o.candidates = list;
+    o.debugContext = r.debugContextEnabled ? ns(r.debugContext) : @"";
+    o.debugContextReported = r.debugContextEnabled && r.debugContextReported;
     return o;
 }
 
 @implementation EngineBridge {
     EngineClient _client;
+    BOOL _composing;
     MemorySnapshot _beforeOpen, _afterOpen;
     double _openSeconds;
     int32_t _modelState;
@@ -70,28 +73,58 @@ static CassotisKeyResult *wrap(const Result &r) {
     try { _client.active(true); } catch (const std::exception &e) { return ns(e.what()); }
     return nil;
 }
+- (BOOL)composing { return _composing; }
+// Every key goes through here, so composing follows the engine. A failed
+// transaction leaves nothing composed: EngineClient disconnects on errors.
+- (CassotisKeyResult *)keyResult:(const Key &)k label:(const char *)label {
+    try {
+        Result r = _client.key(k);
+        _composing = !r.preedit.empty();
+        return wrap(r);
+    } catch (const std::exception &e) {
+        NSLog(@"%s: %s", label, e.what());
+        _composing = NO;
+        return [CassotisKeyResult new];
+    }
+}
 - (CassotisKeyResult *)pressText:(NSString *)text {
     Key k; k.text = text.UTF8String;
-    try { return wrap(_client.key(k)); } catch (const std::exception &e) { NSLog(@"key: %s", e.what()); return [CassotisKeyResult new]; }
+    return [self keyResult:k label:"key"];
 }
 - (CassotisKeyResult *)pressSpecial:(uint16_t)special {
     Key k; k.special = special;
-    try { return wrap(_client.key(k)); } catch (const std::exception &e) { NSLog(@"key: %s", e.what()); return [CassotisKeyResult new]; }
+    return [self keyResult:k label:"key"];
 }
 - (CassotisKeyResult *)selectIndex:(int32_t)index {
     // The digit keys pick from the visible page, as on a hardware keyboard.
     Key k; k.text = std::to_string(index + 1);
-    try { return wrap(_client.key(k)); } catch (const std::exception &e) { NSLog(@"select: %s", e.what()); return [CassotisKeyResult new]; }
+    return [self keyResult:k label:"select"];
 }
 - (void)setLeftContext:(NSString *)text {
-    std::string value = text.UTF8String;
-    try { _client.surrounding(value, int32_t(value.size()), true); } catch (const std::exception &e) { NSLog(@"context: %s", e.what()); }
+    // The cursor counts UTF-16 units, as Length does in the engine and as the
+    // macOS client sends it.
+    try {
+        if (text) _client.surrounding(text.UTF8String, int32_t(text.length), true);
+        else _client.surrounding("", 0, false);
+    } catch (const std::exception &e) { NSLog(@"context: %s", e.what()); }
 }
 - (void)resetComposition {
+    _composing = NO;
     try { _client.reset(); } catch (const std::exception &e) { NSLog(@"reset: %s", e.what()); }
 }
 - (CassotisKeyResult *)poll {
-    try { return wrap(_client.poll()); } catch (const std::exception &e) { NSLog(@"poll: %s", e.what()); return [CassotisKeyResult new]; }
+    try {
+        Result r = _client.poll();
+        if (r.handled) _composing = !r.preedit.empty();
+        return wrap(r);
+    } catch (const std::exception &e) { NSLog(@"poll: %s", e.what()); return [CassotisKeyResult new]; }
+}
+- (void)setDebugMode:(BOOL)on {
+    try {
+        State s = _client.state(false);
+        s.flags = on ? (s.flags | 8) : (s.flags & ~8);  // c_state_flag_debug_mode
+        _client.setState(s);
+    } catch (const std::exception &e) { NSLog(@"debug mode: %s", e.what()); }
 }
 - (void)trim:(int32_t)level {
     cassotis_core_trim(level);

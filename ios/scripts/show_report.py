@@ -13,6 +13,13 @@ if "idle_samples" in r:
     print(r["label"], j["device"], "marks", [(m["name"], m["mb"], m["available_mb"]) for m in j["marks"]])
     print(" idle", r["idle_samples"])
     sys.exit()
+if "document" in r:  # mode=type
+    print(f"{r['label']}  {j['device']} iOS {j['os']}  keys {r['keys']}  model {r.get('model_state')}  user_dict {r['user_dict_bytes']} bytes")
+    print(f"  document {r['document']!r}")
+    print(f"  preedit {r['preedit']!r}  candidates {r['candidates'][:9]}")
+    if "debug_context" in r:
+        print(f"  context {r['debug_context']!r} reported={r['debug_context_reported']}")
+    sys.exit()
 print(f"{r['label']}  {j['device']} iOS {j['os']} full_access={j['full_access']}")
 print("  marks  " + "  ".join(f"{m['name']}={m['mb']}MB(avail {m['available_mb']})" for m in j["marks"]))
 print(f"  keys {r['keys']} in {r['seconds']:.0f}s  first {r['first_rate']:.3f}  digest {r['digest']}  err={r['error']!r}")

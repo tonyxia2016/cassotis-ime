@@ -45,7 +45,17 @@ CASSOTIS_SIMULATOR=1 ./scripts/build_toolchain.sh
 CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build_engine.sh ios-sim
 ```
 
-`scripts/build_sim.sh` 构建并安装到 `build/sim.udid` 记录的模拟器。
+`scripts/build_sim.sh` 构建并安装到 `build/sim.udid` 记录的模拟器。新建一台测试用模拟器，并在它的设置里加上两个键盘（只改这台模拟器）：
+
+```bash
+UDID=$(xcrun simctl create "Cassotis Test" com.apple.CoreSimulator.SimDeviceType.iPhone-17 com.apple.CoreSimulator.SimRuntime.iOS-27-2)
+echo "$UDID" > build/sim.udid && xcrun simctl boot "$UDID"
+xcrun simctl spawn "$UDID" defaults write -g AppleKeyboards -array "en_US@sw=QWERTY;hw=Automatic" \
+  "com.hustmobile.cassotis.poc.swiftui" "com.hustmobile.cassotis.poc.keyboard"
+./scripts/build_sim.sh
+```
+
+模拟器没有神经网络引擎，键盘在模拟器里不用模型。
 
 ## 在 Mac 上回放
 
@@ -92,6 +102,25 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 `device_selftest.sh` 也接受 `mode=mltest`，以及 `mode=mlplan`（用 `MLComputePlan` 看算子派到哪个计算单元；`length` 指定函数）。它们在宿主 App 里跑，不需要先启用键盘。手机连了不止一台时，用 `CASSOTIS_DEVICE` 指定。
 
 模型在引擎打开后由后台线程加载，就绪前候选不使用模型。新装的模型第一次加载时，系统要为神经网络引擎编译，约 8 秒；之后每次进程启动约 0.2 秒。
+
+## 按键测试
+
+`mode=type` 让一串按键走和屏幕上点按相同的调用，最后报告输入框里的文字、剩下的拼音和候选、用户词库大小；加 `debug=1` 时还报告引擎排序用的上下文。模拟器用 `sim_keyboard.sh`，真机用 `device_keyboard.sh`：
+
+```bash
+./scripts/sim_keyboard.sh swiftui "label=context mode=type prefix=我们今天 keys=chifan debug=1"
+./scripts/device_keyboard.sh swiftui type-check "mode=type keys=shuru#3#2 learning=0"
+```
+
+- `keys`：a–z、`'` 和标点照原样输入；`_` 空格，`<` 退格，`~` 回车，`#N` 点第 N 个候选。
+- `prefix`：先插入输入框的文字，当作之前打的内容（不能有空格）。
+- `pace`：两键之间的毫秒数，默认 300，够模型的轮询跑完。
+- `learning=0`：不打开用户词库。在自己的手机上测试时用它，免得测试内容被学进去。
+
+正常打字时：
+
+- **学习：** 用户词库是键盘扩展自己容器里的 `Library/Application Support/Cassotis/user_dict.db`，不需要 Full Access。每次上屏都直接写进 SQLite，扩展被系统结束也不会丢。两个键盘各有一份。测量回放默认不学习，`learning=1` 才打开。
+- **上下文：** 开始一段新输入前，键盘把光标前最多 1024 个 UTF-16 单位交给引擎，和 macOS 相同；输入框不提供时告诉引擎“没有上下文”，不沿用上一个输入框的。
 
 ## 目录
 

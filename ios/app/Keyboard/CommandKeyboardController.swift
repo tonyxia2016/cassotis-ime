@@ -100,6 +100,8 @@ class CommandKeyboardController: UIInputViewController {
   private var pollTimer: Timer?
   private var running = false
   private(set) var preedit = ""
+  /// The last result drawn, for mode=type's report.
+  private var lastResult = CassotisKeyResult()
 
   /// Where dict_sc.db, schema.sql and corpus.tsv live for this extension.
   var resourceDirectory: String { Bundle.main.resourcePath ?? "" }
@@ -150,7 +152,9 @@ class CommandKeyboardController: UIInputViewController {
 
   /// The engine opens with the first key, not with the view: selecting a keyboard
   /// starts the extension before the user types, and a run must set its policy first.
-  func withEngine(options: [String: String] = [:], learning: Bool = false,
+  /// Typing learns (user_dict.db in this extension's container, which needs no Full
+  /// Access); a measurement run opens the engine first and decides for itself.
+  func withEngine(options: [String: String] = [:], learning: Bool = true,
     interruptsPoll: Bool = false, _ work: @escaping () -> Void)
   {
     if Self.engineState == 2 {
@@ -185,12 +189,37 @@ class CommandKeyboardController: UIInputViewController {
 
   // MARK: - Typing
 
+  /// The text before the caret as the engine wants it: the last 1024 UTF-16 units,
+  /// as on macOS, without half a surrogate pair. Read only while nothing is marked,
+  /// so the composition is not part of it; nil when the host reports nothing.
+  private func leftContext() -> String? {
+    guard let text = textDocumentProxy.documentContextBeforeInput else { return nil }
+    let units = text as NSString
+    guard units.length > 1024 else { return text }
+    var start = units.length - 1024
+    if CFStringIsSurrogateLowCharacter(units.character(at: start)) { start += 1 }
+    return units.substring(from: start)
+  }
+
+  /// What a key sends before itself: the left context, when this key may start a
+  /// composition. The engine thread checks again, since keys still queued there
+  /// may have opened one that the main thread has not drawn yet.
+  private func contextForKey() -> (sync: Bool, text: String?) {
+    preedit.isEmpty ? (true, leftContext()) : (false, nil)
+  }
+
+  private static func syncContext(_ context: (sync: Bool, text: String?)) {
+    if context.sync && !engine.composing { engine.setLeftContext(context.text) }
+  }
+
   func pressText(_ text: String) {
     // A pinyin letter edits the composition; punctuation commits.
     let edits = text.count == 1 && text.unicodeScalars.allSatisfy {
       ("a"..."z").contains($0) || $0 == "'"
     }
+    let context = contextForKey()
     withEngine(interruptsPoll: edits) {
+      Self.syncContext(context)
       let result = Self.engine.pressText(text)
       DispatchQueue.main.async { self.apply(result) }
       if result.pending { self.pollWhenIdle() }
@@ -199,7 +228,9 @@ class CommandKeyboardController: UIInputViewController {
 
   func pressSpecial(_ code: UInt16, fallback: String?) {
     let composing = !preedit.isEmpty
+    let context = contextForKey()
     withEngine(interruptsPoll: code == 1) {  // 1: backspace
+      Self.syncContext(context)
       let result = Self.engine.pressSpecial(code)
       DispatchQueue.main.async {
         if !composing, let fallback { self.textDocumentProxy.insertText(fallback) }
@@ -243,6 +274,7 @@ class CommandKeyboardController: UIInputViewController {
   }
 
   func apply(_ result: CassotisKeyResult) {
+    lastResult = result
     if !result.commit.isEmpty {
       textDocumentProxy.setMarkedText("", selectedRange: NSRange(location: 0, length: 0))
       textDocumentProxy.unmarkText()
@@ -313,6 +345,10 @@ class CommandKeyboardController: UIInputViewController {
     }
     if options["mode"] == "idle" {
       idle(seconds: number("seconds", 600), label: options["label"] ?? "idle", options: options)
+      return
+    }
+    if options["mode"] == "type" {
+      typeKeys(options)
       return
     }
     let learning = number("learning", 0) == 1
@@ -410,9 +446,87 @@ class CommandKeyboardController: UIInputViewController {
     }
   }
 
+  /// Types keys through the same calls as the keys on screen and reports what a user
+  /// would see: the document, the composition and candidates left at the end, the
+  /// user dictionary, and with debug=1 the left context the engine ranked with.
+  ///   keys    a–z, ' and punctuation as typed; _ space, < backspace, ~ return,
+  ///           #N the Nth candidate on screen
+  ///   prefix  text inserted first, as if typed earlier (no spaces)
+  ///   pace    milliseconds between keys (default 300, enough for the model's poll)
+  ///   learning=0 opens the engine without the user dictionary
+  private func typeKeys(_ options: [String: String]) {
+    let label = options["label"] ?? "type"
+    let pace = Double(options["pace"].flatMap(Int.init) ?? 300) / 1000
+    let debug = options["debug"] == "1"
+    var tokens: [String] = []
+    let characters = Array(options["keys"] ?? "")
+    var index = 0
+    while index < characters.count {
+      if characters[index] == "#", index + 1 < characters.count, characters[index + 1].isNumber {
+        tokens.append("#" + String(characters[index + 1]))
+        index += 2
+      } else {
+        tokens.append(String(characters[index]))
+        index += 1
+      }
+    }
+    func step(_ position: Int) {
+      guard position < tokens.count else {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { finish() }
+        return
+      }
+      let token = tokens[position]
+      switch token {
+      case "_": pressSpecial(5, fallback: " ")
+      case "<": pressDelete()
+      case "~": pressSpecial(3, fallback: "\n")
+      default:
+        if token.hasPrefix("#"), let number = Int(token.dropFirst()), number > 0 {
+          pickCandidate(number - 1)
+        } else {
+          pressText(token)
+        }
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + pace) { step(position + 1) }
+    }
+    func finish() {
+      let attributes = try? FileManager.default.attributesOfItem(
+        atPath: Self.dataDirectory + "/user_dict.db")
+      let size = (attributes?[.size] as? NSNumber)?.intValue ?? -1
+      let result = lastResult
+      var report: [String: Any] = [
+        "label": label, "keys": tokens.count,
+        "document": (textDocumentProxy.documentContextBeforeInput ?? "")
+          + (textDocumentProxy.documentContextAfterInput ?? ""),
+        "preedit": preedit, "candidates": result.candidates,
+        "user_dict_bytes": size,
+      ]
+      if debug {
+        report["debug_context"] = result.debugContext
+        report["debug_context_reported"] = result.debugContextReported
+      }
+      Self.thread.run {
+        if debug { Self.engine.setDebugMode(false) }
+        let state = Self.engine.wait(forModel: 0)
+        report["model_state"] = state
+        DispatchQueue.main.async {
+          let data = (try? JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])) ?? Data()
+          self.report(self.envelope(String(data: data, encoding: .utf8) ?? "{}"))
+          self.running = false
+        }
+      }
+    }
+    if let prefix = options["prefix"] { textDocumentProxy.insertText(prefix) }
+    withEngine(options: options, learning: options["learning"] != "0") {
+      if debug { Self.engine.setDebugMode(true) }
+      if options["lm"] != "0" { _ = Self.engine.wait(forModel: 180_000) }
+      DispatchQueue.main.async { step(0) }
+    }
+  }
+
   /// docs/memory.md of fcitx5-ios: the visible keyboard, left alone, must not grow.
   private func idle(seconds: Int, label: String, options: [String: String]) {
-    withEngine(options: options) {
+    withEngine(options: options, learning: false) {
       Self.mark("idleStart")
       let began = Date()
       var samples: [String] = []

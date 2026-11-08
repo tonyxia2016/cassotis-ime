@@ -12,6 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) BOOL handled;
 // The engine has more for this key: poll when idle (char_lm_deferred).
 @property(nonatomic) BOOL pending;
+// With the engine's debug mode on: the left context it ranked with, and whether
+// the host reported any. Test runs read these; typing never turns debug on.
+@property(nonatomic, copy) NSString *debugContext;
+@property(nonatomic) BOOL debugContextReported;
 @end
 
 @interface EngineBridge : NSObject
@@ -35,12 +39,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (CassotisKeyResult *)pressText:(NSString *)text;
 - (CassotisKeyResult *)pressSpecial:(uint16_t)special;
 - (CassotisKeyResult *)selectIndex:(int32_t)index;
-- (void)setLeftContext:(NSString *)text;
+// The text before the caret, for context ranking and learning; nil when the
+// host does not report it (a secure field, say), which clears the old one.
+- (void)setLeftContext:(nullable NSString *)text;
+// Whether the last result left a composition open, as the engine sees it. The
+// main thread's copy lags while keys are queued.
+@property(nonatomic, readonly) BOOL composing;
 - (void)resetComposition;
 // The candidates of the last key, ranked with the character LM; handled is NO
 // when there is nothing new (a newer key, or nothing was pending).
 - (CassotisKeyResult *)poll;
 - (void)trim:(int32_t)level;
+// The engine's debug mode (a saved setting): results then carry debugContext.
+- (void)setDebugMode:(BOOL)on;
 // cassotis_core_model_state: starts the character LM's load and waits up to
 // timeoutMs; 1 ready, 0 loading, -1 none (modelError says why). The next
 // replay reports the answer and the wait.
