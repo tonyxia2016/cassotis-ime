@@ -1,0 +1,40 @@
+{
+ "label": "p12max-mltest-ne",
+ "units": "ne",
+ "before_mb": 10.3,
+ "end_mb": 43.5,
+ "peak_mb": 43.5,
+ "available_mb": 3028.5,
+ "functions": [
+  {
+   "length": 64,
+   "load_s": 4.63,
+   "after_load_mb": 22.7,
+   "after_predict_mb": 25.7,
+   "first_ms": 43.1,
+   "median_ms": 5.8,
+   "best_ms": 5.8,
+   "checksum": -578.316
+  },
+  {
+   "length": 128,
+   "load_s": 3.95,
+   "after_load_mb": 24.7,
+   "after_predict_mb": 30.6,
+   "first_ms": 31.7,
+   "median_ms": 7.0,
+   "best_ms": 6.9,
+   "checksum": -578.312
+  },
+  {
+   "length": 256,
+   "load_s": 6.27,
+   "after_load_mb": 31.7,
+   "after_predict_mb": 43.5,
+   "first_ms": 483.2,
+   "median_ms": 16.4,
+   "best_ms": 16.1,
+   "checksum": -578.316
+  }
+ ]
+}

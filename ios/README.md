@@ -8,7 +8,7 @@ iOS 键盘扩展。第 0 阶段验证了 Pascal 引擎能放进键盘扩展，�
 
 - macOS、Xcode、Homebrew 的 `fpc`（3.2.2）、Python 3.11+
 - 一个装有 numpy、onnx、coremltools 的 Python 环境，用来把字符模型转成 Core ML（见 `../macos/BUILD.md` 的 Core ML 一节），用 `CASSOTIS_COREML_PYTHON` 指向它
-- 运行模型要 iOS 18 以上，且神经引擎至少 16 核（A14 及以后）。iPhone XS Max（A12）等机型上，键盘照常工作，只是不用模型；见 REPORT-MODEL.md 第 6 节
+- 运行模型要 iOS 18 以上，且神经引擎至少 16 核（A14 及以后）。iPhone 12 Pro Max（A14）实测可用，见 REPORT-MODEL.md 第 7 节；iPhone XS Max（A12）等机型上，键盘照常工作，只是不用模型，见第 6 节
 - 真机：Apple Development 证书和能覆盖设备的开发 profile。`scripts/build_app.sh` 只在本地签名，不改动开发者账号。默认找钥匙串里的 `Apple Development` 证书和名为 `iOS Team Provisioning Profile: *` 的通配 profile，可用 `CASSOTIS_IDENTITY`、`CASSOTIS_PROFILE` 指定。
 - Xcode 工程里的 bundle ID 是 `com.hustmobile.cassotis.poc*`，团队是 `TR78TGFZDE`。换账号时改 `scripts/gen_xcodeproj.py` 和 `scripts/build_app.sh`。
 

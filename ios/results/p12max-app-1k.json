@@ -1,0 +1,65 @@
+{
+ "label": "p12max-app-1k",
+ "before_open_mb": 11.1,
+ "after_open_mb": 12.3,
+ "open_seconds": 0.199,
+ "keys": 1024,
+ "sentences": 39,
+ "first_hits": 25,
+ "first_rate": 0.641,
+ "deferred": 985,
+ "seconds": 30.7,
+ "p50_ms": 6.49,
+ "p95_ms": 38.34,
+ "p99_ms": 58.57,
+ "worst_ms": 85.3,
+ "mean_ms": 12.05,
+ "ui_p50_ms": 0.0,
+ "ui_p95_ms": 0.0,
+ "ui_p99_ms": 0.0,
+ "ui_worst_ms": 0.0,
+ "end_mb": 66.1,
+ "peak_mb": 76.0,
+ "available_end_mb": 3005.9,
+ "available_min_mb": 3005.9,
+ "model_state": 1,
+ "model_seconds": 0.55,
+ "polls": 985,
+ "polls_applied": 985,
+ "polls_interrupted": 0,
+ "poll_p50_ms": 9.7,
+ "poll_p95_ms": 68.33,
+ "poll_worst_ms": 100.9,
+ "digest": "b3cc304389e94be5",
+ "error": "",
+ "samples": [
+  [
+   0,
+   0.0,
+   32.0,
+   32.1,
+   3040.0
+  ],
+  [
+   500,
+   14.9,
+   45.7,
+   76.0,
+   3026.3
+  ],
+  [
+   1000,
+   29.6,
+   63.3,
+   76.0,
+   3008.7
+  ],
+  [
+   1024,
+   30.7,
+   66.1,
+   76.0,
+   3005.9
+  ]
+ ]
+}
