@@ -25,10 +25,10 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 // The settings a keyboard shows (the engine's State; the engine saves all but the
-// mode in its data directory, macOS keeps the mode per application).
+// mode in its data directory, macOS keeps the mode per application). The iOS
+// keyboard is simplified Chinese only, so the dictionary variant is left alone.
 @interface CassotisSettings : NSObject
 @property(nonatomic) int32_t inputMode;        // 0 Chinese, 1 English
-@property(nonatomic) BOOL traditional;         // 繁體 output (dictionary variant 1)
 @property(nonatomic) BOOL fullWidth;
 @property(nonatomic) BOOL chinesePunctuation;
 @property(nonatomic) BOOL autoEnglish;         // an uppercase letter starts English
@@ -94,8 +94,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setDebugMode:(BOOL)on;
 // nil when the engine cannot say.
 - (nullable CassotisSettings *)settings;
-// Saves them; the engine drops the composition when the mode, script, scheme or
-// fuzzy rules change, so commit that first. NO when the engine refused.
+// Saves them; the engine drops the composition when the mode, scheme or fuzzy
+// rules change, so commit that first. NO when the engine refused.
 - (BOOL)applySettings:(CassotisSettings *)settings;
 // Empties the user dictionary: everything learned is gone.
 - (BOOL)clearLearning;

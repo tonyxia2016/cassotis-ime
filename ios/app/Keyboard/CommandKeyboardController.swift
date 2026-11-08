@@ -732,7 +732,7 @@ class CommandKeyboardController: UIInputViewController {
         report["mode"] = Self.engine.inputMode()
         if let s = Self.engine.settings() {
           report["settings"] = [
-            "traditional": s.traditional, "full_width": s.fullWidth,
+            "full_width": s.fullWidth,
             "chinese_punctuation": s.chinesePunctuation, "auto_english": s.autoEnglish,
             "scheme": s.scheme, "fuzzy_rules": s.fuzzyRules,
           ]

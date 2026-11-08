@@ -37,7 +37,6 @@ extension KeyboardViewController {
       let s = CassotisSettings()
       let saved = UserDefaults.standard.dictionary(forKey: settingsKey) as? [String: Int] ?? [:]
       s.inputMode = Int32(rememberedMode)
-      s.traditional = saved["traditional"] == 1
       s.fullWidth = saved["fullWidth"] == 1
       s.chinesePunctuation = (saved["chinesePunctuation"] ?? 1) == 1
       s.autoEnglish = (saved["autoEnglish"] ?? 1) == 1
@@ -48,7 +47,7 @@ extension KeyboardViewController {
     set {
       UserDefaults.standard.set(
         [
-          "traditional": newValue.traditional ? 1 : 0, "fullWidth": newValue.fullWidth ? 1 : 0,
+          "fullWidth": newValue.fullWidth ? 1 : 0,
           "chinesePunctuation": newValue.chinesePunctuation ? 1 : 0,
           "autoEnglish": newValue.autoEnglish ? 1 : 0, "scheme": Int(newValue.scheme),
           "fuzzyRules": Int(newValue.fuzzyRules),
@@ -77,8 +76,7 @@ extension KeyboardViewController {
       toggle(id, (on ? "✓ " : "") + desc, false)
     }
     let scheme = Int(s.scheme)
-    // No 繁體 switch: the embedded engine opens without the traditional dictionary
-    // (cassotis_core_open takes one path), and dict_tc.db would add 293 MB.
+    // Simplified Chinese only, by decision: there is no 繁體 switch.
     let actions = [
       toggle(
         Setting.fullWidth, "全角", s.fullWidth,

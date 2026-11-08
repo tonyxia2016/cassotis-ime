@@ -230,7 +230,6 @@ static CassotisKeyResult *wrap(const Result &r) {
         State s = _client.state(false);
         CassotisSettings *o = [CassotisSettings new];
         o.inputMode = s.mode;
-        o.traditional = s.dictionary == 1;
         o.fullWidth = (s.flags & 1) != 0;           // c_state_flag_full_width
         o.chinesePunctuation = (s.flags & 2) != 0;  // c_state_flag_punctuation_full_width
         o.autoEnglish = s.autoEnglish;
@@ -243,8 +242,7 @@ static CassotisKeyResult *wrap(const Result &r) {
     try {
         State s = _client.state(false);
         s.mode = uint8_t(o.inputMode == 1 ? 1 : 0);
-        s.dictionary = o.traditional ? 1 : 0;
-        s.flags = uint8_t((s.flags & ~7) | (o.fullWidth ? 1 : 0) | (o.chinesePunctuation ? 2 : 0) |
+        s.flags =uint8_t((s.flags & ~7) | (o.fullWidth ? 1 : 0) | (o.chinesePunctuation ? 2 : 0) |
                           (o.fuzzyRules ? 4 : 0));
         s.fuzzy = o.fuzzyRules & 2047u;  // eleven rules
         s.autoEnglish = o.autoEnglish;
