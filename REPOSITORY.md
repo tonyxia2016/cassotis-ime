@@ -41,4 +41,3 @@
 
 - 输入法代码（根目录、`macos/`、`ios/`）：GPL-3.0。
 - `lexicon/` 的数据：CC BY-SA 4.0，附 THUOCL 与 chinese-poetry 的许可，见 `lexicon/LICENSE` 和 `lexicon/attribution/`。
-- `ios/` 构建时从 fcitx5-ios 取的面板源码（GPL-3.0）：不入库。

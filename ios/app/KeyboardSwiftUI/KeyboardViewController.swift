@@ -1,47 +1,94 @@
-import SwiftUI
 import UIKit
 
-// The fcitx5-ios SwiftUI panel in front of the Cassotis engine. FcitxProtocol is
-// the panel's view of its host: keyPressed is the one busy method, the place where
-// fcitx5-ios calls Fcitx.processKey and this calls the engine. Editing the document
-// around the composition (cursor keys, undo, the backspace slide, the clipboard,
-// another field taking focus) is in DocumentEditing.swift.
-final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
-  nonisolated(unsafe) static weak var current: KeyboardViewController?
-  let program = UUID().uuidString
-  let inputContext = "cassotis"
-  private var hostingController: UIHostingController<AnyView>?
+/// The keyboard's root view. Adopting UIInputViewAudioFeedback is what lets
+/// playInputClick() sound, following the system's keyboard-click setting.
+final class KeyboardInputView: UIInputView, UIInputViewAudioFeedback {
+  var enableInputClicksWhenVisible: Bool { true }
+}
 
+// The keyboard in the style of iOS's own Simplified Chinese Pinyin keyboard: a strip for
+// candidates above four rows of keys, nothing else. Holding 123 opens the settings, the
+// smiley opens emoji. Letters start in the engine at touch-down (keyDown) and show at
+// touch-up; everything about the engine is in CommandKeyboardController.
+final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
+  CandidateViewsDelegate, EmojiPanelDelegate, SettingsPanelDelegate
+{
+  let candidateBar = CandidateBarView()
+  let candidateGrid = CandidateGridView()
+  let keysView = KeysView()
+  let emojiPanel = EmojiPanel()
+  let settingsPanel = SettingsPanel()
   // DocumentEditing.swift
-  let undoRedo = UndoRedoManager()
-  var documentState: UndoRedoDocumentState?
   var documentTimer: Timer?
-  var removedBySlide = ""
-  var slidingBackspace = false
-  var verticalMove = 0
-  var movingVertically = false
-  var changingLines = false
-  /// resetInput waits for the rest of the panel's event to know what it means.
-  var resetPending = false
+  var documentIdentifier = ""
+  private var heightConstraint: NSLayoutConstraint?
+  private var candidatesMore = false
 
-  /// The dictionary stays in the other extension's bundle; a keyboard may read
-  /// anything inside the app that contains it, with or without Full Access.
+  /// The dictionary stays in the other extension's bundle; a keyboard may read anything
+  /// inside the app that contains it, with or without Full Access.
   override var resourceDirectory: String {
     Bundle.main.bundleURL.deletingLastPathComponent()
       .appendingPathComponent("CassotisKeyboard.appex").path
   }
 
-  override func viewDidLoad() {
-    Self.current = self
-    super.viewDidLoad()
+  override func loadView() {
+    view = KeyboardInputView(frame: .zero, inputViewStyle: .default)
+  }
+
+  private var landscape: Bool { traitCollection.verticalSizeClass == .compact }
+  private var dark: Bool { traitCollection.userInterfaceStyle == .dark }
+
+  override func buildKeyboard() {
+    view.backgroundColor = KeyboardTheme.background(dark)
+    keysView.delegate = self
+    candidateBar.delegate = self
+    candidateGrid.delegate = self
+    emojiPanel.delegate = self
+    settingsPanel.delegate = self
+    view.addSubview(candidateBar)
+    // Above the strip, so a letter's callout in the top row is not covered by it.
+    view.addSubview(keysView)
+    for overlay in [candidateGrid, emojiPanel, settingsPanel] as [UIView] {
+      overlay.isHidden = true
+      overlay.backgroundColor = KeyboardTheme.background(dark)
+      view.addSubview(overlay)
+    }
+    let height = view.heightAnchor.constraint(equalToConstant: KeyboardTheme.height(landscape))
+    height.priority = UILayoutPriority(999)
+    height.isActive = true
+    heightConstraint = height
+  }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    let bounds = view.bounds
+    let strip = KeyboardTheme.strip(landscape)
+    candidateBar.frame = CGRect(x: 0, y: 0, width: bounds.width, height: strip)
+    keysView.setLandscape(landscape)
+    let keys = CGRect(x: 0, y: strip, width: bounds.width, height: bounds.height - strip)
+    keysView.frame = keys
+    candidateGrid.frame = keys
+    emojiPanel.frame = CGRect(x: 0, y: 6, width: bounds.width, height: bounds.height - 6)
+    settingsPanel.frame = CGRect(x: 0, y: 6, width: bounds.width, height: bounds.height - 6)
+  }
+
+  override func traitCollectionDidChange(_ previous: UITraitCollection?) {
+    super.traitCollectionDidChange(previous)
+    heightConstraint?.constant = KeyboardTheme.height(landscape)
+    view.backgroundColor = KeyboardTheme.background(dark)
+    for overlay in [candidateGrid, emojiPanel, settingsPanel] as [UIView] {
+      overlay.backgroundColor = KeyboardTheme.background(dark)
+    }
+    view.setNeedsLayout()
   }
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    vm.setReturnKeyType(textDocumentProxy.returnKeyType)
-    vm.setDisplayMode(.initial)
+    closeOverlays()
+    keysView.show(.letters)
+    keysView.hapticsEnabled = hasFullAccess  // a keyboard may vibrate only with Full Access
+    updateReturnKey()
     showInputMode(Self.rememberedMode)
-    refreshSettings()  // KeyboardSettings.swift
     startDocumentPolling()
   }
 
@@ -52,170 +99,150 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     super.viewWillDisappear(animated)
   }
 
-  /// Long-pressing the globe key lists these (getInputMethods); the space bar
-  /// shows the current one's name.
-  nonisolated static let inputMethods: [(name: String, display: String, language: String)] = [
-    ("cassotis-pinyin", "拼音", "zh_CN"), ("cassotis-english", "英文", "en"),
-  ]
-
-  override func showInputMode(_ mode: Int) {
-    let index = mode == 1 ? 1 : 0
-    setCurrentInputMethodAsync(program, inputContext, Self.inputMethods[index].name)
+  override func textDidChange(_ textInput: UITextInput?) {
+    super.textDidChange(textInput)
+    updateReturnKey()
   }
 
-  override func buildKeyboard() {
-    setClient(self)
-    // On iOS 26+ a scroll view gets a soft edge effect, and the candidate strip is
-    // one row high, so the effect covers all of it and blurs the candidates.
-    let root: AnyView
-    if #available(iOS 26.0, *) {
-      root = AnyView(VirtualKeyboardView().scrollEdgeEffectHidden(true, for: .all))
-    } else {
-      root = AnyView(VirtualKeyboardView())
-    }
-    let hosting = UIHostingController(rootView: root)
-    hosting.sizingOptions = .intrinsicContentSize
-    hosting.view.translatesAutoresizingMaskIntoConstraints = false
-    hosting.view.backgroundColor = .clear
-    addChild(hosting)
-    view.addSubview(hosting.view)
-    NSLayoutConstraint.activate([
-      hosting.view.topAnchor.constraint(equalTo: view.topAnchor),
-      hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-    ])
-    hosting.didMove(toParent: self)
-    hostingController = hosting
-    vm.clearInputPanel()
+  /// The return key says what the field's return does, as the system's does.
+  func updateReturnKey() {
+    let titles: [UIReturnKeyType: String] = [
+      .go: "前往", .google: "搜索", .join: "加入", .next: "下一项", .route: "路线",
+      .search: "搜索", .send: "发送", .yahoo: "搜索", .done: "完成", .emergencyCall: "紧急",
+      .continue: "继续",
+    ]
+    keysView.returnTitle = textDocumentProxy.returnKeyType.flatMap { titles[$0] }
   }
 
-  /// Bulk mode: one list that scrolls, in the bar and in the expanded grid. Near its
-  /// end the panel calls scroll() (FcitxBackend), which reads the engine's next pages.
+  func closeOverlays() {
+    candidateGrid.isHidden = true
+    candidateBar.setExpanded(false)
+    emojiPanel.isHidden = true
+    settingsPanel.isHidden = true
+    keysView.isHidden = false
+  }
+
+  // MARK: - What the engine shows
+
   override func showCandidates(_ candidates: [String], preedit: String, selected: Int, more: Bool) {
-    setCandidatesAsync(
-      program, inputContext, "", "", 0, candidates, candidates.isEmpty ? -1 : Int32(selected), true,
-      !preedit.isEmpty, "[]", false, false, !more)
+    candidatesMore = more
+    candidateBar.set(candidates, selected: max(selected, 0), more: more)
+    if candidates.isEmpty {
+      candidateGrid.isHidden = true
+      keysView.isHidden = false
+    } else if !candidateGrid.isHidden {
+      candidateGrid.set(candidates, more: more)
+    }
   }
 
   override func appendCandidates(_ candidates: [String], end: Bool) {
-    scrollAsync(program, inputContext, candidates, end)
+    candidatesMore = !end
+    candidateBar.append(candidates, more: !end)
+    if !candidateGrid.isHidden { candidateGrid.append(candidates, more: !end) }
   }
 
-  // Overrides cannot live in an extension; the work is in DocumentEditing.swift.
-  override func moveCursor(_ code: String) { moveCursorInDocument(code) }
-  override func documentDidChange() { observeDocument() }
+  override func showInputMode(_ mode: Int) {
+    keysView.modeMark = mode == 1 ? "英" : "拼"
+  }
 
-  /// mode=type's commands for what this keyboard adds: the panel's reset, its symbol
-  /// grid and backspace slide (through the panel's own view model), undo, redo, and
-  /// the clipboard.
+  override func moveCursor(_ code: String) { moveCursorInDocument(code) }
+
+  // MARK: - Keys
+
+  func letterDown(_ text: String) { keyDown(text, forward: false) }
+  func letterUp(_ text: String) { letterReleased(text) }
+  func letterCancelled(_ text: String) { keyCancelled() }
+
+  /// A digit or symbol from the number pages: typed as shown, after what is composed.
+  func literal(_ text: String) {
+    commitComposition()
+    insertAfterKeys(text)
+  }
+
+  func delete() { pressDelete() }
+
+  func space() {
+    pressSpecial(5, fallback: " ")
+    if keysView.page != .letters { keysView.show(.letters) }  // as the system does
+  }
+
+  func returnKey() { pressSpecial(3, fallback: "\n") }
+  func showPage(_ page: KeyPage) { keysView.show(page) }
+
+  func emoji() {
+    commitComposition()
+    emojiPanel.reload()
+    emojiPanel.isHidden = false
+  }
+
+  func settings() {
+    refreshSettings()
+    settingsPanel.reset()
+    settingsPanel.isHidden = false
+  }
+
+  func moveCaret(_ steps: Int) {
+    guard preedit.isEmpty else { return }  // the trackpad moves the caret, not the candidates
+    for _ in 0..<abs(steps) { moveCursorInDocument(steps < 0 ? "ArrowLeft" : "ArrowRight") }
+  }
+
+  func shiftChanged(_ shifted: Bool) {}
+
+  // MARK: - Candidates
+
+  override func pickCandidate(_ index: Int) {
+    candidateGrid.isHidden = true
+    candidateBar.setExpanded(false)
+    keysView.isHidden = false
+    super.pickCandidate(index)
+  }
+
+  func loadMoreCandidates() { loadCandidates(shownCandidates.count, 27) }
+
+  func candidatesExpanded(_ expanded: Bool) {
+    if expanded {
+      candidateGrid.set(shownCandidates, more: candidatesMore)
+      candidateGrid.isHidden = false
+      keysView.isHidden = true
+    } else {
+      candidateGrid.isHidden = true
+      keysView.isHidden = false
+    }
+  }
+
+  // MARK: - Emoji and settings
+
+  func emojiPicked(_ emoji: String) { insertAfterKeys(emoji) }
+  func emojiDelete() { pressDelete() }
+  func emojiClose() { emojiPanel.isHidden = true }
+
+  func settingChosen(_ id: Int32) { activateSetting(id) }
+  func settingsClose() { settingsPanel.isHidden = true }
+
+  // MARK: - Test commands
+
+  /// mode=type's commands for this keyboard: open its pages and panels for a screenshot,
+  /// change a setting, type a symbol from a number page.
   override func typeCommand(_ token: String) -> Bool {
+    let argument = String(token.dropFirst().dropLast().split(separator: ":", maxSplits: 1).last ?? "")
     switch token {
-    case "{reset}": resetInput()
-    case "{undo}": undo()
-    case "{redo}": redo()
-    case "{cut}": cut()
-    case "{copy}": copySelection()
-    case "{paste}": paste()
-    case "{status}": vm.setDisplayMode(.statusArea)  // what the toolbar's … button does
+    case "{settings}", "{status}": settings()
+    case "{emoji}": emoji()
+    case "{expand}":
+      candidateBar.setExpanded(true)
+      candidatesExpanded(true)
+    case "{reset}": commitComposition()
     default:
-      let argument = String(token.dropFirst().dropLast().split(separator: ":", maxSplits: 1).last ?? "")
-      if token.hasPrefix("{slide:"), let step = Int(argument) {
-        vm.slideBackspace(step)
+      if token.hasPrefix("{page:") {
+        keysView.show(argument == "numbers" ? .numbers : argument == "symbols" ? .symbols : .letters)
       } else if token.hasPrefix("{set:"), let id = Int32(argument) {
-        activateSetting(id)  // a status area action
+        activateSetting(id)
       } else if token.hasPrefix("{sym:") {
-        resetInput()
-        commitString(argument)
+        literal(argument)
       } else {
         return false
       }
     }
     return true
-  }
-
-  // MARK: FcitxProtocol
-
-  func isCurrentDocument(_ program: String, _ documentIdentifier: String) -> Bool {
-    program == self.program
-  }
-  func isCurrentProgram(_ program: String) -> Bool { program == self.program }
-
-  func keyPressed(_ key: String, _ code: String, _ modifiers: UInt32) {
-    switch code {
-    case "Backspace": pressDelete()
-    case "Enter": pressSpecial(3, fallback: "\n")
-    case "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End": pressCursorKey(code)
-    default:
-      if key == " " {
-        pressSpecial(5, fallback: " ")
-      } else if !key.isEmpty {
-        letterReleased(key)  // draws what touch-down computed, or sends the key now
-      }
-    }
-  }
-
-  /// The panel resets before a symbol from its grid, when it switches to the number
-  /// pad, and when a slide on backspace ends over a composition. That last one means
-  /// "clear it" (as in fcitx5); for the others committing first reads better than
-  /// losing what was typed. What follows in the same event decides; alone, it commits.
-  func resetInput() {
-    guard !resetPending else { return }
-    resetPending = true
-    DispatchQueue.main.async { [weak self] in
-      guard let self, self.resetPending else { return }
-      self.resetPending = false
-      self.commitComposition()
-    }
-  }
-
-  /// The pending reset, settled by the call that followed it.
-  private func settleReset(commit: Bool) {
-    guard resetPending else { return }
-    resetPending = false
-    if commit { commitComposition() } else { clearComposition() }
-  }
-
-  func forwardKey(_ key: String, _ code: String) {
-    settleReset(commit: true)
-    insertAfterKeys(key)
-  }
-  func carriageReturn() {
-    settleReset(commit: true)
-    insertAfterKeys("\n")
-  }
-  func commitString(_ string: String) {
-    settleReset(commit: true)
-    insertAfterKeys(string)
-  }
-  func triggerUnicode() {}
-  func triggerQuickPhrase() {}
-  // The engine composes through marked text and never asks for these.
-  func deleteSurroundingText(_ offset: Int, _ size: Int) {}
-  func setPreedit(_ preedit: String, _ cursor: Int) {}
-  func globe() { advanceToNextInputMode() }
-  func setCurrentInputMethod(_ inputMethod: String) {
-    setInputMode(inputMethod == Self.inputMethods[1].name ? 1 : 0)
-  }
-  func terminateExtension() { exit(0) }
-  func slideBackspace(_ step: Int) {
-    if step == 0 && resetPending {
-      settleReset(commit: false)  // the slide ended over a composition: clear it
-      return
-    }
-    slideBackspaceInDocument(step)
-  }
-  func syncConfig() {}
-  func clipboardMonitoringEnabled() -> Bool { false }
-  func setClipboardMonitoring(_ enabled: Bool) {}
-  func hasKeyboardFullAccess() -> Bool { hasFullAccess }
-  func currentDocumentInfo() -> DocumentInfo {
-    DocumentInfo(
-      processStartTime: nil, capturedAt: Date(), processIdentifier: getpid(),
-      memoryFootprint: EngineBridge.footprint(), availableMemory: EngineBridge.available(),
-      currentDocumentIdentifier: nil, keyboardType: "default",
-      documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
-      selectedText: textDocumentProxy.selectedText,
-      documentContextAfterInput: textDocumentProxy.documentContextAfterInput)
   }
 }

@@ -22,46 +22,18 @@
 		B28B22193DE88E99813638AF = {isa = PBXBuildFile; fileRef = F50750A379400E3F497E81CD; };
 		85C5A1B9C4C5BB0985506C7E = {isa = PBXBuildFile; fileRef = 3B3670EDCC24EBAA6468DBEC; };
 		2717A7E6EAC8FA081CE4BF7C = {isa = PBXBuildFile; fileRef = EFEB9515A11F74F58A6EA43A; };
-		F86AA3F57E97781A96C3283A = {isa = PBXBuildFile; fileRef = 387FCD29B10A50D29501F835; };
-		196D24397CD243816F633E6F = {isa = PBXBuildFile; fileRef = 94B7282181C4F42A276D3DBC; };
+		8CFCBD174157173F61E67385 = {isa = PBXBuildFile; fileRef = 2812DCD6461918589DC4420F; };
+		53DDB313D91AFFCF1C915BA0 = {isa = PBXBuildFile; fileRef = 3E734B8B945D55141DB9127E; };
+		571C9B77EE46B7EC2D0C095E = {isa = PBXBuildFile; fileRef = D4D2B5387B88AD7D61CD9747; };
+		5F46E0B488970CDF146DBE08 = {isa = PBXBuildFile; fileRef = 72616204D2C678FAB98379D7; };
+		C627D87ABEA695F6ECB79884 = {isa = PBXBuildFile; fileRef = 1C2D122704FD95999D4BB2FF; };
 		195FC0166DB3D87942F16BE1 = {isa = PBXBuildFile; fileRef = 7E3BF7F577D65F4A90B75F9D; };
+		196D24397CD243816F633E6F = {isa = PBXBuildFile; fileRef = 94B7282181C4F42A276D3DBC; };
 		83D0D98AAF83B46C2BF711A3 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
 		3D3AD054FD76ADDCB2761E47 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		B0E7FCB26F884F2567E47C2D = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		30FC308173F7966D804B3A74 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
 		F5B8F8BEF5800D5B38A8F9F6 = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
-		00F64A764513A39F7AFE2B29 = {isa = PBXBuildFile; fileRef = CF7A29891B884710B79A0738; };
-		14CCFA34591C361DF1596310 = {isa = PBXBuildFile; fileRef = 5E9AD112AA5E89FCF714AE5D; };
-		650C4B23EE3F2321D576FBD2 = {isa = PBXBuildFile; fileRef = 0A1B0D2671C78350F6D02D18; };
-		A6F2C4212917E2842670F187 = {isa = PBXBuildFile; fileRef = 946EE76D0F804BC56EDE3B03; };
-		21621B2AA20FDCF73D1DB52B = {isa = PBXBuildFile; fileRef = 7FAAC6C210C866A207A4BAFA; };
-		3970EF68E824458F78AFD8FA = {isa = PBXBuildFile; fileRef = 0B54778783A7CFAAAC0D3562; };
-		51515E949E308E1456BA9776 = {isa = PBXBuildFile; fileRef = 821E4EFA96A5A65D5E23726A; };
-		8277C4725DE3BF821DEE8EF5 = {isa = PBXBuildFile; fileRef = 17340016B0AA416D12F65D01; };
-		CBD4C5CDA65F8A48CCD58B45 = {isa = PBXBuildFile; fileRef = B8647C580D5A474176B17D37; };
-		292907C2CF109DB23AC942BA = {isa = PBXBuildFile; fileRef = 66144080F8D949BF8D2AE923; };
-		2E6A75BA2F79AD51651A1FDB = {isa = PBXBuildFile; fileRef = 940298F8FB3D4FE5C289D15E; };
-		09EC6E4F177F60AE33362255 = {isa = PBXBuildFile; fileRef = 4ECBABC8B87867977E1205FF; };
-		75A529C562E70C1D96D93608 = {isa = PBXBuildFile; fileRef = DAA48B7882404BF02760A447; };
-		11AFBEEFAAB0FFFDE0D12B21 = {isa = PBXBuildFile; fileRef = C3BD6ACFBF35922FBE6D1E9E; };
-		E13960F4B16C67B0ABB9DD5C = {isa = PBXBuildFile; fileRef = 8E4630BEC480B4AB8556C7F9; };
-		B74D2E0DA6AF8C609EB4F7D0 = {isa = PBXBuildFile; fileRef = 8FD25C25183C5166A24DD8EB; };
-		BE602FC7ABA6CB4B33EB4FB2 = {isa = PBXBuildFile; fileRef = D45FDA0D8417C9FE5E9E0A3C; };
-		E81ABEFE5DAAA59D86B2C3C3 = {isa = PBXBuildFile; fileRef = 23197D98605E1468AE4AFEC4; };
-		8CE9AE443B598AF53A9629C0 = {isa = PBXBuildFile; fileRef = 61163A297E76434A17CEE84D; };
-		C82C35E51730BC3E421905CC = {isa = PBXBuildFile; fileRef = 1D9D39930B4A99F40C51D1B7; };
-		EBC1059B636F4647B13EFE74 = {isa = PBXBuildFile; fileRef = 08DDF4FCDBE4954F3CFE64D8; };
-		233CDAF7293B699281E85986 = {isa = PBXBuildFile; fileRef = 5D892C065DF5326698EB4124; };
-		AEBD71DFE47AEA30F8DCC26C = {isa = PBXBuildFile; fileRef = 3B8D08D4A428E0F15E034822; };
-		A8ED6600220B9A8A0E9547EB = {isa = PBXBuildFile; fileRef = F075E683DFA69DD8ECE4DF3C; };
-		B11D6E69859AB4561CC2C5E6 = {isa = PBXBuildFile; fileRef = B7E0B4B5AEB5797B780659CF; };
-		812B6A1F83633FC067D6F114 = {isa = PBXBuildFile; fileRef = D39A6653E78CCBB31039C919; };
-		04812FBEDE275FA148D1C1C0 = {isa = PBXBuildFile; fileRef = D656C72F74E1E818B20C700B; };
-		06F87E879D4F3D8497931638 = {isa = PBXBuildFile; fileRef = B172E7578F33146BB6E050F4; };
-		1A2D8FF6DA4BF5941BEBD678 = {isa = PBXBuildFile; fileRef = 891C62EBB6507A807BB2C246; };
-		0E4EFF2C38C3CAEB7869F5BE = {isa = PBXBuildFile; fileRef = 6B0B8883A046E683C352BB78; };
-		D6F1690944D9E2849CBCE1FE = {isa = PBXBuildFile; fileRef = 2F21ABE09E82EFE2B7F6A490; };
-		68C86244A706EF5412316888 = {isa = PBXBuildFile; fileRef = 409A1C304288A757398FEB68; };
 		0ED75F5269B73FF1F1AE62F7 = {isa = PBXBuildFile; fileRef = E98C161A42C3F8433503ECB6; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B669E4F2559CABE55B60B678 = {isa = PBXBuildFile; fileRef = 6244DB8E6A95F6A4A7D37EC2; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 
@@ -105,41 +77,13 @@
 		F50750A379400E3F497E81CD = {isa = PBXFileReference; lastKnownFileType = text; name = "corpus.tsv"; path = "../bench/corpus.tsv"; sourceTree = SOURCE_ROOT; };
 		3B3670EDCC24EBAA6468DBEC = {isa = PBXFileReference; lastKnownFileType = folder; name = "char_lm"; path = "../build/res/char_lm"; sourceTree = SOURCE_ROOT; };
 		EFEB9515A11F74F58A6EA43A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "KeyboardSwiftUI/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
-		387FCD29B10A50D29501F835 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxBackend.swift"; path = "KeyboardSwiftUI/FcitxBackend.swift"; sourceTree = SOURCE_ROOT; };
-		94B7282181C4F42A276D3DBC = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DocumentEditing.swift"; path = "KeyboardSwiftUI/DocumentEditing.swift"; sourceTree = SOURCE_ROOT; };
+		2812DCD6461918589DC4420F = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyLayout.swift"; path = "KeyboardSwiftUI/KeyLayout.swift"; sourceTree = SOURCE_ROOT; };
+		3E734B8B945D55141DB9127E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeysView.swift"; path = "KeyboardSwiftUI/KeysView.swift"; sourceTree = SOURCE_ROOT; };
+		D4D2B5387B88AD7D61CD9747 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateViews.swift"; path = "KeyboardSwiftUI/CandidateViews.swift"; sourceTree = SOURCE_ROOT; };
+		72616204D2C678FAB98379D7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "EmojiPanel.swift"; path = "KeyboardSwiftUI/EmojiPanel.swift"; sourceTree = SOURCE_ROOT; };
+		1C2D122704FD95999D4BB2FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "SettingsPanel.swift"; path = "KeyboardSwiftUI/SettingsPanel.swift"; sourceTree = SOURCE_ROOT; };
 		7E3BF7F577D65F4A90B75F9D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardSettings.swift"; path = "KeyboardSwiftUI/KeyboardSettings.swift"; sourceTree = SOURCE_ROOT; };
-		CF7A29891B884710B79A0738 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Bubble.swift"; path = "../build/fcitxui/Bubble.swift"; sourceTree = SOURCE_ROOT; };
-		5E9AD112AA5E89FCF714AE5D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Candidate.swift"; path = "../build/fcitxui/Candidate.swift"; sourceTree = SOURCE_ROOT; };
-		0A1B0D2671C78350F6D02D18 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateBar.swift"; path = "../build/fcitxui/CandidateBar.swift"; sourceTree = SOURCE_ROOT; };
-		946EE76D0F804BC56EDE3B03 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateTabActionColumn.swift"; path = "../build/fcitxui/CandidateTabActionColumn.swift"; sourceTree = SOURCE_ROOT; };
-		7FAAC6C210C866A207A4BAFA = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ClipboardSuggestion.swift"; path = "../build/fcitxui/ClipboardSuggestion.swift"; sourceTree = SOURCE_ROOT; };
-		0B54778783A7CFAAAC0D3562 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Color.swift"; path = "../build/fcitxui/Color.swift"; sourceTree = SOURCE_ROOT; };
-		821E4EFA96A5A65D5E23726A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ContextMenu.swift"; path = "../build/fcitxui/ContextMenu.swift"; sourceTree = SOURCE_ROOT; };
-		17340016B0AA416D12F65D01 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Dialog.swift"; path = "../build/fcitxui/Dialog.swift"; sourceTree = SOURCE_ROOT; };
-		B8647C580D5A474176B17D37 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DocumentInfo.swift"; path = "../build/fcitxui/DocumentInfo.swift"; sourceTree = SOURCE_ROOT; };
-		66144080F8D949BF8D2AE923 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Edit.swift"; path = "../build/fcitxui/Edit.swift"; sourceTree = SOURCE_ROOT; };
-		940298F8FB3D4FE5C289D15E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxProtocol.swift"; path = "../build/fcitxui/FcitxProtocol.swift"; sourceTree = SOURCE_ROOT; };
-		4ECBABC8B87867977E1205FF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Key.swift"; path = "../build/fcitxui/Key.swift"; sourceTree = SOURCE_ROOT; };
-		DAA48B7882404BF02760A447 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyModifier.swift"; path = "../build/fcitxui/KeyModifier.swift"; sourceTree = SOURCE_ROOT; };
-		C3BD6ACFBF35922FBE6D1E9E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Keyboard.swift"; path = "../build/fcitxui/Keyboard.swift"; sourceTree = SOURCE_ROOT; };
-		8E4630BEC480B4AB8556C7F9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Numpad.swift"; path = "../build/fcitxui/Numpad.swift"; sourceTree = SOURCE_ROOT; };
-		8FD25C25183C5166A24DD8EB = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ReturnBar.swift"; path = "../build/fcitxui/ReturnBar.swift"; sourceTree = SOURCE_ROOT; };
-		D45FDA0D8417C9FE5E9E0A3C = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ScrollMetrics.swift"; path = "../build/fcitxui/ScrollMetrics.swift"; sourceTree = SOURCE_ROOT; };
-		23197D98605E1468AE4AFEC4 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Shadow.swift"; path = "../build/fcitxui/Shadow.swift"; sourceTree = SOURCE_ROOT; };
-		61163A297E76434A17CEE84D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "StatusArea.swift"; path = "../build/fcitxui/StatusArea.swift"; sourceTree = SOURCE_ROOT; };
-		1D9D39930B4A99F40C51D1B7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Symbol.swift"; path = "../build/fcitxui/Symbol.swift"; sourceTree = SOURCE_ROOT; };
-		08DDF4FCDBE4954F3CFE64D8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Sync.swift"; path = "../build/fcitxui/Sync.swift"; sourceTree = SOURCE_ROOT; };
-		5D892C065DF5326698EB4124 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Toast.swift"; path = "../build/fcitxui/Toast.swift"; sourceTree = SOURCE_ROOT; };
-		3B8D08D4A428E0F15E034822 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Toolbar.swift"; path = "../build/fcitxui/Toolbar.swift"; sourceTree = SOURCE_ROOT; };
-		F075E683DFA69DD8ECE4DF3C = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UndoRedo.swift"; path = "../build/fcitxui/UndoRedo.swift"; sourceTree = SOURCE_ROOT; };
-		B7E0B4B5AEB5797B780659CF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "VirtualKeyboard.swift"; path = "../build/fcitxui/VirtualKeyboard.swift"; sourceTree = SOURCE_ROOT; };
-		D39A6653E78CCBB31039C919 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "WrapLayout.swift"; path = "../build/fcitxui/WrapLayout.swift"; sourceTree = SOURCE_ROOT; };
-		D656C72F74E1E818B20C700B = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "height.swift"; path = "../build/fcitxui/height.swift"; sourceTree = SOURCE_ROOT; };
-		B172E7578F33146BB6E050F4 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "keyboardui.swift"; path = "../build/fcitxui/keyboardui.swift"; sourceTree = SOURCE_ROOT; };
-		891C62EBB6507A807BB2C246 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "logging.swift"; path = "../build/fcitxui/logging.swift"; sourceTree = SOURCE_ROOT; };
-		6B0B8883A046E683C352BB78 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ui.swift"; path = "../build/fcitxui/ui.swift"; sourceTree = SOURCE_ROOT; };
-		2F21ABE09E82EFE2B7F6A490 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "util.swift"; path = "../build/fcitxui/util.swift"; sourceTree = SOURCE_ROOT; };
-		409A1C304288A757398FEB68 = {isa = PBXFileReference; lastKnownFileType = folder; name = "share"; path = "../build/fcitxui-res/share"; sourceTree = SOURCE_ROOT; };
+		94B7282181C4F42A276D3DBC = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DocumentEditing.swift"; path = "KeyboardSwiftUI/DocumentEditing.swift"; sourceTree = SOURCE_ROOT; };
 		0A02BCB7CA811FAE15FCC5C3 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CassotisPOC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E98C161A42C3F8433503ECB6 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CassotisKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6244DB8E6A95F6A4A7D37EC2 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CassotisKeyboardSwiftUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -159,41 +103,13 @@
 				F50750A379400E3F497E81CD,
 				3B3670EDCC24EBAA6468DBEC,
 				EFEB9515A11F74F58A6EA43A,
-				387FCD29B10A50D29501F835,
-				94B7282181C4F42A276D3DBC,
+				2812DCD6461918589DC4420F,
+				3E734B8B945D55141DB9127E,
+				D4D2B5387B88AD7D61CD9747,
+				72616204D2C678FAB98379D7,
+				1C2D122704FD95999D4BB2FF,
 				7E3BF7F577D65F4A90B75F9D,
-				CF7A29891B884710B79A0738,
-				5E9AD112AA5E89FCF714AE5D,
-				0A1B0D2671C78350F6D02D18,
-				946EE76D0F804BC56EDE3B03,
-				7FAAC6C210C866A207A4BAFA,
-				0B54778783A7CFAAAC0D3562,
-				821E4EFA96A5A65D5E23726A,
-				17340016B0AA416D12F65D01,
-				B8647C580D5A474176B17D37,
-				66144080F8D949BF8D2AE923,
-				940298F8FB3D4FE5C289D15E,
-				4ECBABC8B87867977E1205FF,
-				DAA48B7882404BF02760A447,
-				C3BD6ACFBF35922FBE6D1E9E,
-				8E4630BEC480B4AB8556C7F9,
-				8FD25C25183C5166A24DD8EB,
-				D45FDA0D8417C9FE5E9E0A3C,
-				23197D98605E1468AE4AFEC4,
-				61163A297E76434A17CEE84D,
-				1D9D39930B4A99F40C51D1B7,
-				08DDF4FCDBE4954F3CFE64D8,
-				5D892C065DF5326698EB4124,
-				3B8D08D4A428E0F15E034822,
-				F075E683DFA69DD8ECE4DF3C,
-				B7E0B4B5AEB5797B780659CF,
-				D39A6653E78CCBB31039C919,
-				D656C72F74E1E818B20C700B,
-				B172E7578F33146BB6E050F4,
-				891C62EBB6507A807BB2C246,
-				6B0B8883A046E683C352BB78,
-				2F21ABE09E82EFE2B7F6A490,
-				409A1C304288A757398FEB68,
+				94B7282181C4F42A276D3DBC,
 				86024CAD1E83101D97359D73,
 			);
 			sourceTree = "<group>";
@@ -335,45 +251,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				2717A7E6EAC8FA081CE4BF7C,
-				F86AA3F57E97781A96C3283A,
-				196D24397CD243816F633E6F,
+				8CFCBD174157173F61E67385,
+				53DDB313D91AFFCF1C915BA0,
+				571C9B77EE46B7EC2D0C095E,
+				5F46E0B488970CDF146DBE08,
+				C627D87ABEA695F6ECB79884,
 				195FC0166DB3D87942F16BE1,
+				196D24397CD243816F633E6F,
 				83D0D98AAF83B46C2BF711A3,
 				3D3AD054FD76ADDCB2761E47,
 				B0E7FCB26F884F2567E47C2D,
 				30FC308173F7966D804B3A74,
 				F5B8F8BEF5800D5B38A8F9F6,
-				00F64A764513A39F7AFE2B29,
-				14CCFA34591C361DF1596310,
-				650C4B23EE3F2321D576FBD2,
-				A6F2C4212917E2842670F187,
-				21621B2AA20FDCF73D1DB52B,
-				3970EF68E824458F78AFD8FA,
-				51515E949E308E1456BA9776,
-				8277C4725DE3BF821DEE8EF5,
-				CBD4C5CDA65F8A48CCD58B45,
-				292907C2CF109DB23AC942BA,
-				2E6A75BA2F79AD51651A1FDB,
-				09EC6E4F177F60AE33362255,
-				75A529C562E70C1D96D93608,
-				11AFBEEFAAB0FFFDE0D12B21,
-				E13960F4B16C67B0ABB9DD5C,
-				B74D2E0DA6AF8C609EB4F7D0,
-				BE602FC7ABA6CB4B33EB4FB2,
-				E81ABEFE5DAAA59D86B2C3C3,
-				8CE9AE443B598AF53A9629C0,
-				C82C35E51730BC3E421905CC,
-				EBC1059B636F4647B13EFE74,
-				233CDAF7293B699281E85986,
-				AEBD71DFE47AEA30F8DCC26C,
-				A8ED6600220B9A8A0E9547EB,
-				B11D6E69859AB4561CC2C5E6,
-				812B6A1F83633FC067D6F114,
-				04812FBEDE275FA148D1C1C0,
-				06F87E879D4F3D8497931638,
-				1A2D8FF6DA4BF5941BEBD678,
-				0E4EFF2C38C3CAEB7869F5BE,
-				D6F1690944D9E2849CBCE1FE,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -381,7 +270,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				68C86244A706EF5412316888,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

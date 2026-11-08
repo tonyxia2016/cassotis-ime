@@ -1,21 +1,18 @@
 import Foundation
 
-// The settings in the panel's status area (the toolbar's … button). Without an App
-// Group the host app cannot reach the keyboard's files, so they are set here. The
-// engine saves all of them but the mode in its data directory, which is this
-// extension's container; the keyboard remembers the mode (rememberedMode) and keeps
-// a copy of the rest to show before the engine has opened.
+// The settings behind a long press on 123 (SettingsPanel). Without an App Group the host
+// app cannot reach the keyboard's files, so they are set here. The engine saves all of
+// them but the mode in the user dictionary; the keyboard remembers the mode
+// (rememberedMode) and keeps a copy of the rest to show before the engine has opened.
+// Simplified Chinese only, by decision: there is no 繁體 setting.
 extension KeyboardViewController {
-  /// Status area action ids. Menus pick with their children's ids: 100 + scheme,
-  /// 300 + fuzzy rule, 200 clears what was learned.
-  private enum Setting {
+  /// Setting ids, as the panel reports them: 100 + scheme, 300 + fuzzy rule, 200 clears
+  /// what was learned. mode=type's {set:N} uses the same numbers.
+  enum Setting {
     static let fullWidth: Int32 = 2
     static let chinesePunctuation: Int32 = 3
     static let autoEnglish: Int32 = 4
     static let english: Int32 = 5
-    static let schemeMenu: Int32 = 10
-    static let fuzzyMenu: Int32 = 11
-    static let learningMenu: Int32 = 12
     static let firstScheme: Int32 = 100
     static let clearLearning: Int32 = 200
     static let firstFuzzyRule: Int32 = 300
@@ -32,7 +29,7 @@ extension KeyboardViewController {
   private static let settingsKey = "cassotis.settings"
 
   /// What the keyboard saw last; the engine's defaults before that.
-  private static var savedSettings: CassotisSettings {
+  static var savedSettings: CassotisSettings {
     get {
       let s = CassotisSettings()
       let saved = UserDefaults.standard.dictionary(forKey: settingsKey) as? [String: Int] ?? [:]
@@ -55,62 +52,28 @@ extension KeyboardViewController {
     }
   }
 
-  /// Puts the current settings in the status area: the engine's when it is open.
+  /// Fills the settings panel: what the keyboard saw last at once, then the engine's.
   func refreshSettings() {
-    showSettings(Self.savedSettings)
+    settingsPanel.show(Self.savedSettings)
     guard engineIsOpen else { return }
     Self.thread.run {
       guard let settings = Self.engine.settings() else { return }
       DispatchQueue.main.async {
         Self.savedSettings = settings
-        self.showSettings(settings)
+        self.settingsPanel.show(settings)
       }
     }
   }
 
-  private func showSettings(_ s: CassotisSettings) {
-    func toggle(_ id: Int32, _ desc: String, _ on: Bool, icon: String = "") -> StatusAreaAction {
-      StatusAreaAction(id: id, desc: desc, icon: icon, checked: on, separator: false, children: [])
-    }
-    func item(_ id: Int32, _ desc: String, _ on: Bool = false) -> StatusAreaAction {
-      toggle(id, (on ? "✓ " : "") + desc, false)
-    }
-    let scheme = Int(s.scheme)
-    // Simplified Chinese only, by decision: there is no 繁體 switch.
-    let actions = [
-      toggle(
-        Setting.fullWidth, "全角", s.fullWidth,
-        icon: s.fullWidth ? "fcitx-fullwidth-active" : "fcitx-fullwidth-inactive"),
-      toggle(Setting.chinesePunctuation, "中文标点", s.chinesePunctuation),
-      toggle(Setting.autoEnglish, "自动英文", s.autoEnglish),
-      toggle(Setting.english, "英文", s.inputMode == 1),
-      StatusAreaAction(
-        id: Setting.schemeMenu,
-        desc: Self.schemeNames.indices.contains(scheme) ? Self.schemeNames[scheme] : "全拼",
-        icon: "", checked: false, separator: false,
-        children: Self.schemeNames.enumerated().map {
-          item(Setting.firstScheme + Int32($0.offset), $0.element, $0.offset == scheme)
-        }),
-      StatusAreaAction(
-        id: Setting.fuzzyMenu, desc: "模糊拼音", icon: "", checked: false, separator: false,
-        children: Self.fuzzyRuleNames.enumerated().map {
-          item(
-            Setting.firstFuzzyRule + Int32($0.offset), $0.element,
-            s.fuzzyRules & (1 << UInt32($0.offset)) != 0)
-        }),
-      StatusAreaAction(
-        id: Setting.learningMenu, desc: "学习记录", icon: "", checked: false, separator: false,
-        children: [item(Setting.clearLearning, "清除全部学习记录")]),
-    ]
-    setStatusAreaAsync(program, inputContext, actions)
-  }
-
-  /// A status area action: changes one setting (committing what is composed first,
-  /// as the engine drops it), or clears what was learned.
+  /// One setting changed in the panel: commit what is composed (the engine drops it when
+  /// the mode, scheme or fuzzy rules change), save, and show what the engine took.
   func activateSetting(_ id: Int32) {
     withEngine {
       guard let s = Self.engine.settings() else { return }
       let mode = s.inputMode
+      if let committed = Self.engine.commitComposition() {
+        DispatchQueue.main.async { self.apply(committed) }
+      }
       switch id {
       case Setting.fullWidth: s.fullWidth.toggle()
       case Setting.chinesePunctuation: s.chinesePunctuation.toggle()
@@ -121,15 +84,10 @@ extension KeyboardViewController {
       case Setting.firstFuzzyRule..<(Setting.firstFuzzyRule + Int32(Self.fuzzyRuleNames.count)):
         s.fuzzyRules ^= 1 << UInt32(id - Setting.firstFuzzyRule)
       case Setting.clearLearning:
-        if let committed = Self.engine.commitComposition() {
-          DispatchQueue.main.async { self.apply(committed) }
-        }
         _ = Self.engine.clearLearning()
+        DispatchQueue.main.async { self.settingsPanel.show(s) }
         return
       default: return
-      }
-      if let committed = Self.engine.commitComposition() {
-        DispatchQueue.main.async { self.apply(committed) }
       }
       _ = Self.engine.applySettings(s)
       let applied = Self.engine.settings() ?? s
@@ -140,7 +98,7 @@ extension KeyboardViewController {
           self.showInputMode(Int(applied.inputMode))
         }
         self.apply(CassotisKeyResult())
-        self.showSettings(applied)
+        self.settingsPanel.show(applied)
       }
     }
   }

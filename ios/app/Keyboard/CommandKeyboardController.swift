@@ -4,7 +4,7 @@ import UIKit
 // memory marks, and a command channel through the text field so runs need no one
 // at the phone. A subclass only supplies the keys and draws the candidates:
 //   Keyboard/KeyboardViewController.swift          plain UIKit, the floor
-//   KeyboardSwiftUI/KeyboardViewController.swift   the fcitx5-ios SwiftUI panel
+//   KeyboardSwiftUI/KeyboardViewController.swift   言泉, in the style of iOS's pinyin keyboard
 
 /// One thread that outlives the engine, as cassotis_core.h demands. A serial
 /// DispatchQueue would hop between pool threads.

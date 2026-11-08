@@ -1,0 +1,19 @@
+{
+  "label": "mac-desk-sync-paced",
+  "before_open_mb": 5.6, "after_open_mb": 35.8, "open_seconds": 0.314,
+  "keys": 1519, "sentences": 55, "first_hits": 35, "first_rate": 0.6364, "deferred": 0,
+  "seconds": 330.9, "p50_ms": 30.59, "p95_ms": 112.70, "p99_ms": 158.32, "worst_ms": 326.5, "mean_ms": 41.46,
+  "ui_p50_ms": 0.00, "ui_p95_ms": 0.00, "ui_p99_ms": 0.00, "ui_worst_ms": 0.0,
+  "end_mb": 80.1, "peak_mb": 95.6, "available_end_mb": 0.0, "available_min_mb": 0.0,
+  "model_state": 1, "model_seconds": 0.24,
+  "polls": 0, "polls_applied": 0, "polls_interrupted": 0, "poll_p50_ms": 0.00, "poll_p95_ms": 0.00, "poll_worst_ms": 0.0,
+  "digest": "db95fcffe3ea9c2c",
+  "error": "",
+  "samples": [
+    [0, 0.0, 35.8, 35.8, 0.0],
+    [500, 106.3, 58.6, 72.1, 0.0],
+    [1000, 214.3, 71.0, 88.4, 0.0],
+    [1500, 325.9, 82.8, 95.6, 0.0],
+    [1519, 330.9, 80.1, 95.6, 0.0]
+  ]
+}

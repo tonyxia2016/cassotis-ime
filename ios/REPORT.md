@@ -77,6 +77,8 @@
 
 ## 5. fcitx5-ios UI 复用：可行
 
+（更新，2026-11-08：真机试用后，按用户要求改为照 iOS 自带简体拼音键盘自写的精简界面，不再用 fcitx5-ios 面板。下面是当时的结论。）
+
 - commit `7f4fecf` 的 `uipanel` 已接到言泉引擎，并在真机键盘扩展里跑完上面的全部测量（`app/KeyboardSwiftUI/`）。
 - 接缝很小：8 个 UIPanel 函数、4 个 Fcitx 函数和几个路径 JSON 工具。`FcitxProtocol.keyPressed` 正是 `Fcitx.processKey` 的替换点。
 - 剪贴板历史只做了桩，它依赖 GRDB。`KeyboardViewController.swift` 没有直接复用，撤销、光标移动、文档轮询等逻辑以后要移植。

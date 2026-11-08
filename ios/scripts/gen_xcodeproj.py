@@ -2,9 +2,10 @@
 """Generate app/CassotisPOC.xcodeproj. Fixed ids keep the file stable across runs.
 
 Three targets: the host app, the plain UIKit keyboard (which also carries the
-dictionary), and the keyboard with the fcitx5-ios SwiftUI panel (sources imported
-into build/fcitxui by scripts/import_fcitx_ui.sh)."""
-import glob, hashlib, os, pathlib
+dictionary and is the measurement floor), and the keyboard people use, in the style of
+iOS's own pinyin keyboard (app/KeyboardSwiftUI: the target kept its first name so that
+the keyboard users added and its learned words stay)."""
+import hashlib, os, pathlib
 
 root = pathlib.Path(__file__).resolve().parent.parent / "app"
 os.chdir(root)
@@ -16,7 +17,9 @@ def uid(name):
 
 bridge = ["Keyboard/EngineBridge.mm", "../client/EngineClient.cpp", "../bench/replay.cpp",
           "Keyboard/ModelProbe.swift"]
-fcitx_ui = sorted(os.path.relpath(p) for p in glob.glob("../build/fcitxui/*.swift"))
+keyboard = ["KeyboardSwiftUI/" + name for name in (
+    "KeyboardViewController.swift", "KeyLayout.swift", "KeysView.swift", "CandidateViews.swift",
+    "EmojiPanel.swift", "SettingsPanel.swift", "KeyboardSettings.swift", "DocumentEditing.swift")]
 targets = {
     "host": dict(
         name="CassotisPOC", ext="app", ptype="com.apple.product-type.application",
@@ -32,10 +35,8 @@ targets = {
         header="Keyboard/Keyboard-Bridging-Header.h"),
     "sui": dict(
         name="CassotisKeyboardSwiftUI", ext="appex", ptype="com.apple.product-type.app-extension",
-        sources=["KeyboardSwiftUI/KeyboardViewController.swift", "KeyboardSwiftUI/FcitxBackend.swift",
-                 "KeyboardSwiftUI/DocumentEditing.swift", "KeyboardSwiftUI/KeyboardSettings.swift",
-                 "Keyboard/CommandKeyboardController.swift"] + bridge + fcitx_ui,
-        resources=["../build/fcitxui-res/share"],
+        sources=keyboard + ["Keyboard/CommandKeyboardController.swift"] + bridge,
+        resources=[],
         bundle="com.hustmobile.cassotis.poc.swiftui", plist="KeyboardSwiftUI/Info.plist",
         header="KeyboardSwiftUI/Keyboard-Bridging-Header.h"),
 }
