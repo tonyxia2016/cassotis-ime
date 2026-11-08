@@ -35,6 +35,17 @@ func deserialize<T: Codable>(_ type: T.Type, _ s: String) -> T {
 func getLocale() -> String { "zh_CN" }
 func setOpenURLPermissionCheck(_ check: @escaping () -> Bool) {}
 
+// Compute on key-down: scripts/import_fcitx_ui.sh adds these two calls to the panel.
+// keyDownHook runs at touch-down of a normal key; the key itself still arrives through
+// keyPressed when the finger lifts. keyCancelHook runs when a press is dropped unsent:
+// a long press chose another character, or a swipe took over.
+func keyDownHook(_ key: String, _ code: String, _ forward: Bool) {
+  KeyboardViewController.current?.keyDown(key, forward: forward)
+}
+func keyCancelHook() {
+  KeyboardViewController.current?.keyCancelled()
+}
+
 // UIPanel
 func inputContextIsFocused(_ inputContext: String) -> Bool { true }
 func selectCandidate(_ inputContext: String, _ index: Int32) {

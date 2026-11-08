@@ -30,6 +30,7 @@ static CassotisKeyResult *wrap(const Result &r) {
     o.page = r.page;
     o.pages = r.pages;
     o.selected = r.selected;
+    o.query = ns(r.query);
     o.debugContext = r.debugContextEnabled ? ns(r.debugContext) : @"";
     o.debugContextReported = r.debugContextEnabled && r.debugContextReported;
     return o;

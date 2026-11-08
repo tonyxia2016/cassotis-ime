@@ -150,7 +150,7 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
       if key == " " {
         pressSpecial(5, fallback: " ")
       } else if !key.isEmpty {
-        pressText(key)
+        letterReleased(key)  // draws what touch-down computed, or sends the key now
       }
     }
   }

@@ -61,6 +61,13 @@ final class EngineThread {
     condition.unlock()
   }
 
+  /// Forgets a poll that has not started; one that runs is interrupted instead.
+  func dropIdle() {
+    condition.lock()
+    idle = nil
+    condition.unlock()
+  }
+
   /// On the engine thread, in the idle job: whether a key interrupted it.
   func idleWasInterrupted() -> Bool {
     condition.lock()
@@ -254,6 +261,8 @@ class CommandKeyboardController: UIInputViewController {
     let digit = text.count == 1 && text.unicodeScalars.allSatisfy { ("0"..."9").contains($0) }
     let context = contextForKey()
     let preceding = text == "." && preedit.isEmpty ? precedingDigit() : 0
+    let sentAt = CFAbsoluteTimeGetCurrent()  // the key's release, for mode=type's measure
+    let measure = measuring && Self.isPinyinLetter(text)
     withEngine(interruptsPoll: edits) {
       Self.syncContext(context)
       // A digit typed on screen is a digit: the composition is committed first
@@ -274,6 +283,7 @@ class CommandKeyboardController: UIInputViewController {
           self.textDocumentProxy.insertText(text)
           self.documentDidChange()
         }
+        if measure { self.releaseTimes.append((CFAbsoluteTimeGetCurrent() - sentAt) * 1000) }
       }
       if result.pending { self.pollWhenIdle() }
     }
@@ -290,7 +300,9 @@ class CommandKeyboardController: UIInputViewController {
     return 0
   }
 
-  func pressSpecial(_ code: UInt16, fallback: String?) {
+  /// otherwise: what to do on the main thread when the engine passes the key on and
+  /// there is no fallback text (backspace deletes from the field).
+  func pressSpecial(_ code: UInt16, fallback: String?, otherwise: (() -> Void)? = nil) {
     let context = contextForKey()
     withEngine(interruptsPoll: code == 1) {  // 1: backspace
       Self.syncContext(context)
@@ -299,9 +311,13 @@ class CommandKeyboardController: UIInputViewController {
       let passThrough = !result.handled && result.commit.isEmpty && result.preedit.isEmpty
       DispatchQueue.main.async {
         self.apply(result)
-        if passThrough, let fallback {
-          self.textDocumentProxy.insertText(fallback)
-          self.documentDidChange()
+        if passThrough {
+          if let fallback {
+            self.textDocumentProxy.insertText(fallback)
+            self.documentDidChange()
+          } else {
+            otherwise?()
+          }
         }
       }
       if result.pending { self.pollWhenIdle() }
@@ -410,21 +426,129 @@ class CommandKeyboardController: UIInputViewController {
   }
 
   /// The model's ranking for the last key, once the engine thread is free.
-  /// A poll a key interrupted is dropped: that key's own result follows.
+  /// A poll a key interrupted is dropped: that key's own result follows. A poll
+  /// answers for the engine's latest key, and a letter taken at touch-down may be
+  /// ahead of the screen, so only a result for what is drawn (same query) applies.
   private func pollWhenIdle() {
     Self.thread.runWhenIdle { [weak self] in
       let result = Self.engine.poll()
       guard result.handled, !Self.thread.idleWasInterrupted() else { return }
-      DispatchQueue.main.async { self?.apply(result) }
+      DispatchQueue.main.async {
+        guard let self else { return }
+        guard result.query == self.lastResult.query else {
+          self.pollsDropped += 1
+          return
+        }
+        self.pollsApplied += 1
+        self.apply(result)
+      }
     }
   }
 
+  /// Backspace goes through the engine whenever it is open, so that it lands after
+  /// any key still on its way there (a letter taken at touch-down, a fast tap); with
+  /// nothing composed the engine passes it on and the field loses a character.
   func pressDelete() {
-    if preedit.isEmpty {
+    guard Self.engineState != 0 else {
       textDocumentProxy.deleteBackward()
       documentDidChange()
-    } else {
-      pressSpecial(1, fallback: nil)
+      return
+    }
+    pressSpecial(1, fallback: nil) {
+      self.textDocumentProxy.deleteBackward()
+      self.documentDidChange()
+    }
+  }
+
+  // MARK: - Compute on key-down
+
+  /// A pinyin letter the engine took at touch-down. The panel sends the key when the
+  /// finger lifts, and then its result, already computed, is drawn. A long press or a
+  /// swipe drops the press: backspace takes the letter back out of the engine, and
+  /// nothing of it was ever drawn.
+  private final class Speculation {
+    let text: String
+    var result: CassotisKeyResult?
+    var passThrough = false
+    var released = false
+    var releasedAt: CFAbsoluteTime = 0
+    init(text: String) { self.text = text }
+  }
+  private var speculations: [Speculation] = []
+  /// Off for a run that measures the plain path (spec=0).
+  static var speculates = true
+  /// mode=type's measurements: release-to-drawn times of letters, and polls.
+  private var measuring = false
+  private var releaseTimes: [Double] = []
+  private var pollsApplied = 0
+  private var pollsDropped = 0
+
+  private static func isPinyinLetter(_ text: String) -> Bool {
+    text.count == 1 && text.unicodeScalars.allSatisfy { ("a"..."z").contains($0) }
+  }
+
+  /// The panel's touch-down for a key (keyDownHook). Only a lowercase letter in
+  /// Chinese mode starts early: backspace undoes it exactly. Punctuation, space and
+  /// the like can commit, so they wait for the finger to lift.
+  func keyDown(_ text: String, forward: Bool) {
+    guard Self.speculates, !forward, Self.engineState == 2, Self.rememberedMode == 0,
+      Self.isPinyinLetter(text)
+    else { return }
+    let speculation = Speculation(text: text)
+    speculations.append(speculation)
+    let context = contextForKey()
+    Self.thread.run(interruptsPoll: true) {
+      Self.thread.dropIdle()  // a queued poll would answer for this letter before it shows
+      Self.syncContext(context)
+      var result = Self.engine.pressText(text)
+      let passThrough = !result.handled && result.commit.isEmpty
+      if passThrough && Self.engine.composing, let committed = Self.engine.commitComposition() {
+        result = committed
+      }
+      DispatchQueue.main.async {
+        speculation.result = result
+        speculation.passThrough = passThrough
+        if speculation.released { self.finishSpeculation(speculation) }
+      }
+    }
+  }
+
+  /// A letter's touch-up: draws what keyDown computed, or sends the key as usual
+  /// when nothing started early.
+  func letterReleased(_ text: String) {
+    guard let speculation = speculations.first(where: { !$0.released }),
+      speculation.text == text
+    else {
+      pressText(text)
+      return
+    }
+    speculation.released = true
+    speculation.releasedAt = CFAbsoluteTimeGetCurrent()
+    if speculation.result != nil { finishSpeculation(speculation) }
+  }
+
+  private func finishSpeculation(_ speculation: Speculation) {
+    guard let result = speculation.result else { return }
+    speculations.removeAll { $0 === speculation }
+    apply(result)
+    if speculation.passThrough {
+      textDocumentProxy.insertText(speculation.text)
+      documentDidChange()
+    }
+    if measuring {
+      releaseTimes.append((CFAbsoluteTimeGetCurrent() - speculation.releasedAt) * 1000)
+    }
+    if result.pending { pollWhenIdle() }
+  }
+
+  /// The panel dropped the press keyDown started (keyCancelHook): take the letter
+  /// back out of the engine. A long press then sends the character it chose.
+  func keyCancelled() {
+    guard let index = speculations.lastIndex(where: { !$0.released }) else { return }
+    speculations.remove(at: index)
+    Self.thread.run(interruptsPoll: true) {
+      let result = Self.engine.pressSpecial(1)  // backspace removes exactly that letter
+      if result.pending { self.pollWhenIdle() }
     }
   }
 
@@ -655,6 +779,16 @@ class CommandKeyboardController: UIInputViewController {
     let label = options["label"] ?? "type"
     let pace = Double(options["pace"].flatMap(Int.init) ?? 300) / 1000
     let savedMode = Self.rememberedMode
+    // taps=1: each letter is a touch held for hold ms, as the panel sends it (down
+    // computes early, up draws); spec=0 turns compute-on-key-down off to compare.
+    let taps = options["taps"] == "1"
+    let hold = Double(options["hold"].flatMap(Int.init) ?? 80) / 1000
+    let savedSpeculates = Self.speculates
+    Self.speculates = options["spec"] != "0"
+    measuring = true
+    releaseTimes = []
+    pollsApplied = 0
+    pollsDropped = 0
     let debug = options["debug"] == "1"
     var tokens: [String] = []
     let characters = Array(options["keys"] ?? "")
@@ -685,6 +819,23 @@ class CommandKeyboardController: UIInputViewController {
       ]
       if token.hasPrefix("{") && typeCommand(token) {
         DispatchQueue.main.asyncAfter(deadline: .now() + pace) { step(position + 1) }
+        return
+      }
+      if taps && Self.isPinyinLetter(token) {
+        keyDown(token, forward: false)
+        DispatchQueue.main.asyncAfter(deadline: .now() + hold) {
+          self.letterReleased(token)
+          DispatchQueue.main.asyncAfter(deadline: .now() + pace) { step(position + 1) }
+        }
+        return
+      }
+      if token.hasPrefix("{cancel:") {  // a press a long press or a swipe takes over
+        let letter = String(token.dropFirst(8).dropLast())
+        keyDown(letter, forward: false)
+        DispatchQueue.main.asyncAfter(deadline: .now() + hold) {
+          self.keyCancelled()
+          DispatchQueue.main.asyncAfter(deadline: .now() + pace) { step(position + 1) }
+        }
         return
       }
       switch token {
@@ -724,6 +875,18 @@ class CommandKeyboardController: UIInputViewController {
         report["debug_context"] = result.debugContext
         report["debug_context_reported"] = result.debugContextReported
       }
+      let times = releaseTimes.sorted()
+      if !times.isEmpty {
+        let at = { (q: Double) in times[min(times.count - 1, Int(Double(times.count) * q))] }
+        report["release_ms"] = [
+          "count": times.count, "p50": at(0.5), "p95": at(0.95), "max": times.last!,
+        ]
+      }
+      report["speculates"] = Self.speculates
+      report["polls_applied"] = pollsApplied
+      report["polls_dropped"] = pollsDropped
+      measuring = false
+      Self.speculates = savedSpeculates
       Self.rememberedMode = savedMode  // {en} and {zh} must not change the phone's keyboard
       Self.thread.run {
         if debug { Self.engine.setDebugMode(false) }

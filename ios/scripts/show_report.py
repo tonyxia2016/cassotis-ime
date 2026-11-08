@@ -22,6 +22,9 @@ if "document" in r:  # mode=type
         print(f"  context {r['debug_context']!r} reported={r['debug_context_reported']}")
     if "settings" in r:
         print(f"  mode {r.get('mode')}  settings {r['settings']}")
+    if "release_ms" in r:
+        m = r["release_ms"]
+        print(f"  key-down compute {r.get('speculates')}  release->drawn n {m['count']} p50 {m['p50']:.1f} p95 {m['p95']:.1f} max {m['max']:.1f} ms  polls applied {r.get('polls_applied')} dropped {r.get('polls_dropped')}")
     sys.exit()
 print(f"{r['label']}  {j['device']} iOS {j['os']} full_access={j['full_access']}")
 print("  marks  " + "  ".join(f"{m['name']}={m['mb']}MB(avail {m['available_mb']})" for m in j["marks"]))
