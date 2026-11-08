@@ -20,12 +20,12 @@ args=(-n -Paarch64 -Mdelphiunicode -FcUTF8 -CF64 -vm2091 -vm4110 -O2 -g- -Si -Sh
 case "$platform" in
     ios)
         sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
-        args+=(-Tios "-XR$sdk" "-WP${CASSOTIS_MIN_IOS:-15.0}"
+        args+=(-Tios "-XR$sdk" "-WP${CASSOTIS_MIN_IOS:-18.0}"
                "-Fu$root/toolchain/ios-units/rtl" "-Fu$root/toolchain/ios-units/pkg")
         ;;
     ios-sim)
         sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-        args+=(-Tios "-XR$sdk" "-WP${CASSOTIS_MIN_IOS:-15.0}" "-FD$root/toolchain/sim-bin"
+        args+=(-Tios "-XR$sdk" "-WP${CASSOTIS_MIN_IOS:-18.0}" "-FD$root/toolchain/sim-bin"
                "-Fu$root/toolchain/ios-sim-units/rtl" "-Fu$root/toolchain/ios-sim-units/pkg")
         ;;
     macos)
@@ -58,8 +58,8 @@ fi
 # -fcxx-modules the object asks the linker for CoreML and Foundation itself;
 # the host links libc++. APIs newer than the deployment target are guarded.
 case "$platform" in
-    ios) target="arm64-apple-ios${CASSOTIS_MIN_IOS:-15.0}" ;;
-    ios-sim) target="arm64-apple-ios${CASSOTIS_MIN_IOS:-15.0}-simulator" ;;
+    ios) target="arm64-apple-ios${CASSOTIS_MIN_IOS:-18.0}" ;;
+    ios-sim) target="arm64-apple-ios${CASSOTIS_MIN_IOS:-18.0}-simulator" ;;
     macos) target="arm64-apple-macos11.0" ;;
 esac
 printf '[clang %s] nc_char_lm_coreml\n' "$variant"

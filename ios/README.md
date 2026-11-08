@@ -8,7 +8,8 @@ iOS 键盘扩展。第 0 阶段验证了 Pascal 引擎能放进键盘扩展，�
 
 - macOS、Xcode、Homebrew 的 `fpc`（3.2.2）、Python 3.11+
 - 一个装有 numpy、onnx、coremltools 的 Python 环境，用来把字符模型转成 Core ML（见 `../macos/BUILD.md` 的 Core ML 一节），用 `CASSOTIS_COREML_PYTHON` 指向它
-- 运行模型要 iOS 18 以上，且神经引擎至少 16 核（A14 及以后）。iPhone 12 Pro Max（A14）实测可用，见 REPORT-MODEL.md 第 7 节；iPhone XS Max（A12）等机型上，键盘照常工作，只是不用模型，见第 6 节
+- 手机要 iOS 18 及以上：这是项目的最低版本，不为更老的系统写兼容代码。`CASSOTIS_MIN_IOS` 可改运行库和引擎的目标版本，默认 18.0
+- 运行模型还要神经引擎至少 16 核（A14 及以后）。iPhone 12 Pro Max（A14）实测可用，见 REPORT-MODEL.md 第 7 节；iPhone XS Max（A12）等机型上，键盘照常工作，只是不用模型，见第 6 节
 - 真机：Apple Development 证书和能覆盖设备的开发 profile。`scripts/build_app.sh` 只在本地签名，不改动开发者账号。默认找钥匙串里的 `Apple Development` 证书和名为 `iOS Team Provisioning Profile: *` 的通配 profile，可用 `CASSOTIS_IDENTITY`、`CASSOTIS_PROFILE` 指定。
 - Xcode 工程里的 bundle ID 是 `com.hustmobile.cassotis.poc*`，团队是 `TR78TGFZDE`。换账号时改 `scripts/gen_xcodeproj.py` 和 `scripts/build_app.sh`。
 
@@ -112,7 +113,7 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 ./scripts/device_keyboard.sh swiftui type-check "mode=type keys=shuru#3#2 learning=0"
 ```
 
-- `keys`：a–z、数字、`'` 和标点照原样输入；`_` 空格，`<` 退格，`~` 回车；`#N` 点列表里第 N 个候选（包括滚动读进来的），`+` 把候选列表滚到末尾，读入后面的页；`{en}`、`{zh}` 切换英文和拼音，`{reset}` 是面板的 resetInput，`{sym:X}` 是从符号面板点 X。
+- `keys`：a–z、数字、`'` 和标点照原样输入；`_` 空格，`<` 退格，`~` 回车；`#N` 点列表里第 N 个候选（包括滚动读进来的），`+` 把候选列表滚到末尾，读入后面的页；`{en}`、`{zh}` 切换英文和拼音，`{reset}` 是面板的 resetInput，`{sym:X}` 是从符号面板点 X；`{left}` `{right}` `{up}` `{down}` `{home}` `{end}` 是光标键，`{undo}` `{redo}` `{cut}` `{copy}` `{paste}` 是工具栏和编辑面板的按钮，`{slide:N}` 是在退格键上滑动 N 格（负数向左，0 为松手）。
 - `prefix`：先插入输入框的文字，当作之前打的内容（不能有空格）。
 - `pace`：两键之间的毫秒数，默认 300，够模型的轮询跑完。
 - `learning=0`：不打开用户词库。在自己的手机上测试时用它，免得测试内容被学进去。
@@ -123,7 +124,11 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 - **上下文：** 开始一段新输入前，键盘把光标前最多 1024 个 UTF-16 单位交给引擎，和 macOS 相同；输入框不提供时告诉引擎“没有上下文”，不沿用上一个输入框的。
 - **标点和数字：** 标点按引擎的中文标点规则输出；光标前是数字时，句号保持为“.”。拼音还没上屏时按数字，先按第一个候选上屏，再输入数字：屏幕上的数字不用来选候选，只有用拼音转数字这类要读数字的模式除外。
 - **中英文：** 长按地球键在“拼音”和“英文”之间切换，空格键上显示当前模式。引擎不保存这个模式（macOS 由前端按应用记住），键盘自己记住上次的；测量回放总是从拼音开始。引擎不处理的按键（英文模式下的字母、空格等）由键盘直接输入，有拼音时先上屏。
-- **符号面板：** 面板插入符号前会先重置输入，键盘这时把拼音按第一个候选上屏，再插入符号，顺序与点按顺序一致。
+- **符号面板和重置：** 面板在插入符号前、切到数字面板时、在退格键上滑动后松手时，都会先重置输入。键盘看紧接着的调用决定怎么做：滑动退格松手时清掉拼音（fcitx5 的本意），其余情况把拼音按第一个候选上屏，再插入符号，顺序与点按顺序一致。
+- **光标和编辑：** 空格键左右滑动和编辑面板的方向键、Home、End：有拼音时交给引擎，左右键移动候选高亮，空格上屏高亮的那个；没有拼音时移动输入框里的光标，上下键按行移动并尽量保持列位置。在退格键上向左滑逐字删除，往回滑恢复，松手为准。
+- **撤销和重做：** 工具栏的撤销、重做用 fcitx5-ios 的 `UndoRedo.swift`（构建时从上游取），记录键盘自己的修改和宿主 App 里的修改，以行为单位。
+- **剪贴板：** 剪切、复制、粘贴在没有 Full Access 时只在键盘内部有效：系统剪贴板要 Full Access 才能读写。
+- **换输入框和收起键盘：** 键盘显示时每 0.2 秒检查一次当前输入框，换了输入框就丢掉旧的拼音，不会打进新的输入框。键盘收起或换到别的键盘之前，先把拼音按第一个候选上屏，与 macOS 失去焦点时相同。
 - **候选：** 候选栏和展开后的候选区是同一个能一直往下滚的列表。快滚到末尾时，键盘趁引擎空闲读取后面的页（`imt_candidate_pages`，只读），所以按空格仍上屏第一个，延后的模型排序也照常生效。点到后面某页的候选时，先翻到那一页再按数字选中。
 
 ## 目录

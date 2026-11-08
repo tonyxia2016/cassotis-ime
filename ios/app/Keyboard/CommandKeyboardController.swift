@@ -124,9 +124,18 @@ class CommandKeyboardController: UIInputViewController {
 
   func buildKeyboard() {}
   /// more: further pages follow, which loadCandidates reads when the list scrolls.
-  func showCandidates(_ candidates: [String], preedit: String, more: Bool) {}
+  /// selected: the highlighted one, which space takes (-1 for none).
+  func showCandidates(_ candidates: [String], preedit: String, selected: Int, more: Bool) {}
   /// The next part of the list on screen; end: there is nothing after it.
   func appendCandidates(_ candidates: [String], end: Bool) {}
+  /// The keyboard just changed the document (committed, deleted, inserted): the
+  /// SwiftUI keyboard records it for undo.
+  func documentDidChange() {}
+  /// A cursor key the engine left alone: move in the document (ArrowLeft, ArrowRight,
+  /// ArrowUp, ArrowDown, Home, End). The plain keyboard has no such keys.
+  func moveCursor(_ code: String) {}
+  /// mode=type's {…} tokens that only a subclass can carry out; true when handled.
+  func typeCommand(_ token: String) -> Bool { false }
 
   static func mark(_ name: String) {
     marks.append(
@@ -259,7 +268,10 @@ class CommandKeyboardController: UIInputViewController {
       }
       DispatchQueue.main.async {
         self.apply(result)
-        if passThrough { self.textDocumentProxy.insertText(text) }
+        if passThrough {
+          self.textDocumentProxy.insertText(text)
+          self.documentDidChange()
+        }
       }
       if result.pending { self.pollWhenIdle() }
     }
@@ -285,11 +297,64 @@ class CommandKeyboardController: UIInputViewController {
       let passThrough = !result.handled && result.commit.isEmpty && result.preedit.isEmpty
       DispatchQueue.main.async {
         self.apply(result)
-        if passThrough, let fallback { self.textDocumentProxy.insertText(fallback) }
+        if passThrough, let fallback {
+          self.textDocumentProxy.insertText(fallback)
+          self.documentDidChange()
+        }
       }
       if result.pending { self.pollWhenIdle() }
     }
   }
+
+  /// A cursor key (special 7–12): it moves within the composition while there is
+  /// one and the engine takes it; otherwise it moves the caret in the document.
+  func pressCursorKey(_ code: String) {
+    let specials: [String: UInt16] = [
+      "ArrowLeft": 7, "ArrowRight": 8, "ArrowUp": 9, "ArrowDown": 10, "Home": 11, "End": 12,
+    ]
+    guard let special = specials[code], !preedit.isEmpty, Self.engineState == 2 else {
+      moveCursor(code)
+      return
+    }
+    withEngine {
+      let result = Self.engine.pressSpecial(special)
+      DispatchQueue.main.async {
+        if result.handled { self.apply(result) } else { self.moveCursor(code) }
+      }
+    }
+  }
+
+  /// Forgets the composition without touching the document, which may no longer be
+  /// the one it was typed in (another field has focus).
+  func forgetComposition() {
+    if !preedit.isEmpty {
+      preedit = ""
+      lastResult = CassotisKeyResult()
+      candidateGeneration &+= 1
+      shownCandidates = []
+      showCandidates([], preedit: "", selected: -1, more: false)
+    }
+    guard Self.engineState == 2 else { return }
+    Self.thread.run { Self.engine.resetComposition() }
+  }
+
+  /// Commits the composition before the keyboard goes away (another keyboard, or
+  /// dismissed), as macOS commits on deactivation. Waits a moment for the engine;
+  /// if it is busy, UIKit keeps the marked text as it is.
+  func commitCompositionNow() {
+    guard !preedit.isEmpty, Self.engineState == 2 else { return }
+    let done = DispatchSemaphore(value: 0)
+    let box = ResultBox()
+    Self.thread.run {
+      box.result = Self.engine.commitComposition()
+      done.signal()
+    }
+    if done.wait(timeout: .now() + 0.3) == .success, let result = box.result {
+      apply(result)
+    }
+  }
+
+  private final class ResultBox: @unchecked Sendable { var result: CassotisKeyResult? }
 
   /// Commits what is composed with its first candidates, as macOS does when focus
   /// moves: before a symbol from the panel, a switch of mode, and the like.
@@ -306,9 +371,15 @@ class CommandKeyboardController: UIInputViewController {
   func insertAfterKeys(_ text: String) {
     guard Self.engineState != 0 else {
       textDocumentProxy.insertText(text)
+      documentDidChange()
       return
     }
-    Self.thread.run { DispatchQueue.main.async { self.textDocumentProxy.insertText(text) } }
+    Self.thread.run {
+      DispatchQueue.main.async {
+        self.textDocumentProxy.insertText(text)
+        self.documentDidChange()
+      }
+    }
   }
 
   // MARK: - Input mode
@@ -349,6 +420,7 @@ class CommandKeyboardController: UIInputViewController {
   func pressDelete() {
     if preedit.isEmpty {
       textDocumentProxy.deleteBackward()
+      documentDidChange()
     } else {
       pressSpecial(1, fallback: nil)
     }
@@ -403,7 +475,10 @@ class CommandKeyboardController: UIInputViewController {
     }
     candidateGeneration &+= 1
     shownCandidates = result.candidates
-    showCandidates(result.candidates, preedit: preedit, more: result.pages > result.page + 1)
+    showCandidates(
+      result.candidates, preedit: preedit, selected: Int(result.selected),
+      more: result.pages > result.page + 1)
+    if !result.commit.isEmpty { documentDidChange() }
   }
 
   // MARK: - Commands from the host
@@ -602,7 +677,16 @@ class CommandKeyboardController: UIInputViewController {
         return
       }
       let token = tokens[position]
+      let cursorKeys = [
+        "{left}": "ArrowLeft", "{right}": "ArrowRight", "{up}": "ArrowUp", "{down}": "ArrowDown",
+        "{home}": "Home", "{end}": "End",
+      ]
+      if token.hasPrefix("{") && typeCommand(token) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + pace) { step(position + 1) }
+        return
+      }
       switch token {
+      case let key where cursorKeys[key] != nil: pressCursorKey(cursorKeys[key]!)
       case "_": pressSpecial(5, fallback: " ")
       case "<": pressDelete()
       case "~": pressSpecial(3, fallback: "\n")
@@ -631,7 +715,7 @@ class CommandKeyboardController: UIInputViewController {
         "label": label, "keys": tokens.count,
         "document": (textDocumentProxy.documentContextBeforeInput ?? "")
           + (textDocumentProxy.documentContextAfterInput ?? ""),
-        "preedit": preedit, "candidates": shownCandidates,
+        "preedit": preedit, "candidates": shownCandidates, "selected": result.selected,
         "pages": result.pages, "user_dict_bytes": size,
       ]
       if debug {

@@ -3,13 +3,26 @@ import UIKit
 
 // The fcitx5-ios SwiftUI panel in front of the Cassotis engine. FcitxProtocol is
 // the panel's view of its host: keyPressed is the one busy method, the place where
-// fcitx5-ios calls Fcitx.processKey and this calls the engine. Everything else is
-// either plain UITextDocumentProxy work or a feature phase 0 leaves empty.
+// fcitx5-ios calls Fcitx.processKey and this calls the engine. Editing the document
+// around the composition (cursor keys, undo, the backspace slide, the clipboard,
+// another field taking focus) is in DocumentEditing.swift.
 final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
   nonisolated(unsafe) static weak var current: KeyboardViewController?
   private let program = UUID().uuidString
   private let inputContext = "cassotis"
   private var hostingController: UIHostingController<AnyView>?
+
+  // DocumentEditing.swift
+  let undoRedo = UndoRedoManager()
+  var documentState: UndoRedoDocumentState?
+  var documentTimer: Timer?
+  var removedBySlide = ""
+  var slidingBackspace = false
+  var verticalMove = 0
+  var movingVertically = false
+  var changingLines = false
+  /// resetInput waits for the rest of the panel's event to know what it means.
+  var resetPending = false
 
   /// The dictionary stays in the other extension's bundle; a keyboard may read
   /// anything inside the app that contains it, with or without Full Access.
@@ -28,6 +41,14 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     vm.setReturnKeyType(textDocumentProxy.returnKeyType)
     vm.setDisplayMode(.initial)
     showInputMode(Self.rememberedMode)
+    startDocumentPolling()
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    // Another keyboard, or dismissed: commit as macOS does on deactivation.
+    commitCompositionNow()
+    stopDocumentPolling()
+    super.viewWillDisappear(animated)
   }
 
   /// Long-pressing the globe key lists these (getInputMethods); the space bar
@@ -70,14 +91,43 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
 
   /// Bulk mode: one list that scrolls, in the bar and in the expanded grid. Near its
   /// end the panel calls scroll() (FcitxBackend), which reads the engine's next pages.
-  override func showCandidates(_ candidates: [String], preedit: String, more: Bool) {
+  override func showCandidates(_ candidates: [String], preedit: String, selected: Int, more: Bool) {
     setCandidatesAsync(
-      program, inputContext, "", "", 0, candidates, candidates.isEmpty ? -1 : 0, true,
+      program, inputContext, "", "", 0, candidates, candidates.isEmpty ? -1 : Int32(selected), true,
       !preedit.isEmpty, "[]", false, false, !more)
   }
 
   override func appendCandidates(_ candidates: [String], end: Bool) {
     scrollAsync(program, inputContext, candidates, end)
+  }
+
+  // Overrides cannot live in an extension; the work is in DocumentEditing.swift.
+  override func moveCursor(_ code: String) { moveCursorInDocument(code) }
+  override func documentDidChange() { observeDocument() }
+
+  /// mode=type's commands for what this keyboard adds: the panel's reset, its symbol
+  /// grid and backspace slide (through the panel's own view model), undo, redo, and
+  /// the clipboard.
+  override func typeCommand(_ token: String) -> Bool {
+    switch token {
+    case "{reset}": resetInput()
+    case "{undo}": undo()
+    case "{redo}": redo()
+    case "{cut}": cut()
+    case "{copy}": copySelection()
+    case "{paste}": paste()
+    default:
+      let argument = String(token.dropFirst().dropLast().split(separator: ":", maxSplits: 1).last ?? "")
+      if token.hasPrefix("{slide:"), let step = Int(argument) {
+        vm.slideBackspace(step)
+      } else if token.hasPrefix("{sym:") {
+        resetInput()
+        commitString(argument)
+      } else {
+        return false
+      }
+    }
+    return true
   }
 
   // MARK: FcitxProtocol
@@ -91,6 +141,7 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     switch code {
     case "Backspace": pressDelete()
     case "Enter": pressSpecial(3, fallback: "\n")
+    case "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End": pressCursorKey(code)
     default:
       if key == " " {
         pressSpecial(5, fallback: " ")
@@ -100,27 +151,56 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     }
   }
 
-  // The panel resets before a forwarded key or a symbol from its grid: commit what
-  // is composed (macOS does so when focus moves), then the text, in that order.
-  func forwardKey(_ key: String, _ code: String) { insertAfterKeys(key) }
-  func carriageReturn() { insertAfterKeys("\n") }
-  func resetInput() { commitComposition() }
+  /// The panel resets before a symbol from its grid, when it switches to the number
+  /// pad, and when a slide on backspace ends over a composition. That last one means
+  /// "clear it" (as in fcitx5); for the others committing first reads better than
+  /// losing what was typed. What follows in the same event decides; alone, it commits.
+  func resetInput() {
+    guard !resetPending else { return }
+    resetPending = true
+    DispatchQueue.main.async { [weak self] in
+      guard let self, self.resetPending else { return }
+      self.resetPending = false
+      self.commitComposition()
+    }
+  }
+
+  /// The pending reset, settled by the call that followed it.
+  private func settleReset(commit: Bool) {
+    guard resetPending else { return }
+    resetPending = false
+    if commit { commitComposition() } else { clearComposition() }
+  }
+
+  func forwardKey(_ key: String, _ code: String) {
+    settleReset(commit: true)
+    insertAfterKeys(key)
+  }
+  func carriageReturn() {
+    settleReset(commit: true)
+    insertAfterKeys("\n")
+  }
+  func commitString(_ string: String) {
+    settleReset(commit: true)
+    insertAfterKeys(string)
+  }
   func triggerUnicode() {}
   func triggerQuickPhrase() {}
-  func commitString(_ string: String) { insertAfterKeys(string) }
+  // The engine composes through marked text and never asks for these.
   func deleteSurroundingText(_ offset: Int, _ size: Int) {}
   func setPreedit(_ preedit: String, _ cursor: Int) {}
-  func cut() {}
-  func copy() {}
-  func paste() {}
-  func undo() {}
-  func redo() {}
   func globe() { advanceToNextInputMode() }
   func setCurrentInputMethod(_ inputMethod: String) {
     setInputMode(inputMethod == Self.inputMethods[1].name ? 1 : 0)
   }
   func terminateExtension() { exit(0) }
-  func slideBackspace(_ step: Int) {}
+  func slideBackspace(_ step: Int) {
+    if step == 0 && resetPending {
+      settleReset(commit: false)  // the slide ended over a composition: clear it
+      return
+    }
+    slideBackspaceInDocument(step)
+  }
   func syncConfig() {}
   func clipboardMonitoringEnabled() -> Bool { false }
   func setClipboardMonitoring(_ enabled: Bool) {}

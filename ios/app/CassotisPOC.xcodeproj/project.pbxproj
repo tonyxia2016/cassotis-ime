@@ -23,6 +23,7 @@
 		85C5A1B9C4C5BB0985506C7E = {isa = PBXBuildFile; fileRef = 3B3670EDCC24EBAA6468DBEC; };
 		2717A7E6EAC8FA081CE4BF7C = {isa = PBXBuildFile; fileRef = EFEB9515A11F74F58A6EA43A; };
 		F86AA3F57E97781A96C3283A = {isa = PBXBuildFile; fileRef = 387FCD29B10A50D29501F835; };
+		196D24397CD243816F633E6F = {isa = PBXBuildFile; fileRef = 94B7282181C4F42A276D3DBC; };
 		83D0D98AAF83B46C2BF711A3 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
 		3D3AD054FD76ADDCB2761E47 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		B0E7FCB26F884F2567E47C2D = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
@@ -51,12 +52,14 @@
 		EBC1059B636F4647B13EFE74 = {isa = PBXBuildFile; fileRef = 08DDF4FCDBE4954F3CFE64D8; };
 		233CDAF7293B699281E85986 = {isa = PBXBuildFile; fileRef = 5D892C065DF5326698EB4124; };
 		AEBD71DFE47AEA30F8DCC26C = {isa = PBXBuildFile; fileRef = 3B8D08D4A428E0F15E034822; };
+		A8ED6600220B9A8A0E9547EB = {isa = PBXBuildFile; fileRef = F075E683DFA69DD8ECE4DF3C; };
 		B11D6E69859AB4561CC2C5E6 = {isa = PBXBuildFile; fileRef = B7E0B4B5AEB5797B780659CF; };
 		812B6A1F83633FC067D6F114 = {isa = PBXBuildFile; fileRef = D39A6653E78CCBB31039C919; };
 		04812FBEDE275FA148D1C1C0 = {isa = PBXBuildFile; fileRef = D656C72F74E1E818B20C700B; };
 		06F87E879D4F3D8497931638 = {isa = PBXBuildFile; fileRef = B172E7578F33146BB6E050F4; };
 		1A2D8FF6DA4BF5941BEBD678 = {isa = PBXBuildFile; fileRef = 891C62EBB6507A807BB2C246; };
 		0E4EFF2C38C3CAEB7869F5BE = {isa = PBXBuildFile; fileRef = 6B0B8883A046E683C352BB78; };
+		D6F1690944D9E2849CBCE1FE = {isa = PBXBuildFile; fileRef = 2F21ABE09E82EFE2B7F6A490; };
 		68C86244A706EF5412316888 = {isa = PBXBuildFile; fileRef = 409A1C304288A757398FEB68; };
 		0ED75F5269B73FF1F1AE62F7 = {isa = PBXBuildFile; fileRef = E98C161A42C3F8433503ECB6; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B669E4F2559CABE55B60B678 = {isa = PBXBuildFile; fileRef = 6244DB8E6A95F6A4A7D37EC2; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -102,6 +105,7 @@
 		3B3670EDCC24EBAA6468DBEC = {isa = PBXFileReference; lastKnownFileType = folder; name = "char_lm"; path = "../build/res/char_lm"; sourceTree = SOURCE_ROOT; };
 		EFEB9515A11F74F58A6EA43A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "KeyboardSwiftUI/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
 		387FCD29B10A50D29501F835 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxBackend.swift"; path = "KeyboardSwiftUI/FcitxBackend.swift"; sourceTree = SOURCE_ROOT; };
+		94B7282181C4F42A276D3DBC = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DocumentEditing.swift"; path = "KeyboardSwiftUI/DocumentEditing.swift"; sourceTree = SOURCE_ROOT; };
 		CF7A29891B884710B79A0738 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Bubble.swift"; path = "../build/fcitxui/Bubble.swift"; sourceTree = SOURCE_ROOT; };
 		5E9AD112AA5E89FCF714AE5D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Candidate.swift"; path = "../build/fcitxui/Candidate.swift"; sourceTree = SOURCE_ROOT; };
 		0A1B0D2671C78350F6D02D18 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateBar.swift"; path = "../build/fcitxui/CandidateBar.swift"; sourceTree = SOURCE_ROOT; };
@@ -125,12 +129,14 @@
 		08DDF4FCDBE4954F3CFE64D8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Sync.swift"; path = "../build/fcitxui/Sync.swift"; sourceTree = SOURCE_ROOT; };
 		5D892C065DF5326698EB4124 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Toast.swift"; path = "../build/fcitxui/Toast.swift"; sourceTree = SOURCE_ROOT; };
 		3B8D08D4A428E0F15E034822 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Toolbar.swift"; path = "../build/fcitxui/Toolbar.swift"; sourceTree = SOURCE_ROOT; };
+		F075E683DFA69DD8ECE4DF3C = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UndoRedo.swift"; path = "../build/fcitxui/UndoRedo.swift"; sourceTree = SOURCE_ROOT; };
 		B7E0B4B5AEB5797B780659CF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "VirtualKeyboard.swift"; path = "../build/fcitxui/VirtualKeyboard.swift"; sourceTree = SOURCE_ROOT; };
 		D39A6653E78CCBB31039C919 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "WrapLayout.swift"; path = "../build/fcitxui/WrapLayout.swift"; sourceTree = SOURCE_ROOT; };
 		D656C72F74E1E818B20C700B = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "height.swift"; path = "../build/fcitxui/height.swift"; sourceTree = SOURCE_ROOT; };
 		B172E7578F33146BB6E050F4 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "keyboardui.swift"; path = "../build/fcitxui/keyboardui.swift"; sourceTree = SOURCE_ROOT; };
 		891C62EBB6507A807BB2C246 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "logging.swift"; path = "../build/fcitxui/logging.swift"; sourceTree = SOURCE_ROOT; };
 		6B0B8883A046E683C352BB78 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ui.swift"; path = "../build/fcitxui/ui.swift"; sourceTree = SOURCE_ROOT; };
+		2F21ABE09E82EFE2B7F6A490 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "util.swift"; path = "../build/fcitxui/util.swift"; sourceTree = SOURCE_ROOT; };
 		409A1C304288A757398FEB68 = {isa = PBXFileReference; lastKnownFileType = folder; name = "share"; path = "../build/fcitxui-res/share"; sourceTree = SOURCE_ROOT; };
 		0A02BCB7CA811FAE15FCC5C3 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CassotisPOC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E98C161A42C3F8433503ECB6 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CassotisKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -152,6 +158,7 @@
 				3B3670EDCC24EBAA6468DBEC,
 				EFEB9515A11F74F58A6EA43A,
 				387FCD29B10A50D29501F835,
+				94B7282181C4F42A276D3DBC,
 				CF7A29891B884710B79A0738,
 				5E9AD112AA5E89FCF714AE5D,
 				0A1B0D2671C78350F6D02D18,
@@ -175,12 +182,14 @@
 				08DDF4FCDBE4954F3CFE64D8,
 				5D892C065DF5326698EB4124,
 				3B8D08D4A428E0F15E034822,
+				F075E683DFA69DD8ECE4DF3C,
 				B7E0B4B5AEB5797B780659CF,
 				D39A6653E78CCBB31039C919,
 				D656C72F74E1E818B20C700B,
 				B172E7578F33146BB6E050F4,
 				891C62EBB6507A807BB2C246,
 				6B0B8883A046E683C352BB78,
+				2F21ABE09E82EFE2B7F6A490,
 				409A1C304288A757398FEB68,
 				86024CAD1E83101D97359D73,
 			);
@@ -324,6 +333,7 @@
 			files = (
 				2717A7E6EAC8FA081CE4BF7C,
 				F86AA3F57E97781A96C3283A,
+				196D24397CD243816F633E6F,
 				83D0D98AAF83B46C2BF711A3,
 				3D3AD054FD76ADDCB2761E47,
 				B0E7FCB26F884F2567E47C2D,
@@ -352,12 +362,14 @@
 				EBC1059B636F4647B13EFE74,
 				233CDAF7293B699281E85986,
 				AEBD71DFE47AEA30F8DCC26C,
+				A8ED6600220B9A8A0E9547EB,
 				B11D6E69859AB4561CC2C5E6,
 				812B6A1F83633FC067D6F114,
 				04812FBEDE275FA148D1C1C0,
 				06F87E879D4F3D8497931638,
 				1A2D8FF6DA4BF5941BEBD678,
 				0E4EFF2C38C3CAEB7869F5BE,
+				D6F1690944D9E2849CBCE1FE,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,7 +407,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				"CASSOTIS_ENGINE[sdk=iphoneos*]" = ios;
 				"CASSOTIS_ENGINE[sdk=iphonesimulator*]" = "ios-sim";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;
@@ -422,7 +434,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				"CASSOTIS_ENGINE[sdk=iphoneos*]" = ios;
 				"CASSOTIS_ENGINE[sdk=iphonesimulator*]" = "ios-sim";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;

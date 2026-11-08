@@ -33,6 +33,7 @@ targets = {
     "sui": dict(
         name="CassotisKeyboardSwiftUI", ext="appex", ptype="com.apple.product-type.app-extension",
         sources=["KeyboardSwiftUI/KeyboardViewController.swift", "KeyboardSwiftUI/FcitxBackend.swift",
+                 "KeyboardSwiftUI/DocumentEditing.swift",
                  "Keyboard/CommandKeyboardController.swift"] + bridge + fcitx_ui,
         resources=["../build/fcitxui-res/share"],
         bundle="com.hustmobile.cassotis.poc.swiftui", plist="KeyboardSwiftUI/Info.plist",
@@ -64,7 +65,7 @@ common = """				ALWAYS_SEARCH_USER_PATHS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				"CASSOTIS_ENGINE[sdk=iphoneos*]" = ios;
 				"CASSOTIS_ENGINE[sdk=iphonesimulator*]" = "ios-sim";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;

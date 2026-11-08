@@ -26,6 +26,7 @@ static CassotisKeyResult *wrap(const Result &r) {
     o.candidates = list;
     o.page = r.page;
     o.pages = r.pages;
+    o.selected = r.selected;
     o.debugContext = r.debugContextEnabled ? ns(r.debugContext) : @"";
     o.debugContextReported = r.debugContextEnabled && r.debugContextReported;
     return o;

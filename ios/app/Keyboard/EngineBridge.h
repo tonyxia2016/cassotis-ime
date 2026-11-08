@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 // pages > page + 1 (candidatesFrom:count:end: reads them).
 @property(nonatomic) int32_t page;
 @property(nonatomic) int32_t pages;
+// The highlighted candidate on that page (what space takes), or -1.
+@property(nonatomic) int32_t selected;
 // With the engine's debug mode on: the left context it ranked with, and whether
 // the host reported any. Test runs read these; typing never turns debug on.
 @property(nonatomic, copy) NSString *debugContext;

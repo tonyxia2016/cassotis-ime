@@ -12,10 +12,6 @@ enum ModelProbe {
     var held: [MLModel] = []  // memory adds up as in the engine, which keeps every function
     let before = EngineBridge.footprint()
     for length in lengths {
-      guard #available(iOS 18.0, *) else {
-        rows.append("{\"length\":\(length),\"error\":\"needs iOS 18\"}")
-        break
-      }
       let configuration = MLModelConfiguration()
       switch units {
       case "gpu": configuration.computeUnits = .cpuAndGPU
@@ -94,7 +90,6 @@ enum ModelProbe {
   /// operations and estimated cost by preferred device, the operators kept off
   /// the Neural Engine, and what working this out costs.
   static func plan(url: URL, length: Int, units: String, label: String) -> String {
-    guard #available(iOS 18.0, *) else { return "{\"label\":\"\(label)\",\"error\":\"needs iOS 18\"}" }
     let configuration = MLModelConfiguration()
     switch units {
     case "gpu": configuration.computeUnits = .cpuAndGPU

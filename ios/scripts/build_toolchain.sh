@@ -11,7 +11,7 @@ if [[ "$simulator" == 1 ]]; then out="$root/toolchain/ios-sim-units"; else out="
 log="$root/toolchain/logs"
 ppc="${CASSOTIS_PPC:-/opt/homebrew/lib/fpc/3.2.2/ppca64}"
 sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
-min_ios="${CASSOTIS_MIN_IOS:-15.0}"
+min_ios="${CASSOTIS_MIN_IOS:-18.0}"
 rm -rf "$out"   # a unit that looks up to date could carry the other platform's tag
 mkdir -p "$out/rtl" "$out/pkg" "$log"
 

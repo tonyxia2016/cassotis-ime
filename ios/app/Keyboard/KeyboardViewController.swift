@@ -97,7 +97,7 @@ final class KeyboardViewController: CommandKeyboardController {
   }
 
   // Five buttons, no scrolling: the measurement floor needs no more.
-  override func showCandidates(_ candidates: [String], preedit: String, more: Bool) {
+  override func showCandidates(_ candidates: [String], preedit: String, selected: Int, more: Bool) {
     self.candidates = candidates
     for (index, button) in candidateButtons.enumerated() {
       if index < candidates.count {

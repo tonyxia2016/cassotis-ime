@@ -15,6 +15,8 @@ cp "$src/fcitx5-ios/uipanel/"*.swift "$out/"
 rm -f "$out/Clipboard.swift"   # history view: needs GRDB and a store
 cp "$src/fcitx5-ios/protocol/FcitxProtocol.swift" "$src/fcitx5-ios/common/logging.swift" \
    "$src/fcitx5-ios/common/ClipboardSuggestion.swift" "$out/"
+# The keyboard's undo and redo, and the line helpers it uses (app/KeyboardSwiftUI/DocumentEditing.swift).
+cp "$src/fcitx5-ios/keyboard/UndoRedo.swift" "$src/fcitx5-ios/keyboard/util.swift" "$out/"
 sed -i '' -E '/^import (Fcitx|FcitxIpc|FcitxProtocol|SwiftUtil|UIPanel)$/d' "$out/"*.swift
 cp -R "$src/fcitx5-keyboard-layouts/layout" "$src/fcitx5-keyboard-layouts/symbol" "$root/build/fcitxui-res/share/"
 ls "$out" | wc -l
