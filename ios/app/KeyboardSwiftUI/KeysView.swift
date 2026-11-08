@@ -20,12 +20,14 @@ protocol KeysViewDelegate: AnyObject {
   func shiftChanged(_ shifted: Bool)
 }
 
-/// One key: a rounded rectangle with a label or a symbol, like the system's.
+/// One key: a rounded rectangle with a label or a symbol, like the system's. Its views
+/// are made when first needed: a letter key has only its label, the space bar only its
+/// corner, and every view and drawn label is memory the keyboard extension is short of.
 final class KeyCap: UIView {
   let spec: KeySpec
-  let label = UILabel()
-  let icon = UIImageView()
-  let corner = UILabel()  // the space bar's 拼 or 英
+  private var label: UILabel?
+  private var icon: UIImageView?
+  private var corner: UILabel?  // the space bar's 拼 or 英
 
   init(_ spec: KeySpec) {
     self.spec = spec
@@ -33,24 +35,62 @@ final class KeyCap: UIView {
     layer.cornerRadius = KeyboardTheme.cornerRadius
     layer.cornerCurve = .continuous
     isUserInteractionEnabled = false
-    label.textAlignment = .center
-    label.adjustsFontSizeToFitWidth = true
-    label.minimumScaleFactor = 0.6
-    icon.contentMode = .center
-    corner.font = .systemFont(ofSize: 11)
-    corner.textAlignment = .right
-    addSubview(label)
-    addSubview(icon)
-    addSubview(corner)
   }
 
   required init?(coder: NSCoder) { fatalError() }
 
+  func setText(_ text: String?, font: UIFont, color: UIColor) {
+    if label == nil && text != nil {
+      let new = UILabel()
+      new.textAlignment = .center
+      new.adjustsFontSizeToFitWidth = true
+      new.minimumScaleFactor = 0.6
+      addSubview(new)
+      label = new
+      setNeedsLayout()
+    }
+    label?.font = font
+    label?.textColor = color
+    label?.text = text
+  }
+
+  func setSymbol(_ image: UIImage?, color: UIColor) {
+    if icon == nil && image != nil {
+      let new = UIImageView()
+      new.contentMode = .center
+      addSubview(new)
+      icon = new
+      setNeedsLayout()
+    }
+    icon?.tintColor = color
+    icon?.image = image
+  }
+
+  func setCorner(_ text: String, color: UIColor) {
+    if corner == nil {
+      let new = UILabel()
+      new.font = .systemFont(ofSize: 11)
+      new.textAlignment = .right
+      addSubview(new)
+      corner = new
+      setNeedsLayout()
+    }
+    corner?.textColor = color
+    corner?.text = text
+  }
+
+  /// What is on the key fades while the space bar is a trackpad.
+  func setContentAlpha(_ alpha: CGFloat) {
+    label?.alpha = alpha
+    icon?.alpha = alpha
+    corner?.alpha = alpha
+  }
+
   override func layoutSubviews() {
     super.layoutSubviews()
-    label.frame = bounds.insetBy(dx: 2, dy: 0)
-    icon.frame = bounds
-    corner.frame = CGRect(x: bounds.width - 30, y: bounds.height - 18, width: 24, height: 14)
+    label?.frame = bounds.insetBy(dx: 2, dy: 0)
+    icon?.frame = bounds
+    corner?.frame = CGRect(x: bounds.width - 30, y: bounds.height - 18, width: 24, height: 14)
   }
 }
 
@@ -72,8 +112,13 @@ final class KeysView: UIView {
   var returnTitle: String? { didSet { updateLabels() } }
 
   private let callout = CalloutView()
-  private let haptics = UIImpactFeedbackGenerator(style: .light)
-  var hapticsEnabled = false { didSet { if hapticsEnabled { haptics.prepare() } } }
+  private var haptics: UIImpactFeedbackGenerator?
+  var hapticsEnabled = false {
+    didSet {
+      haptics = hapticsEnabled ? haptics ?? UIImpactFeedbackGenerator(style: .light) : nil
+      haptics?.prepare()
+    }
+  }
 
   /// A finger on the keys: the key under it now, and what it is doing there.
   private final class Track {
@@ -147,50 +192,38 @@ final class KeysView: UIView {
 
   func updateLabels() {
     let dark = self.dark
+    let ink = KeyboardTheme.label(dark)
     for cap in caps {
       cap.backgroundColor = KeyboardTheme.key(dark)
-      cap.label.textColor = KeyboardTheme.label(dark)
-      cap.icon.tintColor = KeyboardTheme.label(dark)
-      cap.label.text = nil
-      cap.icon.image = nil
-      cap.corner.text = nil
-      let symbol = { (name: String, size: CGFloat) in
-        cap.icon.image = UIImage(
+      let symbol = { (name: String, size: CGFloat) -> UIImage? in
+        UIImage(
           systemName: name, withConfiguration: UIImage.SymbolConfiguration(pointSize: size, weight: .regular))
       }
       switch cap.spec.kind {
       case .letter(let text):
-        cap.label.font = .systemFont(ofSize: 23)
-        cap.label.text = shifted ? text.uppercased() : text
+        cap.setText(shifted ? text.uppercased() : text, font: .systemFont(ofSize: 23), color: ink)
       case .literal(let text):
-        cap.label.font = .systemFont(ofSize: text.count > 1 ? 16 : 22)
-        cap.label.text = text
+        cap.setText(text, font: .systemFont(ofSize: text.count > 1 ? 16 : 22), color: ink)
       case .shift:
-        symbol(capsLock ? "capslock.fill" : shifted ? "shift.fill" : "shift", 18)
-      case .delete: symbol("delete.left", 18)
-      case .numbers:
-        cap.label.font = .systemFont(ofSize: 17)
-        cap.label.text = "123"
-      case .symbols:
-        cap.label.font = .systemFont(ofSize: 17)
-        cap.label.text = "#+="
-      case .letters:
-        cap.label.font = .systemFont(ofSize: 16)
-        cap.label.text = "拼音"
+        cap.setSymbol(symbol(capsLock ? "capslock.fill" : shifted ? "shift.fill" : "shift", 18), color: ink)
+      case .delete: cap.setSymbol(symbol("delete.left", 18), color: ink)
+      case .numbers: cap.setText("123", font: .systemFont(ofSize: 17), color: ink)
+      case .symbols: cap.setText("#+=", font: .systemFont(ofSize: 17), color: ink)
+      case .letters: cap.setText("拼音", font: .systemFont(ofSize: 16), color: ink)
       case .emoji:
-        cap.icon.image = UIImage(
-          systemName: "face.smiling", withConfiguration: UIImage.SymbolConfiguration(pointSize: 21, weight: .medium))
-      case .space:
-        cap.corner.text = modeMark
-        cap.corner.textColor = KeyboardTheme.secondary(dark)
+        cap.setSymbol(
+          UIImage(
+            systemName: "face.smiling", withConfiguration: UIImage.SymbolConfiguration(pointSize: 21, weight: .medium)),
+          color: ink)
+      case .space: cap.setCorner(modeMark, color: KeyboardTheme.secondary(dark))
       case .returnKey:
         if let title = returnTitle {
           cap.backgroundColor = KeyboardTheme.action
-          cap.label.font = .systemFont(ofSize: 16, weight: .medium)
-          cap.label.textColor = .white
-          cap.label.text = title
+          cap.setSymbol(nil, color: ink)
+          cap.setText(title, font: .systemFont(ofSize: 16, weight: .medium), color: .white)
         } else {
-          symbol("return.left", 18)
+          cap.setText(nil, font: .systemFont(ofSize: 16), color: ink)
+          cap.setSymbol(symbol("return.left", 18), color: ink)
         }
       }
     }
@@ -373,7 +406,7 @@ final class KeysView: UIView {
 
   private func feedback() {
     UIDevice.current.playInputClick()  // follows the system's keyboard-click setting
-    if hapticsEnabled { haptics.impactOccurred(intensity: 0.7) }
+    haptics?.impactOccurred(intensity: 0.7)
   }
 
   private func highlight(_ cap: KeyCap) {
@@ -392,11 +425,7 @@ final class KeysView: UIView {
 
   private func setTrackpad(_ on: Bool) {
     UIView.animate(withDuration: 0.15) {
-      for cap in self.caps {
-        cap.label.alpha = on ? 0 : 1
-        cap.icon.alpha = on ? 0 : 1
-        cap.corner.alpha = on ? 0 : 1
-      }
+      for cap in self.caps { cap.setContentAlpha(on ? 0 : 1) }
     }
   }
 

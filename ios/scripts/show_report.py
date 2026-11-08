@@ -16,6 +16,8 @@ if "idle_samples" in r:
 if "document" in r:  # mode=type
     print(f"{r['label']}  {j['device']} iOS {j['os']}  keys {r['keys']}  model {r.get('model_state')}  user_dict {r['user_dict_bytes']} bytes")
     print(f"  document {r['document']!r}")
+    if "footprint_mb" in r:
+        print(f"  view height {r['view_height']:.0f} pt  footprint {r['footprint_mb']:.1f} MB  peak {r['peak_mb']:.1f} MB")
     shown = r["candidates"]
     print(f"  preedit {r['preedit']!r}  {len(shown)} candidates of {r.get('pages', '?')} pages: {shown[:12]}{' …' if len(shown) > 12 else ''}")
     if r.get("completion"):

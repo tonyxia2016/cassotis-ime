@@ -18,8 +18,11 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   let candidateBar = CandidateBarView()
   let candidateGrid = CandidateGridView()
   let keysView = KeysView()
-  let emojiPanel = EmojiPanel()
-  let settingsPanel = SettingsPanel()
+  // Built when opened and released when closed. Even hidden, a panel lays out and draws
+  // what it holds: the emoji grid's first screen alone is about 6 MB of bitmaps, and most
+  // sessions open neither.
+  private(set) var emojiPanel: EmojiPanel?
+  private(set) var settingsPanel: SettingsPanel?
   // DocumentEditing.swift
   var documentTimer: Timer?
   var documentIdentifier = ""
@@ -46,21 +49,31 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     completionRow.delegate = self
     candidateBar.delegate = self
     candidateGrid.delegate = self
-    emojiPanel.delegate = self
-    settingsPanel.delegate = self
     view.addSubview(completionRow)
     view.addSubview(candidateBar)
     // Above the strip, so a letter's callout in the top row is not covered by it.
     view.addSubview(keysView)
-    for overlay in [candidateGrid, emojiPanel, settingsPanel] as [UIView] {
-      overlay.isHidden = true
-      overlay.backgroundColor = KeyboardTheme.background(dark)
-      view.addSubview(overlay)
-    }
+    candidateGrid.isHidden = true
+    candidateGrid.backgroundColor = KeyboardTheme.background(dark)
+    view.addSubview(candidateGrid)
     let height = view.heightAnchor.constraint(equalToConstant: KeyboardTheme.height(landscape))
     height.priority = UILayoutPriority(999)
     height.isActive = true
     heightConstraint = height
+    // iOS takes a keyboard's height from that constraint only while a subview lays out
+    // with constraints as well (without one the keyboard stays at the system's 226 pt and
+    // loses its bottom row of keys). The keys are laid out by hand, so this empty view
+    // is there for that.
+    let strut = UIView()
+    strut.isUserInteractionEnabled = false
+    strut.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(strut)
+    NSLayoutConstraint.activate([
+      strut.topAnchor.constraint(equalTo: view.topAnchor),
+      strut.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      strut.widthAnchor.constraint(equalToConstant: 0),
+      strut.heightAnchor.constraint(equalToConstant: 0),
+    ])
   }
 
   override func viewDidLayoutSubviews() {
@@ -75,16 +88,27 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     let keys = CGRect(x: 0, y: top, width: bounds.width, height: bounds.height - top)
     keysView.frame = keys
     candidateGrid.frame = keys
-    emojiPanel.frame = CGRect(x: 0, y: 6, width: bounds.width, height: bounds.height - 6)
-    settingsPanel.frame = CGRect(x: 0, y: 6, width: bounds.width, height: bounds.height - 6)
+    emojiPanel?.frame = panelFrame
+    settingsPanel?.frame = panelFrame
+  }
+
+  private var panelFrame: CGRect {
+    CGRect(x: 0, y: 6, width: view.bounds.width, height: view.bounds.height - 6)
+  }
+
+  /// An emoji or settings panel, over the whole keyboard.
+  private func addPanel(_ panel: UIView) {
+    panel.backgroundColor = KeyboardTheme.background(dark)
+    panel.frame = panelFrame
+    view.addSubview(panel)
   }
 
   override func traitCollectionDidChange(_ previous: UITraitCollection?) {
     super.traitCollectionDidChange(previous)
     heightConstraint?.constant = KeyboardTheme.height(landscape)
     view.backgroundColor = KeyboardTheme.background(dark)
-    for overlay in [candidateGrid, emojiPanel, settingsPanel] as [UIView] {
-      overlay.backgroundColor = KeyboardTheme.background(dark)
+    for overlay in [candidateGrid, emojiPanel, settingsPanel] as [UIView?] {
+      overlay?.backgroundColor = KeyboardTheme.background(dark)
     }
     view.setNeedsLayout()
   }
@@ -122,10 +146,17 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   }
 
   func closeOverlays() {
+    collapseGrid()
+    emojiClose()
+    settingsClose()
+  }
+
+  /// Back to the keys. The grid's cells go too: each holds a drawn label, and scrolling
+  /// may have read hundreds.
+  private func collapseGrid() {
     candidateGrid.isHidden = true
+    candidateGrid.set([], more: false)
     candidateBar.setExpanded(false)
-    emojiPanel.isHidden = true
-    settingsPanel.isHidden = true
     keysView.isHidden = false
   }
 
@@ -135,8 +166,7 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     candidatesMore = more
     candidateBar.set(candidates, selected: max(selected, 0), more: more)
     if candidates.isEmpty {
-      candidateGrid.isHidden = true
-      keysView.isHidden = false
+      collapseGrid()
     } else if !candidateGrid.isHidden {
       candidateGrid.set(candidates, more: more)
     }
@@ -182,14 +212,21 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
 
   func emoji() {
     commitComposition()
-    emojiPanel.reload()
-    emojiPanel.isHidden = false
+    guard emojiPanel == nil else { return }
+    let panel = EmojiPanel()
+    panel.delegate = self
+    addPanel(panel)
+    emojiPanel = panel
   }
 
   func settings() {
+    guard settingsPanel == nil else { return }
+    let panel = SettingsPanel()
+    panel.delegate = self
+    addPanel(panel)
+    settingsPanel = panel
     refreshSettings()
-    settingsPanel.reset()
-    settingsPanel.isHidden = false
+    panel.reset()
   }
 
   func moveCaret(_ steps: Int) {
@@ -202,18 +239,14 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   // MARK: - Candidates
 
   override func pickCandidate(_ index: Int) {
-    candidateGrid.isHidden = true
-    candidateBar.setExpanded(false)
-    keysView.isHidden = false
+    collapseGrid()
     super.pickCandidate(index)
   }
 
   func loadMoreCandidates() { loadCandidates(shownCandidates.count, 27) }
 
   func completionTapped() {
-    candidateGrid.isHidden = true
-    candidateBar.setExpanded(false)
-    keysView.isHidden = false
+    collapseGrid()
     acceptCompletion()
   }
 
@@ -223,8 +256,7 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
       candidateGrid.isHidden = false
       keysView.isHidden = true
     } else {
-      candidateGrid.isHidden = true
-      keysView.isHidden = false
+      collapseGrid()
     }
   }
 
@@ -232,10 +264,16 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
 
   func emojiPicked(_ emoji: String) { insertAfterKeys(emoji) }
   func emojiDelete() { pressDelete() }
-  func emojiClose() { emojiPanel.isHidden = true }
+  func emojiClose() {
+    emojiPanel?.removeFromSuperview()
+    emojiPanel = nil
+  }
 
   func settingChosen(_ id: Int32) { activateSetting(id) }
-  func settingsClose() { settingsPanel.isHidden = true }
+  func settingsClose() {
+    settingsPanel?.removeFromSuperview()
+    settingsPanel = nil
+  }
 
   // MARK: - Test commands
 
@@ -246,6 +284,7 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     switch token {
     case "{settings}", "{status}": settings()
     case "{emoji}": emoji()
+    case "{close}": closeOverlays()
     case "{expand}":
       candidateBar.setExpanded(true)
       candidatesExpanded(true)

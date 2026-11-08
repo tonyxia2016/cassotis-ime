@@ -919,6 +919,9 @@ class CommandKeyboardController: UIInputViewController {
         "preedit": preedit, "candidates": shownCandidates, "selected": result.selected,
         "pages": result.pages, "user_dict_bytes": size,
         "completion": shownCompletion, "completion_predicted": result.completionPredicted,
+        "view_height": view.bounds.height,
+        "footprint_mb": Double(EngineBridge.footprint()) / 1_048_576,
+        "peak_mb": Double(EngineBridge.footprintPeak()) / 1_048_576,
       ]
       if debug {
         report["debug_context"] = result.debugContext

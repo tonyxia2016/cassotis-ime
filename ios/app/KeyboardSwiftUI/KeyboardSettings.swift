@@ -54,13 +54,13 @@ extension KeyboardViewController {
 
   /// Fills the settings panel: what the keyboard saw last at once, then the engine's.
   func refreshSettings() {
-    settingsPanel.show(Self.savedSettings)
+    settingsPanel?.show(Self.savedSettings)
     guard engineIsOpen else { return }
     Self.thread.run {
       guard let settings = Self.engine.settings() else { return }
       DispatchQueue.main.async {
         Self.savedSettings = settings
-        self.settingsPanel.show(settings)
+        self.settingsPanel?.show(settings)
       }
     }
   }
@@ -85,7 +85,7 @@ extension KeyboardViewController {
         s.fuzzyRules ^= 1 << UInt32(id - Setting.firstFuzzyRule)
       case Setting.clearLearning:
         _ = Self.engine.clearLearning()
-        DispatchQueue.main.async { self.settingsPanel.show(s) }
+        DispatchQueue.main.async { self.settingsPanel?.show(s) }
         return
       default: return
       }
@@ -98,7 +98,7 @@ extension KeyboardViewController {
           self.showInputMode(Int(applied.inputMode))
         }
         self.apply(CassotisKeyResult())
-        self.settingsPanel.show(applied)
+        self.settingsPanel?.show(applied)
       }
     }
   }
