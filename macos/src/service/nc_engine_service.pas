@@ -41,6 +41,11 @@ type
         FCharLmHost: TncCharLmHost;
         // 1 while a poll reruns candidates with the character LM (atomic).
         FCharLmPassRunning: Integer;
+        // 1 once a key has cut that pass short (InterruptCharLmPass; atomic).
+        FCharLmPassInterrupted: Integer;
+        // While ProcessKey runs a key with the model held back (char_lm_deferred):
+        // the key's Tab completion tasks then wait for the poll that ranks with it.
+        FDeferringKey: Boolean;
         // The next poll answers at once (SkipNextPoll).
         FSkipNextPoll: Boolean;
         FLocalCompletionHost: TncLocalCompletionHost;
@@ -980,14 +985,21 @@ end;
 procedure TncEngineService.InterruptCharLmPass;
 begin
     if InterlockedCompareExchange(FCharLmPassRunning, 0, 0) = 1 then
+    begin
+        InterlockedExchange(FCharLmPassInterrupted, 1);
         SuspendCharLm(True);
+    end;
 end;
 
 { With char_lm_deferred a key runs as if the character LM had not loaded yet:
   dictionary ranking only, which is what the frontend shows at once. The key
   is marked pending, and PollResult reruns its candidates with the model. A
   newer key makes that poll stale, so a fast typist's intermediate keys never
-  wait for the model. }
+  wait for the model.
+  The key's Tab completion and one-key rerank (char_lm_async) are queued by that
+  poll, after the model has ranked: queued from the dictionary's ranking they
+  would be checked against the model's and thrown away, and a same-generation
+  result thrown away also ends the frontend's polling for the right one. }
 function TncEngineService.ProcessKey(const context_id: QWord;
     const generation_id: QWord;
     const key_event: TncKeyEvent): TncEngineResult;
@@ -1000,9 +1012,11 @@ begin
     if not deferred then
         Exit(ProcessKeyCore(context_id, generation_id, key_event));
     SuspendCharLm(True);
+    FDeferringKey := True;
     try
         Result := ProcessKeyCore(context_id, generation_id, key_event);
     finally
+        FDeferringKey := False;
         SuspendCharLm(False);
     end;
     if (Result.error_code <> 0) or not Result.handled then
@@ -1181,8 +1195,17 @@ begin
         end;
         SyncStateFromEngine;
         PopulateResult(context, Result);
-        context.LongCompletionPending := QueueLongNeuralCompletion(context);
-        context.OneKeyRerankPending := QueueOneKeyRerank(context);
+        if FDeferringKey then
+        begin
+            // Queued by the poll that ranks this key with the model (ProcessKey).
+            context.LongCompletionPending := False;
+            context.OneKeyRerankPending := False;
+        end
+        else
+        begin
+            context.LongCompletionPending := QueueLongNeuralCompletion(context);
+            context.OneKeyRerankPending := QueueOneKeyRerank(context);
+        end;
         Result.async_pending := context.LongCompletionPending or context.OneKeyRerankPending;
     except
         on exception_value: Exception do
@@ -1202,6 +1225,7 @@ var
     finished: TncLocalCompletionFinished;
     one_key: TncOneKeyRerankFinished;
     delivered: Boolean;
+    queue_completion: Boolean;
 begin
     nc_initialize_engine_result(Result);
     if FSkipNextPoll then
@@ -1213,6 +1237,7 @@ begin
     if (context = nil) or (context.Generation <> generation_id) or
         not context.Active then Exit;
     delivered := False;
+    queue_completion := False;
     if context.LearnedCandidatesInvalid then
     begin
         if not ActivateContext(context) then Exit;
@@ -1244,6 +1269,7 @@ begin
         context.CharLmRerankPending := False;
         if not ActivateContext(context) then Exit;
         SuspendCharLm(False);
+        InterlockedExchange(FCharLmPassInterrupted, 0);
         InterlockedExchange(FCharLmPassRunning, 1);
         try
             try
@@ -1262,10 +1288,31 @@ begin
             InterlockedExchange(FCharLmPassRunning, 0);
             SuspendCharLm(False);
         end;
+        // The model has ranked: now the key's Tab completion and its rerank, which
+        // ProcessKey held back. Not after a newer key cut the pass short, since
+        // that key's own poll queues them.
+        queue_completion := InterlockedCompareExchange(FCharLmPassInterrupted, 0, 0) = 0;
     end;
-    if not delivered then Exit;
+    if not delivered then
+    begin
+        // Nothing rebuilt (the user pages through the candidates): they start
+        // from the page the key left.
+        if queue_completion then
+        begin
+            context.LongCompletionPending := QueueLongNeuralCompletion(context);
+            context.OneKeyRerankPending := QueueOneKeyRerank(context);
+        end;
+        Exit;
+    end;
     Result.handled := True;
     PopulateResult(context, Result);
+    // After PopulateResult, as ProcessKeyCore queues them: the page it settles
+    // is what the Tab completion continues, and its request follows that page.
+    if queue_completion then
+    begin
+        context.LongCompletionPending := QueueLongNeuralCompletion(context);
+        context.OneKeyRerankPending := QueueOneKeyRerank(context);
+    end;
     Result.async_pending := context.LongCompletionPending or context.OneKeyRerankPending;
 end;
 

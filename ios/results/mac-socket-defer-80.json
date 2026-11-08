@@ -1,3 +1,3 @@
 {"label": "defer-80", "keys": 1519, "sentences": 55, "first_hits": 35, "first_rate": 0.6364,
- "pace_us": 80000, "pending_keys": 1464, "p50_ms": 21.16, "p95_ms": 68.06, "p99_ms": 102.43, "worst_ms": 246.02,
- "polls_sent": 1555, "polls_answered": 1198, "polls_applied": 1198, "polls_dropped": 357}
+ "pace_us": 80000, "pending_keys": 1464, "p50_ms": 15.50, "p95_ms": 69.29, "p99_ms": 113.28, "worst_ms": 290.45,
+ "polls_sent": 1611, "polls_answered": 1208, "polls_applied": 1208, "polls_dropped": 403}

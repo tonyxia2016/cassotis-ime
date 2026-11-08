@@ -12,6 +12,11 @@
 // --keys keys: 1519 is ios/bench/corpus.tsv once. --pace-us 0 types continuously
 // and times each key from when it is sent.
 //
+// To compare what two engine configurations show rather than how fast:
+// --settle-ms N polls after every key until nothing is pending (at most N ms) and
+// only then waits the pace; --completions FILE writes, for every key once settled,
+// the composition, the first candidate and the Tab completion with its source.
+//
 // Build: xcrun clang++ -std=c++20 -O2 tools/bench/socket_replay.cpp
 //        src/macos/EngineClient.cpp -o build/socket_replay
 #include "../../src/macos/EngineClient.hpp"
@@ -51,16 +56,24 @@ double percentile(std::vector<double> values, double q) {
 }
 }  // namespace
 
+// A field of the --completions log: tabs and line breaks would split it.
+std::string field(std::string text) {
+    std::replace_if(text.begin(), text.end(), [](char c) { return c == '\t' || c == '\n' || c == '\r'; }, ' ');
+    return text;
+}
+
 int main(int argc, char **argv) {
-    std::string socket, corpus, label = "socket", output;
+    std::string socket, corpus, label = "socket", output, completions;
     unsigned maxKeys = 1519;
-    long paceMicros = 170000;
+    long paceMicros = 170000, settleMillis = 0;
     for (int i = 1; i + 1 < argc; i += 2) {
         std::string name = argv[i], value = argv[i + 1];
         if (name == "--socket") socket = value;
         else if (name == "--corpus") corpus = value;
         else if (name == "--keys") maxKeys = unsigned(std::stoul(value));
         else if (name == "--pace-us") paceMicros = std::stol(value);
+        else if (name == "--settle-ms") settleMillis = std::stol(value);
+        else if (name == "--completions") completions = value;
         else if (name == "--label") label = value;
         else if (name == "--output") output = value;
         else { std::fprintf(stderr, "unknown option %s\n", name.c_str()); return 2; }
@@ -76,22 +89,42 @@ int main(int argc, char **argv) {
     unsigned keys = 0, sentences = 0, firstHits = 0, pendingKeys = 0;
     unsigned pollsSent = 0, pollsAnswered = 0, pollsApplied = 0, pollsDropped = 0;
     bool pending = false;
+    Result shown;  // what the input method would draw: a key's result, then each poll's
     auto ready = clock_type::now();
+    std::ofstream log;
+    if (!completions.empty()) log.open(completions);
 
+    auto take = [&](const Result &answer) {
+        ++pollsAnswered;
+        if (!answer.handled) return false;
+        ++pollsApplied;
+        pending = answer.pending;
+        shown = answer;
+        return true;
+    };
     // The input method's tick until the next key is due: poll while pending.
     auto waitUntil = [&](clock_type::time_point due) {
         while (clock_type::now() < due) {
             if (pending) {
                 Result answer;
                 if (client.takePoll(answer)) {
-                    ++pollsAnswered;
-                    if (answer.handled) { ++pollsApplied; pending = answer.pending; }
+                    take(answer);
                 } else if (!client.pollOutstanding()) {
                     client.sendPoll();
                     ++pollsSent;
                 }
             }
             std::this_thread::sleep_until(std::min(due, clock_type::now() + tick));
+        }
+    };
+    // --settle-ms: poll until nothing is pending. An answer with nothing new (a
+    // background task still running) is asked again a tick later.
+    auto settle = [&] {
+        auto until = clock_type::now() + std::chrono::milliseconds(settleMillis);
+        while (pending && clock_type::now() < until) {
+            if (!client.pollOutstanding()) { client.sendPoll(); ++pollsSent; }
+            Result answer;
+            if (client.takePoll(answer, 25) && !take(answer)) std::this_thread::sleep_for(tick);
         }
     };
     auto press = [&](const Key &key) {
@@ -105,9 +138,15 @@ int main(int argc, char **argv) {
         ready = clock_type::now();
         ++keys;
         pending = r.pending;
+        shown = r;
         if (r.pending) ++pendingKeys;
         // As the input method: a pending result starts its poll at once.
         if (r.pending && !client.pollOutstanding()) { client.sendPoll(); ++pollsSent; }
+        if (settleMillis) { settle(); ready = clock_type::now(); }
+        if (log.is_open())
+            log << sentences << '\t' << keys << '\t' << field(shown.preedit) << '\t'
+                << field(shown.candidates.empty() ? "" : shown.candidates.front().text) << '\t'
+                << field(shown.completion) << '\t' << int(shown.completionSource) << '\n';
         return r;
     };
 
