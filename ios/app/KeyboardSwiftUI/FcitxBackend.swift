@@ -43,7 +43,9 @@ func selectCandidate(_ inputContext: String, _ index: Int32) {
 func getCandidateActions(_ inputContext: String, _ index: Int32) -> String { "[]" }
 func activateCandidateAction(_ inputContext: String, _ index: Int32, _ id: Int32) {}
 func activateCandidateTabAction(_ inputContext: String, _ id: Int32) {}
-func activateStatusAreaAction(_ inputContext: String, _ id: Int32) {}
+func activateStatusAreaAction(_ inputContext: String, _ id: Int32) {
+  KeyboardViewController.current?.activateSetting(id)
+}
 func scroll(_ inputContext: String, _ start: Int32, _ count: Int32) {
   KeyboardViewController.current?.loadCandidates(Int(start), Int(count))
 }

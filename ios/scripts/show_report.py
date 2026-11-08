@@ -20,6 +20,8 @@ if "document" in r:  # mode=type
     print(f"  preedit {r['preedit']!r}  {len(shown)} candidates of {r.get('pages', '?')} pages: {shown[:12]}{' …' if len(shown) > 12 else ''}")
     if "debug_context" in r:
         print(f"  context {r['debug_context']!r} reported={r['debug_context_reported']}")
+    if "settings" in r:
+        print(f"  mode {r.get('mode')}  settings {r['settings']}")
     sys.exit()
 print(f"{r['label']}  {j['device']} iOS {j['os']} full_access={j['full_access']}")
 print("  marks  " + "  ".join(f"{m['name']}={m['mb']}MB(avail {m['available_mb']})" for m in j["marks"]))

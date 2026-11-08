@@ -33,7 +33,7 @@ targets = {
     "sui": dict(
         name="CassotisKeyboardSwiftUI", ext="appex", ptype="com.apple.product-type.app-extension",
         sources=["KeyboardSwiftUI/KeyboardViewController.swift", "KeyboardSwiftUI/FcitxBackend.swift",
-                 "KeyboardSwiftUI/DocumentEditing.swift",
+                 "KeyboardSwiftUI/DocumentEditing.swift", "KeyboardSwiftUI/KeyboardSettings.swift",
                  "Keyboard/CommandKeyboardController.swift"] + bridge + fcitx_ui,
         resources=["../build/fcitxui-res/share"],
         bundle="com.hustmobile.cassotis.poc.swiftui", plist="KeyboardSwiftUI/Info.plist",

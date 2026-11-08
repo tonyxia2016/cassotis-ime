@@ -24,6 +24,7 @@
 		2717A7E6EAC8FA081CE4BF7C = {isa = PBXBuildFile; fileRef = EFEB9515A11F74F58A6EA43A; };
 		F86AA3F57E97781A96C3283A = {isa = PBXBuildFile; fileRef = 387FCD29B10A50D29501F835; };
 		196D24397CD243816F633E6F = {isa = PBXBuildFile; fileRef = 94B7282181C4F42A276D3DBC; };
+		195FC0166DB3D87942F16BE1 = {isa = PBXBuildFile; fileRef = 7E3BF7F577D65F4A90B75F9D; };
 		83D0D98AAF83B46C2BF711A3 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
 		3D3AD054FD76ADDCB2761E47 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		B0E7FCB26F884F2567E47C2D = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
@@ -106,6 +107,7 @@
 		EFEB9515A11F74F58A6EA43A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "KeyboardSwiftUI/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
 		387FCD29B10A50D29501F835 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FcitxBackend.swift"; path = "KeyboardSwiftUI/FcitxBackend.swift"; sourceTree = SOURCE_ROOT; };
 		94B7282181C4F42A276D3DBC = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DocumentEditing.swift"; path = "KeyboardSwiftUI/DocumentEditing.swift"; sourceTree = SOURCE_ROOT; };
+		7E3BF7F577D65F4A90B75F9D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardSettings.swift"; path = "KeyboardSwiftUI/KeyboardSettings.swift"; sourceTree = SOURCE_ROOT; };
 		CF7A29891B884710B79A0738 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Bubble.swift"; path = "../build/fcitxui/Bubble.swift"; sourceTree = SOURCE_ROOT; };
 		5E9AD112AA5E89FCF714AE5D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Candidate.swift"; path = "../build/fcitxui/Candidate.swift"; sourceTree = SOURCE_ROOT; };
 		0A1B0D2671C78350F6D02D18 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CandidateBar.swift"; path = "../build/fcitxui/CandidateBar.swift"; sourceTree = SOURCE_ROOT; };
@@ -159,6 +161,7 @@
 				EFEB9515A11F74F58A6EA43A,
 				387FCD29B10A50D29501F835,
 				94B7282181C4F42A276D3DBC,
+				7E3BF7F577D65F4A90B75F9D,
 				CF7A29891B884710B79A0738,
 				5E9AD112AA5E89FCF714AE5D,
 				0A1B0D2671C78350F6D02D18,
@@ -334,6 +337,7 @@
 				2717A7E6EAC8FA081CE4BF7C,
 				F86AA3F57E97781A96C3283A,
 				196D24397CD243816F633E6F,
+				195FC0166DB3D87942F16BE1,
 				83D0D98AAF83B46C2BF711A3,
 				3D3AD054FD76ADDCB2761E47,
 				B0E7FCB26F884F2567E47C2D,

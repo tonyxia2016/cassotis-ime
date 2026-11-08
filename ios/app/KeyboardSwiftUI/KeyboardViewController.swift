@@ -8,8 +8,8 @@ import UIKit
 // another field taking focus) is in DocumentEditing.swift.
 final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
   nonisolated(unsafe) static weak var current: KeyboardViewController?
-  private let program = UUID().uuidString
-  private let inputContext = "cassotis"
+  let program = UUID().uuidString
+  let inputContext = "cassotis"
   private var hostingController: UIHostingController<AnyView>?
 
   // DocumentEditing.swift
@@ -41,6 +41,7 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     vm.setReturnKeyType(textDocumentProxy.returnKeyType)
     vm.setDisplayMode(.initial)
     showInputMode(Self.rememberedMode)
+    refreshSettings()  // KeyboardSettings.swift
     startDocumentPolling()
   }
 
@@ -116,10 +117,13 @@ final class KeyboardViewController: CommandKeyboardController, FcitxProtocol {
     case "{cut}": cut()
     case "{copy}": copySelection()
     case "{paste}": paste()
+    case "{status}": vm.setDisplayMode(.statusArea)  // what the toolbar's … button does
     default:
       let argument = String(token.dropFirst().dropLast().split(separator: ":", maxSplits: 1).last ?? "")
       if token.hasPrefix("{slide:"), let step = Int(argument) {
         vm.slideBackspace(step)
+      } else if token.hasPrefix("{set:"), let id = Int32(argument) {
+        activateSetting(id)  // a status area action
       } else if token.hasPrefix("{sym:") {
         resetInput()
         commitString(argument)

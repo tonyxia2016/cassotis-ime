@@ -121,6 +121,8 @@ class CommandKeyboardController: UIInputViewController {
 
   /// Where dict_sc.db, schema.sql and corpus.tsv live for this extension.
   var resourceDirectory: String { Bundle.main.resourcePath ?? "" }
+  /// Whether the engine has opened (it opens with the first key).
+  var engineIsOpen: Bool { Self.engineState == 2 }
 
   func buildKeyboard() {}
   /// more: further pages follow, which loadCandidates reads when the list scrolls.
@@ -728,6 +730,13 @@ class CommandKeyboardController: UIInputViewController {
         let state = Self.engine.wait(forModel: 0)
         report["model_state"] = state
         report["mode"] = Self.engine.inputMode()
+        if let s = Self.engine.settings() {
+          report["settings"] = [
+            "traditional": s.traditional, "full_width": s.fullWidth,
+            "chinese_punctuation": s.chinesePunctuation, "auto_english": s.autoEnglish,
+            "scheme": s.scheme, "fuzzy_rules": s.fuzzyRules,
+          ]
+        }
         DispatchQueue.main.async {
           let data = (try? JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])) ?? Data()
           self.report(self.envelope(String(data: data, encoding: .utf8) ?? "{}"))

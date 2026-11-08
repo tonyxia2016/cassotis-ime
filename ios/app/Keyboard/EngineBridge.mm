@@ -11,6 +11,9 @@ using namespace cassotis;
 @implementation CassotisKeyResult
 @end
 
+@implementation CassotisSettings
+@end
+
 static NSString *ns(const std::string &text) {
     NSString *value = [[NSString alloc] initWithBytes:text.data() length:text.size() encoding:NSUTF8StringEncoding];
     return value ?: @"";
@@ -221,6 +224,39 @@ static CassotisKeyResult *wrap(const Result &r) {
         s.flags = on ? (s.flags | 8) : (s.flags & ~8);  // c_state_flag_debug_mode
         _client.setState(s);
     } catch (const std::exception &e) { NSLog(@"debug mode: %s", e.what()); }
+}
+- (CassotisSettings *)settings {
+    try {
+        State s = _client.state(false);
+        CassotisSettings *o = [CassotisSettings new];
+        o.inputMode = s.mode;
+        o.traditional = s.dictionary == 1;
+        o.fullWidth = (s.flags & 1) != 0;           // c_state_flag_full_width
+        o.chinesePunctuation = (s.flags & 2) != 0;  // c_state_flag_punctuation_full_width
+        o.autoEnglish = s.autoEnglish;
+        o.scheme = s.scheme;
+        o.fuzzyRules = (s.flags & 4) ? s.fuzzy : 0; // c_state_flag_fuzzy_pinyin_enabled
+        return o;
+    } catch (const std::exception &e) { NSLog(@"settings: %s", e.what()); return nil; }
+}
+- (BOOL)applySettings:(CassotisSettings *)o {
+    try {
+        State s = _client.state(false);
+        s.mode = uint8_t(o.inputMode == 1 ? 1 : 0);
+        s.dictionary = o.traditional ? 1 : 0;
+        s.flags = uint8_t((s.flags & ~7) | (o.fullWidth ? 1 : 0) | (o.chinesePunctuation ? 2 : 0) |
+                          (o.fuzzyRules ? 4 : 0));
+        s.fuzzy = o.fuzzyRules & 2047u;  // eleven rules
+        s.autoEnglish = o.autoEnglish;
+        s.scheme = uint8_t(std::clamp(o.scheme, 0, 6));
+        _client.setState(s);
+        [self forget];
+        return YES;
+    } catch (const std::exception &e) { NSLog(@"settings: %s", e.what()); return NO; }
+}
+- (BOOL)clearLearning {
+    try { _client.clearLearning(); [self forget]; return YES; }
+    catch (const std::exception &e) { NSLog(@"clear learning: %s", e.what()); return NO; }
 }
 - (void)trim:(int32_t)level {
     cassotis_core_trim(level);
