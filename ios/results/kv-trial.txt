@@ -1,0 +1,88 @@
+K/V 复用试验的原始数字（2026-11-08，MacBook M1 Pro，macOS 27.2，神经网络引擎）。
+说明见 ../REPORT-MODEL.md 第 10 节，脚本在 ../bench/kv/。
+
+== 不带 K/V 的函数，连续运行（kv_bench）
+len16    median  4.03 ms
+len32    median  4.38 ms
+len64    median  4.94 ms
+len128   median  5.94 ms
+len256   median 15.11 ms
+
+== K/V 函数，连续运行（kv_bench，token 大多是补齐的空位）
+kv16_32  median 4.16 ms    kv16_64  median 4.36 ms    kv16_80  median 4.35 ms
+kv32_32  median 4.61 ms
+kv64_32  median 5.50 ms    kv64_64  median 5.59 ms    kv64_80  median 5.80 ms
+kv128_32 median 6.96 ms
+
+== 真实形状（kv_real）：R 个新 token 挂在 A 个旧 token 的链下面；含拷贝 K/V 的时间
+R   1 A  15  len64              predict median   4.92 ms (p90   5.12), copies  0.00 ms, total   4.92 ms
+R   1 A  15  kv16_32    plain   predict median   4.11 ms (p90   4.27), copies  0.04 ms, total   4.15 ms
+R   6 A  18  len64              predict median   4.93 ms (p90   5.06), copies  0.00 ms, total   4.93 ms
+R   6 A  18  kv16_32    plain   predict median   4.11 ms (p90   4.20), copies  0.05 ms, total   4.17 ms
+R  25 A  18  len64              predict median   4.99 ms (p90   5.15), copies  0.00 ms, total   4.99 ms
+R  25 A  18  kv32_32    plain   predict median   4.53 ms (p90   4.62), copies  0.12 ms, total   4.65 ms
+R  75 A  13  len128             predict median   5.96 ms (p90   6.07), copies  0.00 ms, total   5.96 ms
+R  75 A  13  kv128_32   plain   predict median   6.91 ms (p90   7.07), copies  0.28 ms, total   7.19 ms
+R 110 A  16  len128             predict median   6.04 ms (p90   6.22), copies  0.00 ms, total   6.04 ms
+R 110 A  16  kv128_32   plain   predict median   6.99 ms (p90   7.18), copies  0.40 ms, total   7.39 ms
+旧 K/V 用 IOSurface 零拷贝：
+R   6 A  18  kv16_32    surface predict median   4.13 ms (p90   4.19), copies  0.06 ms, total   4.19 ms
+R  25 A  18  kv32_32    surface predict median   4.62 ms (p90   4.82), copies  0.13 ms, total   4.75 ms
+R  75 A  13  kv128_32   surface predict median   7.00 ms (p90   7.19), copies  0.29 ms, total   7.28 ms
+
+== K/V 函数的数值（kv_proto.py --check），和 numpy 版本比，在神经网络引擎上
+[check] kv16_32 ne: |dlogp| mean 0.0171 max 0.0468; argmax agreement 1.000
+
+== 冷启动：两次运行之间空闲 gap，len64 的中位耗时（kv_bench --gap）
+gap   0 ms   4.94 ms
+gap   5 ms   8.86 ms
+gap  10 ms  14.25 ms
+gap  20 ms  14.97 ms
+gap  40 ms  15.87 ms
+gap  80 ms  14.93 ms
+gap 170 ms  14.75 ms
+gap 400 ms  15.01 ms
+
+== MLOptimizationHints.specializationStrategy = fastPrediction（kv_bench --fast）
+len64   默认 4.98 ms，fastPrediction 4.93 ms
+len128  默认 5.96 ms，fastPrediction 5.92 ms
+
+== 同一棵树在不同长度的函数里（same_tokens.py）
+len64 vs len128: identical False; |d| mean 0.001419 max 0.031250; differing values 16.51%; argmax agree 1.0000
+len64 vs len256: identical True;  |d| mean 0.000000 max 0.000000; differing values 0.00%;  argmax agree 1.0000
+len128 vs len256: identical False; |d| mean 0.001419 max 0.031250; differing values 16.51%; argmax agree 1.0000
+同一函数重复运行，结果完全相同。
+
+== 回放记录（键盘配置：iOS 内存策略、延后排序、后台补全；真人节奏 1,519 键；trace_summary.py）
+runs 4604, model time 37.7 s, of 291 s of replay; 3.03 runs a key, 24.8 ms a key
+by thread and kind (runs, seconds, median ms, median rows, median union):
+  thread0  S   runs   784   11.51 s (30.5%)  median  15.30 ms  rows    55  union    66
+  thread0  R   runs  1326    8.59 s (22.8%)  median   5.59 ms  rows    11  union    30
+  thread1  C   runs  1572    8.19 s (21.7%)  median   4.99 ms  rows     1  union    22
+  thread0  SN  runs   259    4.29 s (11.4%)  median  16.01 ms  rows    20  union    83
+  thread1  SN  runs   551    3.76 s (10.0%)  median   6.13 ms  rows    47  union    48
+  thread2  S   runs   110    1.35 s ( 3.6%)  median  12.22 ms  rows    11  union    72
+  thread3  ?   runs     2    0.03 s ( 0.1%)  median  14.47 ms  rows     1  union     1
+bursts 812: runs in a burst median 6.0, p90 11, max 20
+burst duration median 49.0 ms, p90 78.7, p95 87.5, max 149.9
+first run of a burst against later runs, by function length (median ms):
+  len64: first  14.63 ms (n=178), later   5.06 ms (n=3561)
+  len128: first  16.11 ms (n=526), later   7.84 ms (n=231)
+  len256: first  25.32 ms (n=108), later   0.00 ms (n=0)
+time above the hot run time in first runs: 9.3 s
+time above the hot run time in later runs: 4.0 s
+at hot times: now 24.6 s, with len16 and len32 23.0 s
+  and K/V where it wins 21.8 s
+union <= 16: 395  <= 32: 2263  <= 64: 1081  <= 128: 757  > 128: 108
+
+== 只跑要读的行：改前后的回放记录（同上配置）
+改前  runs 4604, model time 37.9 s; needed rows 138709, union computed 218898, padded positions 405440
+      len64 3299 次，len128 1092 次，len256 213 次；回放 end 65.3 MB，peak 88.6 MB
+改后  runs 4585, model time 37.6 s; needed rows 103266, union computed 183200, padded positions 362496
+      len64 3722 次，len128 755 次，len256 108 次；回放 end 60.2 MB，peak 77.2 MB
+
+== 逻辑核对：所有运行强制 len256、关掉时间预算，3,015 键，关掉后台补全
+每行都跑   digest a9a2a07a4f907fd9  first_rate 0.6697
+只跑要读的 digest a9a2a07a4f907fd9  first_rate 0.6697
+不强制长度时（连续 10,006 键，关掉后台补全）：改前 ccc0b013f54a0ccd，改后 09bb35490c39da6a，首选率都是 0.6603。
+摘要不同是因为一部分运行换了函数长度（见上一节），不是逻辑不同。

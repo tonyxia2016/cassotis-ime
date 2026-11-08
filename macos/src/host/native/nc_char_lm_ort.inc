@@ -322,18 +322,21 @@ void CharLmAppendUtf16(std::u16string& out, uint32_t cp) {
 
 // Runs the graph. past may be null (no earlier tokens). Returns logp_all, and
 // the per-layer keys and values of the run's tokens when want_presents is set.
+// read: the rows of logp_all the caller will read (null: all). Here every token
+// still has to run for its keys and values; the Core ML backend, which keeps no
+// keys and values, runs only the chains of these rows.
 #ifdef NC_CHAR_LM_COREML
 // Defined by the Core ML backend (nc_char_lm_coreml.mm).
 std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& ids,
     const std::vector<int64_t>& positions, const std::vector<int32_t>& mask,
     int64_t past_length, std::vector<Ort::Value>* past, bool want_presents,
-    Ort::RunOptions& options);
+    Ort::RunOptions& options, const std::vector<uint8_t>* read = nullptr);
 void CharLmOpenModel(CharLmHandle& h, const std::string& directory);
 #else
 std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& ids,
     const std::vector<int64_t>& positions, const std::vector<int32_t>& mask,
     int64_t past_length, std::vector<Ort::Value>* past, bool want_presents,
-    Ort::RunOptions& options) {
+    Ort::RunOptions& options, const std::vector<uint8_t>* /*read*/ = nullptr) {
     auto memory = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
     const int64_t n = static_cast<int64_t>(ids.size());
     const std::array<int64_t, 2> ids_shape{1, n};
@@ -543,12 +546,22 @@ int CharLmScore(CharLmHandle& h, const char16_t* context, const char16_t* const*
                          : past_width + static_cast<size_t>(row_of[static_cast<size_t>(a)])] = 1;
             }
             const bool want_keys = store && !fresh.empty();
+            // What this call reads below: a token's score comes from its parent's row,
+            // so the last token of a text is read only if its next characters are asked.
+            std::vector<uint8_t> read(rows, 0);
+            for (const auto& node : fresh)
+                if (node.parent >= 0) read[static_cast<size_t>(row_of[static_cast<size_t>(node.parent)])] = 1;
+            for (int j = 0; j < next_count; ++j) {
+                const int i = next_indices[j];
+                if (i < 0 || i >= static_cast<int>(paths.size()) || paths[static_cast<size_t>(i)].empty()) continue;
+                read[static_cast<size_t>(row_of[static_cast<size_t>(paths[static_cast<size_t>(i)].back())])] = 1;
+            }
             if (past_width > 0) {
                 auto past = memo.keys.Past();
                 outputs = CharLmRun(h, ids, positions, mask, static_cast<int64_t>(past_width), &past, want_keys,
-                    options);
+                    options, &read);
             } else {
-                outputs = CharLmRun(h, ids, positions, mask, 0, nullptr, want_keys, options);
+                outputs = CharLmRun(h, ids, positions, mask, 0, nullptr, want_keys, options, &read);
             }
             logp = outputs[0].GetTensorData<float>();
         }

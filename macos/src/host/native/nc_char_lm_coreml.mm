@@ -19,7 +19,9 @@
 // computes the union of the chains of its tokens again, as one trie. The
 // numbers of a token depend on its chain alone, so the result is what a run
 // over the kept keys would give. A union longer than the longest function is
-// split into several predictions of whole chains.
+// split into several predictions of whole chains. Keys and values as inputs were
+// tried and do not pay: a run on the Neural Engine costs about 4 ms whatever its
+// length, plus about 10 ms after any idle moment (ios/REPORT-MODEL.md, section 10).
 #import <CoreML/CoreML.h>
 #import <Foundation/Foundation.h>
 #include <mach/mach.h>
@@ -387,7 +389,7 @@ void CharLmPredict(CharLmCoreMlModel& model, const std::vector<uint32_t>& tokens
 std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& ids,
     const std::vector<int64_t>& positions, const std::vector<int32_t>& mask,
     int64_t past_length, std::vector<Ort::Value>* past, bool /*want_presents*/,
-    Ort::RunOptions& options) {
+    Ort::RunOptions& options, const std::vector<uint8_t>* read) {
     if (options.Terminated()) throw std::runtime_error("character LM deadline passed");
     const size_t n = ids.size();
     const size_t width = static_cast<size_t>(past_length) + n;
@@ -452,6 +454,9 @@ std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& i
         rows.clear();
         size_t end = begin;
         for (; end < n; ++end) {
+            // A token nothing reads needs no run: this backend keeps its chain, not
+            // its keys and values, so a later call runs it when it extends it.
+            if (read && !(*read)[end]) continue;
             const auto& chain = (*chains)[end];
             size_t depth = 0;
             int32_t node = -1;
@@ -471,8 +476,10 @@ std::vector<Ort::Value> CharLmRun(CharLmHandle& h, const std::vector<int64_t>& i
             rows.emplace_back(node, end);
         }
         if (options.Terminated()) throw std::runtime_error("character LM deadline passed");
-        @autoreleasepool {
-            CharLmPredict(model, tokens, parents, rows, vocab, logp.get());
+        if (!tokens.empty()) {
+            @autoreleasepool {
+                CharLmPredict(model, tokens, parents, rows, vocab, logp.get());
+            }
         }
         begin = end;
     }

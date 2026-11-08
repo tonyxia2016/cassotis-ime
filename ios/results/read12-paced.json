@@ -1,0 +1,20 @@
+{"device":"iPhone13,4","os":"27.2","full_access":true,"marks":[{"name":"viewDidLoad","mb":7.1,"peak_mb":7.1,"available_mb":69.9},{"name":"viewDidAppear","mb":9.7,"peak_mb":11.0,"available_mb":67.3},{"name":"engineOpen","mb":10.1,"peak_mb":11.0,"available_mb":66.9},{"name":"model","mb":18.1,"peak_mb":19.6,"available_mb":58.9},{"name":"firstKey","mb":18.3,"peak_mb":19.6,"available_mb":58.7},{"name":"firstCommit","mb":23.6,"peak_mb":27.7,"available_mb":53.4}],"run":{
+  "label": "read12-paced",
+  "before_open_mb": 9.8, "after_open_mb": 10.0, "open_seconds": 0.243,
+  "keys": 1519, "sentences": 55, "first_hits": 35, "first_rate": 0.6364, "deferred": 1464,
+  "seconds": 326.9, "p50_ms": 36.82, "p95_ms": 90.95, "p99_ms": 110.23, "worst_ms": 215.9, "mean_ms": 41.91,
+  "ui_p50_ms": 40.33, "ui_p95_ms": 92.38, "ui_p99_ms": 111.49, "ui_worst_ms": 217.1,
+  "end_mb": 36.7, "peak_mb": 43.9, "available_end_mb": 40.3, "available_min_mb": 40.3,
+  "model_state": 1, "model_seconds": 0.25,
+  "polls": 1464, "polls_applied": 1461, "polls_interrupted": 3, "poll_p50_ms": 22.01, "poll_p95_ms": 83.28, "poll_worst_ms": 239.0,
+  "digest": "d85397877d9e708b",
+  "error": "",
+  "samples": [
+    [0, 0.0, 18.1, 19.6, 58.9],
+    [500, 107.3, 35.8, 43.1, 41.2],
+    [1000, 213.9, 36.4, 43.6, 40.6],
+    [1500, 322.4, 36.7, 43.9, 40.3],
+    [1519, 326.9, 36.7, 43.9, 40.3]
+  ]
+}
+}
