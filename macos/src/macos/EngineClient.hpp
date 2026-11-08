@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -86,7 +87,12 @@ State decodeState(const Bytes &data);
 class EngineClient {
     int fd_ = -1;
     uint64_t request_ = 0, generation_ = 0;
+    // A poll sent without waiting (sendPoll): its answer comes before any later one.
+    uint64_t pollId_ = 0, pollGeneration_ = 0;
     Bytes transact(uint16_t type, const Bytes &payload, int timeoutMs = 1000);
+    Bytes frame(uint16_t type, const Bytes &payload, uint64_t id, uint64_t generation) const;
+    Bytes receive(uint16_t type, uint64_t id, uint64_t generation,
+        std::chrono::steady_clock::time_point deadline);
 public:
     ~EngineClient() { disconnect(); }
     EngineClient() = default;
@@ -100,6 +106,15 @@ public:
     void surrounding(const std::string &text, int32_t cursor, bool reported = true);
     Result key(const Key &value);
     Result poll();
+    // Polling without holding up the caller. With deferred ranking the engine reruns
+    // the candidates with the model when polled, which takes tens of milliseconds:
+    // sendPoll writes the request, takePoll reads its answer once it is there
+    // (waitMs 0: only if it already is). A request sent meanwhile goes out first, so
+    // that the engine sees it and cuts a letter's pass short; the poll's answer,
+    // stale by then, is read and dropped before that request's own.
+    bool pollOutstanding() const { return pollId_ != 0; }
+    void sendPoll();
+    bool takePoll(Result &result, int waitMs = 0);
     Result removeCandidate(int32_t index, const std::string &query, const Candidate &expected);
     Result candidateAction(uint64_t revision, int32_t page, int32_t index, bool remove,
         const std::string &query, const Candidate &expected);

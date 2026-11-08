@@ -27,7 +27,10 @@
   - 用回放语料核对过：缓存 100% 时，候选与原始引擎逐键相同。
 - **构建：** 两端默认读取仓库内的 `lexicon/`。
 - **Core ML 推理：** 新增 `macos/src/host/native/nc_char_lm_coreml.mm`，与 ONNX Runtime 桥接库导出同一组 `nc_lm_*` 函数，共用 `nc_char_lm_ort.inc` 里的全部算法，在神经网络引擎上运行。`macos/src/host/nc_lm_runtime.pas` 负责选择后端：macOS 有 Core ML 模型时优先用它，否则用 ONNX Runtime；iOS 只有 Core ML，并且直接静态链接。嵌入构建因此重新编进了字符模型和整句纠错两个宿主，可用 `char_lm` 选项关闭。
-- **延后排序（嵌入构建）：** `char_lm_deferred` 打开时，按键先只按词库排序并立即返回，前端轮询时再用模型重建候选；`cassotis_core_interrupt` 让新按键打断正在进行的重建。iOS 键盘默认打开。macOS 桌面版不受影响。
+- **延后排序：** `char_lm_deferred` 打开时，按键先只按词库排序并立即返回，前端轮询时再用模型重建候选。新的拼音字母或退格会打断正在进行的重建；空格、回车、选候选等它做完，上屏的是模型排好的结果。iOS 键盘（嵌入构建）默认打开，用 `cassotis_core_interrupt` 在进程内打断。macOS 输入法从 2026-11-08 起也默认打开，`cassotis-engine --no-char-lm-deferred` 可关闭。macOS 的引擎是独立进程，打断这样做：
+  - 轮询期间，`nc_unix_socket_server.pas` 里的一个线程窥探（`MSG_PEEK`）客户端 socket，看到这类按键就打断重建。
+  - 轮询开始前，这类按键已经读进服务端缓冲区的话，这次轮询直接返回（`SkipNextPoll`）。
+  - 前端 `EngineClient` 的轮询改为先发出，在之后的定时器里取回，按键不再等轮询。
 - **只读候选页（IPC 新请求 `imt_candidate_pages`）：** 按候选版本号读取之后最多三页候选，引擎的当前页和选择不动。iOS 键盘的候选列表靠它边滚动边加载；改用翻页键的话会被当成用户翻页，延后排序就不再生效。新类型追加在枚举末尾，不影响已有消息；macOS 客户端不发这个请求。
 
 `lexicon/` 的内容没有改动。

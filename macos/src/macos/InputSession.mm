@@ -592,7 +592,13 @@ BOOL CassotisModifierTapInterrupted(const CassotisModifierTap &tap, const Cassot
     if(!_result.pending) return;
     try {
         if(++_pollAttempts>120) { _result.pending=false; return; }
-        auto result=_engine->poll(); if(result.handled) [self apply:result];
+        // With deferred ranking a poll reruns the candidates with the model, which
+        // takes tens of milliseconds. Send it and read the answer on a later tick, so
+        // the main thread stays free: a key typed meanwhile goes out at once, the
+        // engine cuts a letter's pass short, and the poll's stale answer is dropped.
+        cassotis::Result result;
+        if(_engine->takePoll(result)) { if(result.handled) [self apply:result]; return; }
+        if(!_engine->pollOutstanding()) _engine->sendPoll();
     }
     catch(...) { [self recover]; }
 }
@@ -761,6 +767,9 @@ BOOL CassotisModifierTapInterrupted(const CassotisModifierTap &tap, const Cassot
         }
         if(result.handled || !result.commit.empty() || !result.preedit.empty()) [self apply:result];
         else if(event.type==NSEventTypeKeyDown) [self commit];
+        // Deferred ranking: start the model's pass now, not at the next tick, so a
+        // space typed right after the last letter still commits what it ranked.
+        if(_result.pending && _engine->connected() && !_engine->pollOutstanding()) _engine->sendPoll();
         if(plainDigit && result.preedit.empty() &&
            (!result.handled || result.commit==key.text ||
             result.commit==utf8([NSString stringWithFormat:@"%C",(unichar)(0xff10+key.text[0]-'0')])))

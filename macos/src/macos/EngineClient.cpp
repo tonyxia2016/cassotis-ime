@@ -188,7 +188,7 @@ State decodeState(const Bytes &data) {
     if(schema<7) s.flags|=32; // Older installations inherit the enabled default.
     return s;
 }
-void EngineClient::disconnect() { if(fd_>=0) ::close(fd_); fd_=-1; ++generation_; }
+void EngineClient::disconnect() { if(fd_>=0) ::close(fd_); fd_=-1; ++generation_; pollId_=0; }
 bool EngineClient::connect(const std::string &path) {
     disconnect(); sockaddr_un address{}; if(path.size()>=sizeof(address.sun_path)) return false;
     struct stat st{}; if(lstat(path.c_str(),&st) || !S_ISSOCK(st.st_mode) || st.st_uid!=getuid() || (st.st_mode&0077)) return false;
@@ -212,27 +212,63 @@ static void transfer(int fd, uint8_t *data, size_t size, bool sending,
         require(count>0,"Engine disconnected"); data+=count; size-=size_t(count);
     }
 }
+Bytes EngineClient::frame(uint16_t type,const Bytes &payload,uint64_t id,uint64_t generation) const {
+    Writer w;
+    w.u32(0x4d495343); w.u16(1); w.u16(0); w.u16(type); w.u16(0); w.u32(0);
+    w.u64(id); w.u64(1); w.u64(generation); w.u32(uint32_t(payload.size()));
+    w.data.insert(w.data.end(),payload.begin(),payload.end());
+    return w.data;
+}
+Bytes EngineClient::receive(uint16_t type,uint64_t id,uint64_t generation,
+                            std::chrono::steady_clock::time_point deadline) {
+    Bytes head(44); transfer(fd_,head.data(),head.size(),false,deadline); Reader r(head);
+    require(r.u32()==0x4d495343 && r.u16()==1 && r.u16()==0,"Invalid IPC header"); auto kind=r.u16();
+    require(r.u16()==0,"Invalid IPC header flags"); auto flags=r.u32();
+    require(flags==1 || flags==3,"Invalid IPC response flags");
+    require(r.u64()==id && r.u64()==1 && r.u64()==generation,"Stale IPC response");
+    size_t n=r.u32(); require(n<=maxPayload,"IPC response too large"); Bytes reply(n);
+    transfer(fd_,reply.data(),reply.size(),false,deadline);
+    if(flags&2) { Reader e(reply); require(e.schema()==1,"Invalid engine error"); e.u32(); throw std::runtime_error(e.string()); }
+    // Requests answered with an engine result (11): key, poll, remove, action, pages.
+    require(kind==((type==10 || type==17 || type==18 || type==19 || type==21)?11:type),"Unexpected IPC response");
+    return reply;
+}
 Bytes EngineClient::transact(uint16_t type,const Bytes &payload,int timeoutMs) {
     require(fd_>=0,"Engine is not ready");
     try {
         uint64_t id=++request_;
         if(type!=12 && type!=17) ++generation_;
-        uint64_t generation=generation_; Writer w;
-        w.u32(0x4d495343); w.u16(1); w.u16(0); w.u16(type); w.u16(0); w.u32(0);
-        w.u64(id); w.u64(1); w.u64(generation); w.u32(uint32_t(payload.size()));
-        w.data.insert(w.data.end(),payload.begin(),payload.end());
+        uint64_t generation=generation_;
+        auto request=frame(type,payload,id,generation);
         auto deadline=std::chrono::steady_clock::now()+std::chrono::milliseconds(timeoutMs);
-        transfer(fd_,w.data.data(),w.data.size(),true,deadline);
-        Bytes head(44); transfer(fd_,head.data(),head.size(),false,deadline); Reader r(head);
-        require(r.u32()==0x4d495343 && r.u16()==1 && r.u16()==0,"Invalid IPC header"); auto kind=r.u16();
-        require(r.u16()==0,"Invalid IPC header flags"); auto flags=r.u32();
-        require(flags==1 || flags==3,"Invalid IPC response flags");
-        require(r.u64()==id && r.u64()==1 && r.u64()==generation,"Stale IPC response");
-        size_t n=r.u32(); require(n<=maxPayload,"IPC response too large"); Bytes reply(n);
-        transfer(fd_,reply.data(),reply.size(),false,deadline);
-        if(flags&2) { Reader e(reply); require(e.schema()==1,"Invalid engine error"); e.u32(); throw std::runtime_error(e.string()); }
-        require(kind==((type==10 || type==17 || type==18 || type==19)?11:type),"Unexpected IPC response");
-        return reply;
+        transfer(fd_,request.data(),request.size(),true,deadline);
+        if(pollId_) {
+            // The poll still out is answered first; this request is newer.
+            uint64_t poll=pollId_, pollGeneration=pollGeneration_; pollId_=0;
+            receive(17,poll,pollGeneration,deadline);
+        }
+        return receive(type,id,generation,deadline);
+    } catch(...) { disconnect(); throw; }
+}
+void EngineClient::sendPoll() {
+    require(fd_>=0,"Engine is not ready");
+    if(pollId_) return;
+    try {
+        uint64_t id=++request_;
+        auto request=frame(17,{},id,generation_);
+        transfer(fd_,request.data(),request.size(),true,std::chrono::steady_clock::now()+std::chrono::seconds(1));
+        pollId_=id; pollGeneration_=generation_;
+    } catch(...) { disconnect(); throw; }
+}
+bool EngineClient::takePoll(Result &result,int waitMs) {
+    if(!pollId_ || fd_<0) return false;
+    try {
+        pollfd p{fd_,POLLIN,0}; int n=::poll(&p,1,waitMs);
+        if(n==0 || (n<0 && errno==EINTR)) return false;
+        require(n>0 && !(p.revents&(POLLERR|POLLNVAL)),"Engine connection unavailable");
+        uint64_t id=pollId_, generation=pollGeneration_; pollId_=0;
+        result=decodeResult(receive(17,id,generation,std::chrono::steady_clock::now()+std::chrono::seconds(1)));
+        return true;
     } catch(...) { disconnect(); throw; }
 }
 void EngineClient::active(bool v) { Writer w; w.schema(); w.u8(v); transact(8,w.data); }

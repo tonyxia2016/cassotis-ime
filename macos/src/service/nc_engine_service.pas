@@ -41,6 +41,8 @@ type
         FCharLmHost: TncCharLmHost;
         // 1 while a poll reruns candidates with the character LM (atomic).
         FCharLmPassRunning: Integer;
+        // The next poll answers at once (SkipNextPoll).
+        FSkipNextPoll: Boolean;
         FLocalCompletionHost: TncLocalCompletionHost;
         FCharLm: IncCharLm;
         FOneKeyRerankHost: TncOneKeyRerankHost;
@@ -125,6 +127,10 @@ type
           character LM (char_lm_deferred) skips the model calls it has not
           made yet and returns soon; a key waiting behind it starts sooner. }
         procedure InterruptCharLmPass;
+        { On the serving thread, before a poll: answer it at once with nothing
+          new. The socket server calls it when a letter or backspace already
+          waits behind the poll, which that key would make stale anyway. }
+        procedure SkipNextPoll;
         function DictionaryReady: Boolean;
         function UserDictionaryReady: Boolean;
         function RemoveUserCandidate(const context_id: QWord;
@@ -966,6 +972,11 @@ begin
         FLmRepairHost.set_suspended(value);
 end;
 
+procedure TncEngineService.SkipNextPoll;
+begin
+    FSkipNextPoll := True;
+end;
+
 procedure TncEngineService.InterruptCharLmPass;
 begin
     if InterlockedCompareExchange(FCharLmPassRunning, 0, 0) = 1 then
@@ -1193,6 +1204,11 @@ var
     delivered: Boolean;
 begin
     nc_initialize_engine_result(Result);
+    if FSkipNextPoll then
+    begin
+        FSkipNextPoll := False;
+        Exit;
+    end;
     context := FContexts.Find(context_id);
     if (context = nil) or (context.Generation <> generation_id) or
         not context.Active then Exit;

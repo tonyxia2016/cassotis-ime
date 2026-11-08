@@ -12,6 +12,7 @@ uses
     SysUtils,
     nc_version,
     nc_config,
+    nc_cache_policy,
     nc_engine_service
 {$IFDEF UNIX}
     , nc_unix_socket_server
@@ -80,7 +81,7 @@ begin
     WriteLn('       cassotis-engine --serve [--dictionary DB]');
     WriteLn('           [--dictionary-traditional DB]');
     WriteLn('           [--user-dictionary DB] [--socket PATH]');
-    WriteLn('           [--parent-pid PID]');
+    WriteLn('           [--parent-pid PID] [--no-char-lm-deferred]');
 end;
 
 procedure parse_server_options(out dictionary_path: string;
@@ -124,6 +125,10 @@ begin
                 Halt(2);
             end;
         end
+        else if ParamStr(index) = '--no-char-lm-deferred' then
+            // Rank with the character LM inside every key, as before deferred
+            // ranking: for comparisons.
+            g_char_lm_deferred := False
         else if (ParamStr(index) = '--user-dictionary') and
             (index < ParamCount) then
         begin
@@ -147,6 +152,10 @@ var
     server_parent_pid: LongInt;
 
 begin
+    // Keys return with dictionary ranking at once; the frontend's next poll
+    // reranks with the character LM, which a newer letter or backspace cuts
+    // short (TncPollWatcher). Halves the per-key P95 in a replay on M1 Pro.
+    g_char_lm_deferred := True;
     if (ParamCount >= 1) and (ParamStr(1) = '--serve') then
     begin
         parse_server_options(server_dictionary_path,

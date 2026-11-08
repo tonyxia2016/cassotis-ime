@@ -29,12 +29,15 @@ type
         FClients: TObjectList;
         FNextInternalContextId: QWord;
         FParentPid: LongInt;
+        // TncPollWatcher, with char_lm_deferred.
+        FPollWatcher: TObject;
         procedure PrepareSocketDirectory;
         procedure OpenSocket;
         procedure CloseSocket;
         procedure AcceptClient;
         function AllocateInternalContextId: QWord;
         function ProcessClient(const client: TObject): Boolean;
+        procedure BeginPoll(const client: TObject);
     public
         constructor Create(const socket_path: string;
             const engine: TncEngineService; const parent_pid: LongInt = 0);
@@ -48,7 +51,11 @@ uses
     BaseUnix,
     Unix,
     Sockets,
+    Classes,
+    nc_types,
+    nc_cache_policy,
     nc_ipc_protocol,
+    nc_ipc_payload,
     nc_ipc_dispatcher;
 
 {$IFDEF DARWIN}
@@ -92,6 +99,32 @@ type
         procedure DestroyMappedContext(const external_id: QWord);
         property SocketHandle: LongInt read FSocket;
         property Dispatcher: TncIpcDispatcher read FDispatcher;
+        { Whether what was read but not yet served begins with a letter or a
+          backspace (FrameIsEditingKey). }
+        function BufferedEditingKey: Boolean;
+    end;
+
+    { While a poll reruns a key's candidates with the character LM
+      (char_lm_deferred), a thread watches the clients' sockets. A pinyin letter
+      or a backspace arriving there ends the pass early (InterruptCharLmPass), as
+      the iOS keyboard does in process, and is served as soon as the poll
+      returns. The server is single-threaded and reads nothing during a request;
+      the watcher only peeks. A commit key waits for the pass, so that what it
+      commits is what the model ranked. }
+    TncPollWatcher = class(TThread)
+    private
+        FEngine: TncEngineService;
+        FLock: TRTLCriticalSection;
+        FWake: PRTLEvent;
+        FSockets: array of LongInt;
+        FWatching: LongInt;
+    protected
+        procedure Execute; override;
+    public
+        constructor Create(const engine: TncEngineService);
+        destructor Destroy; override;
+        procedure Watch(const sockets: array of LongInt);
+        procedure Unwatch;
     end;
 
 function ReadUInt32Le(const value: TBytes; const offset: SizeInt): Cardinal;
@@ -102,6 +135,142 @@ begin
     for index := 0 to 3 do
         Result := Result or
             (Cardinal(value[offset + index]) shl (index * 8));
+end;
+
+{ Whether bytes begin with a whole key frame for a pinyin letter or a backspace:
+  a key that edits the composition and so makes a running candidate pass stale. }
+function FrameIsEditingKey(const bytes: TBytes; const count: SizeInt): Boolean;
+var
+    frame: TBytes;
+    envelope: TncIpcEnvelope;
+    consumed: SizeInt;
+    error_text: string;
+    key_event: TncKeyEvent;
+    first: Char;
+begin
+    Result := False;
+    if count < c_ipc_header_size then
+        Exit;
+    frame := Copy(bytes, 0, count);
+    if not nc_try_decode_ipc_frame(frame, envelope, consumed, error_text) or
+        (envelope.message_type <> imt_process_key) or
+        not nc_try_decode_key_event_payload(envelope.payload, key_event, error_text) or
+        key_event.is_release or
+        (key_event.modifiers * [km_shift, km_control, km_alt, km_super] <> []) then
+        Exit;
+    if key_event.special_key = sk_backspace then
+        Exit(True);
+    if (key_event.special_key <> sk_none) or (Length(key_event.text) <> 1) then
+        Exit;
+    first := key_event.text[1];
+    Result := ((first >= 'a') and (first <= 'z')) or (first = '''');
+end;
+
+constructor TncPollWatcher.Create(const engine: TncEngineService);
+begin
+    FEngine := engine;
+    InitCriticalSection(FLock);
+    FWake := RTLEventCreate;
+    FWatching := 0;
+    inherited Create(False);
+end;
+
+destructor TncPollWatcher.Destroy;
+begin
+    Terminate;
+    InterlockedExchange(FWatching, 0);
+    RTLEventSetEvent(FWake);
+    WaitFor;
+    RTLEventDestroy(FWake);
+    DoneCriticalSection(FLock);
+    inherited Destroy;
+end;
+
+procedure TncPollWatcher.Watch(const sockets: array of LongInt);
+var
+    index: Integer;
+begin
+    EnterCriticalSection(FLock);
+    SetLength(FSockets, Length(sockets));
+    for index := 0 to High(sockets) do
+        FSockets[index] := sockets[index];
+    LeaveCriticalSection(FLock);
+    InterlockedExchange(FWatching, 1);
+    RTLEventSetEvent(FWake);
+end;
+
+procedure TncPollWatcher.Unwatch;
+begin
+    InterlockedExchange(FWatching, 0);
+end;
+
+procedure TncPollWatcher.Execute;
+var
+    fds: array of pollfd;
+    peeked: TBytes;
+    index: Integer;
+    received: ssize_t;
+    arriving: Boolean;
+begin
+    SetLength(peeked, 4096);
+    while not Terminated do
+    begin
+        RTLEventWaitFor(FWake);
+        if Terminated then
+            Break;
+        EnterCriticalSection(FLock);
+        SetLength(fds, Length(FSockets));
+        for index := 0 to High(FSockets) do
+        begin
+            fds[index].fd := FSockets[index];
+            fds[index].events := POLLIN;
+        end;
+        LeaveCriticalSection(FLock);
+        while (InterlockedCompareExchange(FWatching, 0, 0) = 1) and not Terminated do
+        begin
+            if Length(fds) = 0 then
+            begin
+                Sleep(2);
+                Continue;
+            end;
+            for index := 0 to High(fds) do
+                fds[index].revents := 0;
+            if fpPoll(@fds[0], Length(fds), 2) <= 0 then
+                Continue;
+            arriving := False;
+            for index := 0 to High(fds) do
+            begin
+                if (fds[index].fd < 0) or ((fds[index].revents and POLLIN) = 0) then
+                    Continue;
+                received := fpRecv(fds[index].fd, @peeked[0], Length(peeked), MSG_PEEK);
+                if received <= 0 then
+                begin
+                    fds[index].fd := -1;  // closed: the server will notice
+                    Continue;
+                end;
+                if (received < c_ipc_header_size) or
+                    (received < c_ipc_header_size + SizeInt(ReadUInt32Le(peeked, 40))) then
+                begin
+                    arriving := True;  // the rest of the frame is on its way
+                    Continue;
+                end;
+                if FrameIsEditingKey(peeked, received) then
+                begin
+                    FEngine.InterruptCharLmPass;
+                    InterlockedExchange(FWatching, 0);
+                    Break;
+                end;
+                fds[index].fd := -1;  // a commit or anything else waits for the pass
+            end;
+            if arriving then
+                Sleep(1);
+        end;
+    end;
+end;
+
+function TncUnixClientConnection.BufferedEditingKey: Boolean;
+begin
+    Result := FrameIsEditingKey(FInputBuffer, Length(FInputBuffer));
 end;
 
 function ResponseSucceeded(const response: TncIpcEnvelope): Boolean;
@@ -304,10 +473,12 @@ begin
     FClients := TObjectList.Create(True);
     FNextInternalContextId := 1;
     FParentPid := parent_pid;
+    FPollWatcher := nil;
 end;
 
 destructor TncUnixSocketServer.Destroy;
 begin
+    FPollWatcher.Free;
     FClients.Free;
     CloseSocket;
     inherited Destroy;
@@ -497,7 +668,11 @@ begin
                 end;
         end;
 
+        if request.message_type = imt_poll_result then
+            BeginPoll(connection);
         connection.Dispatcher.DispatchRequest(request, response);
+        if (request.message_type = imt_poll_result) and (FPollWatcher <> nil) then
+            TncPollWatcher(FPollWatcher).Unwatch;
         if mapping_created and (not ResponseSucceeded(response)) then
             connection.DestroyMappedContext(external_context_id)
         else if (request.message_type = imt_destroy_context) and
@@ -518,6 +693,25 @@ begin
     Result := True;
 end;
 
+procedure TncUnixSocketServer.BeginPoll(const client: TObject);
+var
+    sockets: array of LongInt;
+    index: Integer;
+begin
+    if FPollWatcher = nil then
+        Exit;
+    // A letter already read behind this poll would make its pass stale: skip it.
+    if TncUnixClientConnection(client).BufferedEditingKey then
+    begin
+        FEngine.SkipNextPoll;
+        Exit;
+    end;
+    SetLength(sockets, FClients.Count);
+    for index := 0 to FClients.Count - 1 do
+        sockets[index] := TncUnixClientConnection(FClients[index]).SocketHandle;
+    TncPollWatcher(FPollWatcher).Watch(sockets);
+end;
+
 procedure TncUnixSocketServer.Run;
 var
     read_sockets: TFDSet;
@@ -528,6 +722,8 @@ var
     timeout: TTimeVal;
 begin
     OpenSocket;
+    if g_char_lm_deferred then
+        FPollWatcher := TncPollWatcher.Create(FEngine);
     WriteLn('cassotis-engine listening on ', FSocketPath);
     while not FShutdownRequested do
     begin

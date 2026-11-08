@@ -1,0 +1,3 @@
+{"label": "defer-170", "keys": 1519, "sentences": 55, "first_hits": 35, "first_rate": 0.6364,
+ "pace_us": 170000, "pending_keys": 1464, "p50_ms": 20.97, "p95_ms": 75.83, "p99_ms": 99.94, "worst_ms": 256.56,
+ "polls_sent": 2099, "polls_answered": 2061, "polls_applied": 2059, "polls_dropped": 38}

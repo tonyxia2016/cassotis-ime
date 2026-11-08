@@ -62,6 +62,43 @@ CASSOTIS_COREML_PYTHON=/path/to/coreml-venv/bin/python ./scripts/build_coreml_mo
 
 `VERSION` 控制显示版本，`BUILD_NUMBER` 控制应用和安装器的 `CFBundleVersion`。修改后需重新构建；打包器会拒绝版本或构建号不匹配的旧应用。
 
+## 延后排序
+
+输入法默认打开延后排序：
+
+- 按键先只按词库排序，结果标为待定，立即返回。前端随即发出轮询，引擎这时用字符模型重建候选；前端在之后的 25 ms 定时器里取回并显示。按键不等轮询：轮询结果还没取回就来了新按键时，前端读掉那份结果，不显示。
+- 轮询进行中，服务端有一个线程窥探（`MSG_PEEK`）客户端 socket。新到的拼音字母或退格会打断这次重建，按键不用等它做完。空格、回车、选候选不打断，上屏的仍是模型排好的结果。
+- 要回到每个按键里都用模型排序，给引擎加 `--no-char-lm-deferred`。
+
+`tools/bench/socket_replay.cpp` 像输入法那样通过 socket 驱动运行中的引擎：每次一个键，按固定间隔，期间照前端的方式轮询。每个键从该按下的时刻计到结果返回，排在轮询后面等着的时间也算在内。
+
+```sh
+xcrun clang++ -std=c++20 -O2 tools/bench/socket_replay.cpp src/macos/EngineClient.cpp -o build/socket_replay
+rm -rf build/bench && mkdir -p build/bench
+build/arm64/Cassotis.app/Contents/MacOS/cassotis-engine --serve --dictionary build/dictionaries/dict_sc.db \
+    --user-dictionary build/bench/user.db --socket build/bench/engine.sock &
+engine=$!
+until [ -S build/bench/engine.sock ]; do sleep 0.1; done
+build/socket_replay --socket build/bench/engine.sock --corpus ../ios/bench/corpus.tsv \
+    --keys 200 --pace-us 170000 > /dev/null    # 预热
+build/socket_replay --socket build/bench/engine.sock --corpus ../ios/bench/corpus.tsv \
+    --keys 1519 --pace-us 170000 --output build/bench/result.json
+kill $engine
+```
+
+- 用应用里的引擎，它会找到应用里的 Core ML 模型。`build/arm64/bin/` 里的引擎旁边只有 ONNX 模型，会用 ONNX Runtime。
+- socket 路径要短于 104 字节。
+- 开头先删掉 `build/bench`，每次测量都用新的用户词库，免得上一次学到的东西影响结果。
+
+M1 Pro 上的结果。用 Core ML，回放 55 句共 1,519 键，先预热 200 键：
+
+| 按键间隔 | 按键里排序 P50 / P95 / P99 | 延后排序 P50 / P95 / P99 |
+| --- | --- | --- |
+| 170 ms | 37.0 / 131.8 / 181.5 ms | 21.0 / 75.8 / 99.9 ms |
+| 80 ms | 32.8 / 129.7 / 183.5 ms | 21.2 / 68.1 / 102.4 ms |
+
+两种方式首选都是 35 句。下一个键按下时还没答复的轮询，170 ms 间隔有 38 次，80 ms 间隔有 357 次。
+
 ## 从源码安装
 
 ```sh
