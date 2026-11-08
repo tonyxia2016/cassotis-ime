@@ -56,6 +56,18 @@ function nc_try_decode_candidate_action_payload(const payload: TBytes;
     out remove: Boolean;
     out expected_query, expected_text, expected_comment, error_text: string): Boolean;
 
+const
+    { An engine result carries at most three candidate rows. }
+    c_max_candidate_pages_per_request = 3;
+
+{ imt_candidate_pages: up to three pages from first_page, for the candidate
+  list a client shows (revision), without moving the engine's page. }
+function nc_encode_candidate_pages_payload(const revision: QWord;
+    const first_page, page_count: Integer): TBytes;
+function nc_try_decode_candidate_pages_payload(const payload: TBytes;
+    out revision: QWord; out first_page, page_count: Integer;
+    out error_text: string): Boolean;
+
 function nc_encode_remove_candidate_payload(const candidate_index: Integer;
     const expected_query, expected_text, expected_comment: string): TBytes;
 function nc_try_decode_remove_candidate_payload(const payload: TBytes;
@@ -725,6 +737,50 @@ begin
             (candidate_index >= c_max_candidate_page_size)) then
         begin
             reader.SetError('Invalid candidate action');
+            Result := False;
+        end;
+        Result := Result and reader.Finish(error_text);
+        if not Result then reader.Finish(error_text);
+    finally
+        reader.Free;
+    end;
+end;
+
+function nc_encode_candidate_pages_payload(const revision: QWord;
+    const first_page, page_count: Integer): TBytes;
+var writer: TncIpcPayloadWriter;
+begin
+    if (revision = 0) or (first_page < 0) or (page_count < 1) or
+        (page_count > c_max_candidate_pages_per_request) then
+        raise EncIpcPayloadError.Create('Invalid candidate pages request');
+    writer := TncIpcPayloadWriter.Create;
+    try
+        WritePayloadHeader(writer);
+        writer.WriteUInt64(revision);
+        writer.WriteInt32(first_page);
+        writer.WriteInt32(page_count);
+        Result := writer.Finish;
+    finally
+        writer.Free;
+    end;
+end;
+
+function nc_try_decode_candidate_pages_payload(const payload: TBytes;
+    out revision: QWord; out first_page, page_count: Integer;
+    out error_text: string): Boolean;
+var reader: TncIpcPayloadReader;
+begin
+    revision := 0;
+    first_page := -1;
+    page_count := 0;
+    reader := TncIpcPayloadReader.Create(payload);
+    try
+        Result := ReadPayloadHeader(reader) and reader.ReadUInt64(revision) and
+            reader.ReadInt32(first_page) and reader.ReadInt32(page_count);
+        if Result and ((revision = 0) or (first_page < 0) or (page_count < 1) or
+            (page_count > c_max_candidate_pages_per_request)) then
+        begin
+            reader.SetError('Invalid candidate pages request');
             Result := False;
         end;
         Result := Result and reader.Finish(error_text);

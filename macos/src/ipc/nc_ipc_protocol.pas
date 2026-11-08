@@ -40,7 +40,10 @@ type
         imt_poll_result,
         imt_remove_candidate,
         imt_candidate_action,
-        imt_import_user_words
+        imt_import_user_words,
+        { Read-only copies of further candidate pages (the iOS keyboard's
+          scrolling list); the engine's page and selection stay as they are. }
+        imt_candidate_pages
     );
 
     TncIpcEnvelope = record

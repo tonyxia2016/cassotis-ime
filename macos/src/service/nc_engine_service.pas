@@ -107,6 +107,8 @@ type
             revision: QWord; const page_index, candidate_index: Integer;
             const remove: Boolean; const expected_query, expected_text,
             expected_comment: string): TncEngineResult; override;
+        function CandidatePagesVerified(const context_id, generation_id,
+            revision: QWord; const first_page, page_count: Integer): TncEngineResult; override;
         function ContextCount: Integer;
         procedure ClearContexts;
         // Answers a host memory warning: every cache it drops can be rebuilt.
@@ -1322,6 +1324,67 @@ begin
     except
         on exception_value: Exception do
         begin
+            Result.error_code := c_engine_error_dictionary_query;
+            Result.error_text := UnicodeString(exception_value.Message);
+        end;
+    end;
+end;
+
+function TncEngineService.CandidatePagesVerified(const context_id, generation_id,
+    revision: QWord; const first_page, page_count: Integer): TncEngineResult;
+var
+    context: TncEngineContext;
+    pages: TncCandidatePages;
+    snapshot: TncCandidateList;
+    last_page, index, count: Integer;
+begin
+    // A scrolling candidate list (the iOS keyboard) reads the pages after the
+    // visible one. Paging keys would do it too, but they move the selection
+    // and count as navigation, which ends the deferred character LM ranking.
+    nc_initialize_engine_result(Result);
+    Result.error_code := PrepareContext(context_id, generation_id, context);
+    if Result.error_code <> 0 then Exit;
+    if not context.Active then Exit;
+    try
+        if not ActivateContext(context) then
+        begin
+            Result.error_code := c_engine_error_dictionary_unavailable;
+            Result.error_text := FDictionaryError;
+            Exit;
+        end;
+        // Only pages of the list the client shows; anything newer is unhandled.
+        if (revision = 0) or (revision <> context.CandidateRevision) or
+            (context.Composition = '') then
+            Exit;
+        Result.handled := True;
+        Result.page_index := FEngine.get_page_index;
+        Result.page_count := FEngine.get_page_count;
+        Result.candidate_revision := context.CandidateRevision;
+        last_page := first_page + page_count - 1;
+        if last_page >= Result.page_count then
+            last_page := Result.page_count - 1;
+        if last_page < first_page then
+            Exit;
+        // A page the engine has no copy of ends the answer: rows are contiguous.
+        SetLength(pages, last_page - first_page + 1);
+        count := 0;
+        for index := first_page to last_page do
+        begin
+            snapshot := FEngine.get_candidate_page_snapshot(index);
+            if Length(snapshot) = 0 then
+                Break;
+            NormalizeCandidates(snapshot, FEngine.get_last_lookup_key);
+            pages[count].page_index := index;
+            pages[count].candidates := snapshot;
+            Inc(count);
+        end;
+        SetLength(pages, count);
+        Result.candidate_pages := pages;
+    except
+        on exception_value: Exception do
+        begin
+            Result.handled := False;
+            Result.candidate_pages := nil;
             Result.error_code := c_engine_error_dictionary_query;
             Result.error_text := UnicodeString(exception_value.Message);
         end;

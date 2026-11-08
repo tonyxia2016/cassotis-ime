@@ -223,6 +223,21 @@ begin
                 response.message_type := imt_engine_result;
                 response.payload := nc_encode_engine_result_payload(engine_result);
             end;
+        imt_candidate_pages:
+            begin
+                if not nc_try_decode_candidate_pages_payload(request.payload,
+                    revision, page_index, candidate_index, payload_error) then
+                begin
+                    SetErrorResponse(request, response,
+                        c_ipc_dispatch_error_invalid_payload, payload_error);
+                    Exit;
+                end;
+                // candidate_index carries the number of pages here.
+                engine_result := FEngine.CandidatePagesVerified(request.context_id,
+                    request.generation_id, revision, page_index, candidate_index);
+                response.message_type := imt_engine_result;
+                response.payload := nc_encode_engine_result_payload(engine_result);
+            end;
         imt_remove_candidate:
             begin
                 if not nc_try_decode_remove_candidate_payload(request.payload,

@@ -78,6 +78,8 @@ struct State {
 std::string normalizePunctuationASCII(const std::string &value);
 Bytes encodeKey(const Key &key);
 Result decodeResult(const Bytes &data);
+// pagesOnly: an answer to candidatePages, whose rows need not include the visible page.
+Result decodeResult(const Bytes &data, bool pagesOnly);
 Bytes encodeState(const State &state);
 State decodeState(const Bytes &data);
 
@@ -107,6 +109,10 @@ public:
     Result removeCandidate(int32_t index, const std::string &query, const Candidate &expected);
     Result candidateAction(uint64_t revision, int32_t page, int32_t index, bool remove,
         const std::string &query, const Candidate &expected);
+    // Up to three pages from first, of the list with this candidateRevision, in
+    // candidatePages; the engine's page and selection do not move. handled is
+    // false once the list changed.
+    Result candidatePages(uint64_t revision, int32_t first, int32_t count);
     State state(bool includeCustomPhrases = true);
     void setState(const State &state);
     void clearLearning();

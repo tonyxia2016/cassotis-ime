@@ -53,7 +53,8 @@ static Candidate readCandidate(Reader &r) {
 static bool sameCandidate(const Candidate &a,const Candidate &b) {
     return a.text==b.text && a.comment==b.comment && a.source==b.source && a.kind==b.kind && a.deletable==b.deletable;
 }
-Result decodeResult(const Bytes &data) {
+Result decodeResult(const Bytes &data) { return decodeResult(data, false); }
+Result decodeResult(const Bytes &data, bool pagesOnly) {
     Reader r(data); auto version=r.schema(); require(version>=1 && version<=7,"Unsupported result schema"); Result v;
     auto handled=r.u8(); require(handled<=1 && r.u16()==0,"Invalid result flags"); v.handled=handled;
     auto flags=r.u8(); require((flags&~1)==0,"Invalid result flags"); v.pending=flags&1;
@@ -86,7 +87,8 @@ Result decodeResult(const Bytes &data) {
     if(version>=4) {
         v.candidateRevision=r.u64(); auto rows=r.u32();
         require(v.candidateRevision && rows<=3,"Invalid candidate viewport");
-        bool activeFound=count==0 && rows==0;
+        // A candidatePages answer holds only the pages asked for, not the visible one.
+        bool activeFound=pagesOnly || (count==0 && rows==0);
         int32_t previous=-1;
         for(uint32_t row=0;row<rows;++row) {
             CandidatePage page; page.page=int32_t(r.u32()); auto n=r.u32();
@@ -226,7 +228,8 @@ Bytes EngineClient::transact(uint16_t type,const Bytes &payload) {
     size_t n=r.u32(); require(n<=maxPayload && 44+n==size_t(length),"Invalid IPC length");
     Bytes body(reply_.begin()+44,reply_.begin()+44+n);
     if(flags&2) { Reader e(body); require(e.schema()==1,"Invalid engine error"); e.u32(); throw std::runtime_error(e.string()); }
-    require(kind==((type==10 || type==17 || type==18 || type==19)?11:type),"Unexpected IPC response");
+    // Requests answered with an engine result (11): key, poll, remove, action, pages.
+    require(kind==((type==10 || type==17 || type==18 || type==19 || type==21)?11:type),"Unexpected IPC response");
     return body;
 }
 void EngineClient::active(bool v) { Writer w; w.schema(); w.u8(v); transact(8,w.data); }
@@ -260,6 +263,11 @@ Result EngineClient::candidateAction(uint64_t revision,int32_t page,int32_t inde
     Writer w; w.schema(); w.u64(revision); w.u32(uint32_t(page)); w.u32(uint32_t(index)); w.u8(remove);
     w.string(query); w.string(expected.text); w.string(expected.comment);
     try { return decodeResult(transact(19,w.data)); } catch(...) { disconnect();throw; }
+}
+Result EngineClient::candidatePages(uint64_t revision,int32_t first,int32_t count) {
+    require(revision && first>=0 && count>=1 && count<=3,"Invalid candidate pages request");
+    Writer w; w.schema(); w.u64(revision); w.u32(uint32_t(first)); w.u32(uint32_t(count));
+    try { return decodeResult(transact(21,w.data),true); } catch(...) { disconnect();throw; }
 }
 void EngineClient::setState(const State &s) {
     auto payload=encodeState(s);

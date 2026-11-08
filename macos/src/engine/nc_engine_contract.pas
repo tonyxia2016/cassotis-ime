@@ -38,6 +38,10 @@ type
             revision: QWord; const page_index, candidate_index: Integer;
             const remove: Boolean; const expected_query, expected_text,
             expected_comment: string): TncEngineResult; virtual;
+        { Copies of pages first_page.. of the list a client shows (revision),
+          in candidate_pages; nothing about the composition changes. }
+        function CandidatePagesVerified(const context_id, generation_id,
+            revision: QWord; const first_page, page_count: Integer): TncEngineResult; virtual;
     end;
 
 implementation
@@ -70,6 +74,14 @@ function TncEngineCore.PollResult(const context_id: QWord;
     const generation_id: QWord): TncEngineResult;
 begin
     nc_initialize_engine_result(Result);
+end;
+
+function TncEngineCore.CandidatePagesVerified(const context_id, generation_id,
+    revision: QWord; const first_page, page_count: Integer): TncEngineResult;
+begin
+    nc_initialize_engine_result(Result);
+    Result.error_code := 3;
+    Result.error_text := 'Candidate pages are not supported';
 end;
 
 end.
