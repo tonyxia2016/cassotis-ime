@@ -29,8 +29,12 @@ enum KeyboardTheme {
   static func rowGap(_ landscape: Bool) -> CGFloat { landscape ? 6 : 11 }
   static let bottomInset: CGFloat = 2
   static func height(_ landscape: Bool) -> CGFloat {
-    strip(landscape) + 4 * keyHeight(landscape) + 3 * rowGap(landscape) + bottomInset
+    completionRow(landscape) + strip(landscape) + 4 * keyHeight(landscape) + 3 * rowGap(landscape)
+      + bottomInset
   }
+  /// The Tab completion's own row above the candidates (macOS keeps one under its
+  /// candidates): a whole sentence's continuation would crowd them out of the strip.
+  static func completionRow(_ landscape: Bool) -> CGFloat { landscape ? 24 : 30 }
   static func strip(_ landscape: Bool) -> CGFloat { landscape ? 36 : topStrip
   }
 }

@@ -21,6 +21,12 @@ NS_ASSUME_NONNULL_BEGIN
 // The engine's lookup key for these candidates: a poll that re-ranks what is drawn
 // has the same one.
 @property(nonatomic, copy) NSString *query;
+// The one Tab completion macOS shows under its candidates (a longer word, the rest
+// of a sentence, a poem's next line), on one line; empty when there is none.
+// acceptCompletion takes it. predicted: the engine guessed text not typed yet
+// (macOS draws that in the accent colour), rather than joining typed words.
+@property(nonatomic, copy) NSString *completion;
+@property(nonatomic) BOOL completionPredicted;
 // With the engine's debug mode on: the left context it ranked with, and whether
 // the host reported any. Test runs read these; typing never turns debug on.
 @property(nonatomic, copy) NSString *debugContext;
@@ -50,7 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Applies the keyboard's memory policy, then any cache=/sqlite=/mmap=/ondemand=/
 // prewarm= overrides from a run's options; lm=0 opens the engine without the
 // character LM, defer=0 ranks with it inside every key instead of on the next
-// poll (char_lm_deferred), det=1 sets deterministic_search.
+// poll (char_lm_deferred), async=0 turns off the Tab completion's model work in
+// the background (char_lm_async), det=1 sets deterministic_search.
 + (void)applyMemoryPolicy:(NSDictionary<NSString *, NSString *> *)options;
 // Returns nil on success, otherwise the error text.
 - (nullable NSString *)openDictionary:(NSString *)dictionary
@@ -59,6 +66,9 @@ NS_ASSUME_NONNULL_BEGIN
                                  data:(NSString *)data;
 - (CassotisKeyResult *)pressText:(NSString *)text;
 - (CassotisKeyResult *)pressSpecial:(uint16_t)special;
+// Takes the result's completion: the key macOS does it with, Tab or ` as the
+// engine's settings say.
+- (CassotisKeyResult *)acceptCompletion;
 // The candidates of the last result, then the pages after it, as one list that
 // scrolls: candidates start..start+count, reading pages from the engine as
 // needed (read-only, so space still takes the first one and the deferred

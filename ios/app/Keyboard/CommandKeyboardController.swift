@@ -137,6 +137,9 @@ class CommandKeyboardController: UIInputViewController {
   func showCandidates(_ candidates: [String], preedit: String, selected: Int, more: Bool) {}
   /// The next part of the list on screen; end: there is nothing after it.
   func appendCandidates(_ candidates: [String], end: Bool) {}
+  /// The engine's one Tab completion for what is composed, or "" (acceptCompletion
+  /// takes it). predicted: text the engine guessed, drawn in the accent colour.
+  func showCompletion(_ text: String, predicted: Bool) {}
   /// The keyboard just changed the document (committed, deleted, inserted): the
   /// SwiftUI keyboard records it for undo.
   func documentDidChange() {}
@@ -351,6 +354,7 @@ class CommandKeyboardController: UIInputViewController {
       candidateGeneration &+= 1
       shownCandidates = []
       showCandidates([], preedit: "", selected: -1, more: false)
+      showCompletion("", predicted: false)
     }
     guard Self.engineState == 2 else { return }
     Self.thread.run { Self.engine.resetComposition() }
@@ -425,23 +429,54 @@ class CommandKeyboardController: UIInputViewController {
     }
   }
 
-  /// The model's ranking for the last key, once the engine thread is free.
+  /// The model's ranking for the last key, once the engine thread is free, and
+  /// after it the Tab completion's background work (char_lm_async), which the
+  /// engine hands over only when polled: while what is drawn is still pending, poll
+  /// again every 30 ms, for 3 s at most, as macOS does on its 25 ms timer.
   /// A poll a key interrupted is dropped: that key's own result follows. A poll
   /// answers for the engine's latest key, and a letter taken at touch-down may be
   /// ahead of the screen, so only a result for what is drawn (same query) applies.
-  private func pollWhenIdle() {
+  private func pollWhenIdle(attempt: Int = 0) {
     Self.thread.runWhenIdle { [weak self] in
       let result = Self.engine.poll()
-      guard result.handled, !Self.thread.idleWasInterrupted() else { return }
+      guard !Self.thread.idleWasInterrupted() else { return }
       DispatchQueue.main.async {
         guard let self else { return }
+        guard result.handled else {
+          if self.lastResult.pending { self.pollAgain(attempt) }  // nothing new yet
+          return
+        }
         guard result.query == self.lastResult.query else {
           self.pollsDropped += 1
           return
         }
         self.pollsApplied += 1
         self.apply(result)
+        if result.pending { self.pollAgain(attempt) }
       }
+    }
+  }
+
+  /// The next poll of a chain, unless a newer result has been drawn (it polls for
+  /// itself) or a letter is down: the engine already has that letter, and a poll
+  /// would take its model ranking before the screen shows it, so it would be dropped.
+  private func pollAgain(_ attempt: Int) {
+    guard attempt < 100 else { return }
+    let drawn = lastResult
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { [weak self] in
+      guard let self, self.lastResult === drawn, self.speculations.isEmpty else { return }
+      self.pollWhenIdle(attempt: attempt + 1)
+    }
+  }
+
+  /// The completion row was tapped: the engine takes its completion, as macOS does
+  /// on Tab. Like space, it waits for a running poll.
+  func acceptCompletion() {
+    guard !shownCompletion.isEmpty else { return }
+    withEngine {
+      let result = Self.engine.acceptCompletion()
+      DispatchQueue.main.async { self.apply(result) }
+      if result.pending { self.pollWhenIdle() }
     }
   }
 
@@ -587,6 +622,11 @@ class CommandKeyboardController: UIInputViewController {
   }
 
   func apply(_ result: CassotisKeyResult) {
+    // A poll that brings only the Tab completion leaves the list as it is drawn,
+    // scrolled pages and all.
+    let sameList = result.commit.isEmpty && result.preedit == preedit
+      && result.candidates == lastResult.candidates && result.page == lastResult.page
+      && result.pages == lastResult.pages && result.selected == lastResult.selected
     lastResult = result
     if !result.commit.isEmpty {
       textDocumentProxy.setMarkedText("", selectedRange: NSRange(location: 0, length: 0))
@@ -599,13 +639,20 @@ class CommandKeyboardController: UIInputViewController {
         preedit, selectedRange: NSRange(location: (preedit as NSString).length, length: 0))
       if preedit.isEmpty { textDocumentProxy.unmarkText() }
     }
-    candidateGeneration &+= 1
-    shownCandidates = result.candidates
-    showCandidates(
-      result.candidates, preedit: preedit, selected: Int(result.selected),
-      more: result.pages > result.page + 1)
+    if !sameList {
+      candidateGeneration &+= 1
+      shownCandidates = result.candidates
+      showCandidates(
+        result.candidates, preedit: preedit, selected: Int(result.selected),
+        more: result.pages > result.page + 1)
+    }
+    showCompletion(shownCompletion, predicted: result.completionPredicted)
     if !result.commit.isEmpty { documentDidChange() }
   }
+
+  /// The completion on screen: only while something is composed, as macOS hides its
+  /// candidate window, completion row and all, once nothing is.
+  var shownCompletion: String { preedit.isEmpty ? "" : lastResult.completion }
 
   // MARK: - Commands from the host
 
@@ -844,6 +891,7 @@ class CommandKeyboardController: UIInputViewController {
       case "<": pressDelete()
       case "~": pressSpecial(3, fallback: "\n")
       case "+": loadCandidates(shownCandidates.count, 9)  // the list scrolled to its end
+      case "{tab}": acceptCompletion()  // a tap on the completion row
       case "{en}": setInputMode(1)
       case "{zh}": setInputMode(0)
       case "{reset}": commitComposition()  // what the panel's resetInput does
@@ -870,6 +918,7 @@ class CommandKeyboardController: UIInputViewController {
           + (textDocumentProxy.documentContextAfterInput ?? ""),
         "preedit": preedit, "candidates": shownCandidates, "selected": result.selected,
         "pages": result.pages, "user_dict_bytes": size,
+        "completion": shownCompletion, "completion_predicted": result.completionPredicted,
       ]
       if debug {
         report["debug_context"] = result.debugContext

@@ -18,6 +18,8 @@ if "document" in r:  # mode=type
     print(f"  document {r['document']!r}")
     shown = r["candidates"]
     print(f"  preedit {r['preedit']!r}  {len(shown)} candidates of {r.get('pages', '?')} pages: {shown[:12]}{' …' if len(shown) > 12 else ''}")
+    if r.get("completion"):
+        print(f"  completion {r['completion']!r}{' (predicted)' if r.get('completion_predicted') else ''}")
     if "debug_context" in r:
         print(f"  context {r['debug_context']!r} reported={r['debug_context_reported']}")
     if "settings" in r:

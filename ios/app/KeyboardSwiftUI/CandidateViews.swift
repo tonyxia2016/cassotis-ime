@@ -7,6 +7,63 @@ protocol CandidateViewsDelegate: AnyObject {
   /// The list was scrolled near its end: read the next pages.
   func loadMoreCandidates()
   func candidatesExpanded(_ expanded: Bool)
+  /// The completion row was tapped: take its completion.
+  func completionTapped()
+}
+
+/// The row above the candidates for the one Tab completion the engine offers: a longer
+/// word, the rest of a sentence, a poem's next line. Empty when there is none; a tap
+/// takes it. Text the engine guessed is in the accent colour, as macOS draws it.
+final class CompletionRowView: UIView {
+  weak var delegate: CandidateViewsDelegate?
+  private let label = UILabel()
+  private var predicted = false
+
+  static let font = UIFont.systemFont(ofSize: 17)
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    label.font = Self.font
+    label.lineBreakMode = .byTruncatingTail
+    addSubview(label)
+    addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapped)))
+    isAccessibilityElement = true
+    accessibilityTraits = .button
+    set("", predicted: false)
+  }
+
+  required init?(coder: NSCoder) { fatalError() }
+
+  private var dark: Bool { traitCollection.userInterfaceStyle == .dark }
+  var text: String { label.text ?? "" }
+
+  func set(_ text: String, predicted: Bool) {
+    label.text = text
+    self.predicted = predicted
+    isUserInteractionEnabled = !text.isEmpty
+    accessibilityLabel = text.isEmpty ? "暂无补全" : "补全，" + text
+    updateColor()
+  }
+
+  private func updateColor() {
+    label.textColor = predicted ? KeyboardTheme.action : KeyboardTheme.label(dark)
+  }
+
+  override func traitCollectionDidChange(_ previous: UITraitCollection?) {
+    super.traitCollectionDidChange(previous)
+    updateColor()
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    label.frame = bounds.insetBy(dx: 12, dy: 0)  // lined up with the first candidate
+  }
+
+  @objc private func tapped() {
+    guard !text.isEmpty else { return }
+    UIDevice.current.playInputClick()
+    delegate?.completionTapped()
+  }
 }
 
 /// The strip above the keys: empty while nothing is typed, the candidates in one row

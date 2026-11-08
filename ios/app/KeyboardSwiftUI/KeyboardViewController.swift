@@ -7,12 +7,14 @@ final class KeyboardInputView: UIInputView, UIInputViewAudioFeedback {
 }
 
 // The keyboard in the style of iOS's own Simplified Chinese Pinyin keyboard: a strip for
-// candidates above four rows of keys, nothing else. Holding 123 opens the settings, the
-// smiley opens emoji. Letters start in the engine at touch-down (keyDown) and show at
+// candidates above four rows of keys, and above the strip a row for the Tab completion
+// (macOS shows it under its candidates). Holding 123 opens the settings, the smiley
+// opens emoji. Letters start in the engine at touch-down (keyDown) and show at
 // touch-up; everything about the engine is in CommandKeyboardController.
 final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   CandidateViewsDelegate, EmojiPanelDelegate, SettingsPanelDelegate
 {
+  let completionRow = CompletionRowView()
   let candidateBar = CandidateBarView()
   let candidateGrid = CandidateGridView()
   let keysView = KeysView()
@@ -41,10 +43,12 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   override func buildKeyboard() {
     view.backgroundColor = KeyboardTheme.background(dark)
     keysView.delegate = self
+    completionRow.delegate = self
     candidateBar.delegate = self
     candidateGrid.delegate = self
     emojiPanel.delegate = self
     settingsPanel.delegate = self
+    view.addSubview(completionRow)
     view.addSubview(candidateBar)
     // Above the strip, so a letter's callout in the top row is not covered by it.
     view.addSubview(keysView)
@@ -62,10 +66,13 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     let bounds = view.bounds
+    let row = KeyboardTheme.completionRow(landscape)
     let strip = KeyboardTheme.strip(landscape)
-    candidateBar.frame = CGRect(x: 0, y: 0, width: bounds.width, height: strip)
+    completionRow.frame = CGRect(x: 0, y: 0, width: bounds.width, height: row)
+    candidateBar.frame = CGRect(x: 0, y: row, width: bounds.width, height: strip)
     keysView.setLandscape(landscape)
-    let keys = CGRect(x: 0, y: strip, width: bounds.width, height: bounds.height - strip)
+    let top = row + strip
+    let keys = CGRect(x: 0, y: top, width: bounds.width, height: bounds.height - top)
     keysView.frame = keys
     candidateGrid.frame = keys
     emojiPanel.frame = CGRect(x: 0, y: 6, width: bounds.width, height: bounds.height - 6)
@@ -141,6 +148,10 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     if !candidateGrid.isHidden { candidateGrid.append(candidates, more: !end) }
   }
 
+  override func showCompletion(_ text: String, predicted: Bool) {
+    completionRow.set(text, predicted: predicted)
+  }
+
   override func showInputMode(_ mode: Int) {
     keysView.modeMark = mode == 1 ? "英" : "拼"
   }
@@ -198,6 +209,13 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   }
 
   func loadMoreCandidates() { loadCandidates(shownCandidates.count, 27) }
+
+  func completionTapped() {
+    candidateGrid.isHidden = true
+    candidateBar.setExpanded(false)
+    keysView.isHidden = false
+    acceptCompletion()
+  }
 
   func candidatesExpanded(_ expanded: Bool) {
     if expanded {

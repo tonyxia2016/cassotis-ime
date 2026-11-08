@@ -31,6 +31,14 @@ static CassotisKeyResult *wrap(const Result &r) {
     o.pages = r.pages;
     o.selected = r.selected;
     o.query = ns(r.query);
+    // As macOS previews it: a custom phrase may span lines.
+    std::string completion = r.completion;
+    std::replace_if(completion.begin(), completion.end(),
+        [](char c) { return c == '\t' || c == '\r' || c == '\n'; }, ' ');
+    o.completion = ns(completion);
+    o.completionPredicted = r.completionSource != CompletionSource::None &&
+        r.completionSource != CompletionSource::ExactTailFallback &&
+        r.completionSource != CompletionSource::CustomPhrase;
     o.debugContext = r.debugContextEnabled ? ns(r.debugContext) : @"";
     o.debugContextReported = r.debugContextEnabled && r.debugContextReported;
     return o;
@@ -72,6 +80,9 @@ static CassotisKeyResult *wrap(const Result &r) {
     cassotis_core_set_option("prewarm_short_lookups", number(@"prewarm", 0));
     cassotis_core_set_option("char_lm", number(@"lm", 1));
     cassotis_core_set_option("char_lm_deferred", number(@"defer", 1));
+    // The Tab completion's model work in the background: the longer continuation
+    // and the rerank of the one shown, which polls bring in (acceptCompletion).
+    cassotis_core_set_option("char_lm_async", number(@"async", 1));
     cassotis_core_set_option("deterministic_search", number(@"det", 0));
 }
 
@@ -199,6 +210,17 @@ static CassotisKeyResult *wrap(const Result &r) {
 - (CassotisKeyResult *)pressSpecial:(uint16_t)special {
     Key k; k.special = special;
     return [self keyResult:k label:"key"];
+}
+- (CassotisKeyResult *)acceptCompletion {
+    // As macOS: completionKey 0 is Tab (special 6), anything else `.
+    Key k;
+    try {
+        if (_client.state(false).completionKey == 0) k.special = 6; else k.text = "`";
+    } catch (const std::exception &e) {
+        NSLog(@"completion key: %s", e.what());
+        k.special = 6;
+    }
+    return [self keyResult:k label:"completion"];
 }
 - (void)setLeftContext:(NSString *)text {
     // The cursor counts UTF-16 units, as Length does in the engine and as the
