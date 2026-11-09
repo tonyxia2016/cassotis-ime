@@ -46,6 +46,17 @@ function nc_word_completion_remainder_fits(const parser: TncPinyinParser;
   whatever the rows of its single characters say (弄堂 under longtang, where
   弄 has only nong); "jianan" also splits as jian an. }
 function nc_pinyin_splits_one_way(const value: string; const units: Integer): Boolean;
+{ True when the letters spell a word of compact pinyin with every syllable
+  shortened to a beginning of itself: mmd, mmda and memd all spell memeda, zyk
+  and zhyk spell zhuyaokan. Every split of the pinyin counts (fg for fan gan,
+  under the key fangan). units is the word's number of syllables, 0 when it
+  does not matter. }
+function nc_pinyin_letters_spell_word(const letters, pinyin: string;
+    const units: Integer): Boolean;
+{ True when the letters cannot be whole syllables only: some key stands for a
+  syllable it only begins. Complete pinyin (tian, memeda) is read as written,
+  not as an abbreviation of something else. }
+function nc_pinyin_letters_abbreviate(const letters: string): Boolean;
 function nc_normalize_umlaut_spelling(const value: string): string;
 { Split the original keys, not a corrected lookup key. Only a literal suffix
   or one verified adjacent transposition may supply the consumption boundary.
@@ -303,6 +314,83 @@ function nc_pinyin_splits_one_way(const value: string; const units: Integer): Bo
 
 begin
     Result := (value <> '') and (units > 0) and (splits(1, units) = 1);
+end;
+
+function nc_pinyin_letters_spell_word(const letters, pinyin: string;
+    const units: Integer): Boolean;
+
+    function solve(const letter_position, pinyin_position, count: Integer): Boolean;
+    var
+        syllable_length, taken: Integer;
+        syllable: string;
+    begin
+        if pinyin_position > Length(pinyin) then
+            Exit((letter_position > Length(letters)) and
+                ((units <= 0) or (count = units)));
+        Result := False;
+        if (letter_position > Length(letters)) or
+            ((units > 0) and (count >= units)) then Exit;
+        for syllable_length := 6 downto 1 do
+        begin
+            if pinyin_position + syllable_length - 1 > Length(pinyin) then Continue;
+            syllable := Copy(pinyin, pinyin_position, syllable_length);
+            if not nc_is_canonical_pinyin_syllable(syllable) then Continue;
+            taken := 0;
+            while (taken < syllable_length) and
+                (letter_position + taken <= Length(letters)) and
+                (letters[letter_position + taken] = syllable[taken + 1]) do
+            begin
+                Inc(taken);
+                if solve(letter_position + taken,
+                    pinyin_position + syllable_length, count + 1) then Exit(True);
+            end;
+        end;
+    end;
+
+var
+    idx, position: Integer;
+begin
+    Result := False;
+    if (letters = '') or (pinyin = '') or (letters[1] <> pinyin[1]) then Exit;
+    // Most words fail here, without looking at any syllable.
+    position := 1;
+    for idx := 1 to Length(letters) do
+    begin
+        while (position <= Length(pinyin)) and (pinyin[position] <> letters[idx]) do
+            Inc(position);
+        if position > Length(pinyin) then Exit;
+        Inc(position);
+    end;
+    Result := solve(1, 1, 0);
+end;
+
+function nc_pinyin_letters_abbreviate(const letters: string): Boolean;
+var
+    parser: TncPinyinParser;
+    syllables: TncPinyinParseResult;
+    idx: Integer;
+    reconstructed: string;
+begin
+    Result := False;
+    if Length(letters) < 2 then Exit;
+    parser := TncPinyinParser.Create;
+    try
+        syllables := parser.parse(letters);
+    finally
+        parser.Free;
+    end;
+    reconstructed := '';
+    for idx := 0 to High(syllables) do
+    begin
+        // A lone consonant (m, n and r are syllables too) stands for a word's
+        // syllable here, as in mixed abbreviations.
+        if ((Length(syllables[idx].text) = 1) and
+            not CharInSet(syllables[idx].text[1], ['a', 'e', 'o'])) or
+            not nc_is_canonical_pinyin_syllable(syllables[idx].text) then
+            Exit(True);
+        reconstructed := reconstructed + syllables[idx].text;
+    end;
+    Result := reconstructed <> letters;
 end;
 
 function nc_is_canonical_pinyin_syllable(const value: string): Boolean;

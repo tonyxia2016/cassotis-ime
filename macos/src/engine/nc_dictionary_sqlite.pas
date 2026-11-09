@@ -151,6 +151,7 @@ type
         m_candidate_penalty_pinyin_loaded_cache: TDictionary<string, Boolean>;
         m_lookup_result_cache: TDictionary<string, TncCandidateList>;
         m_mixed_abbreviation_cache: TDictionary<string, TncCandidateList>;
+        m_personal_word_cache: TDictionary<string, TncPersonalWordList>;
         m_word_completion_cache: TDictionary<string, TncOneKeyCompletionList>;
         m_next_character_cache: TDictionary<string, TArray<string>>;
         m_lookup_result_cache_order: TQueue<string>;
@@ -346,6 +347,8 @@ type
             out results: TncCandidateList): Boolean; override;
         function lookup_mixed_abbreviation_words(const pinyin: string;
             out results: TncCandidateList): Boolean; override;
+        function lookup_personal_words(const query: string; const abbreviate: Boolean;
+            out words: TncPersonalWordList): Boolean; override;
         function lookup_word_completions(const syllables: TArray<string>;
             const max_syllables, limit: Integer;
             out results: TncOneKeyCompletionList): Boolean; override;
@@ -2751,6 +2754,7 @@ begin
     m_candidate_penalty_pinyin_loaded_cache := TDictionary<string, Boolean>.Create;
     m_lookup_result_cache := TDictionary<string, TncCandidateList>.Create;
     m_mixed_abbreviation_cache := TDictionary<string, TncCandidateList>.Create;
+    m_personal_word_cache := TDictionary<string, TncPersonalWordList>.Create;
     m_word_completion_cache := TDictionary<string, TncOneKeyCompletionList>.Create;
     m_next_character_cache := TDictionary<string, TArray<string>>.Create;
     m_lookup_result_cache_order := TQueue<string>.Create;
@@ -2989,6 +2993,8 @@ begin
         m_lookup_result_cache.Free;
         m_lookup_result_cache := nil;
     end;
+    m_personal_word_cache.Free;
+    m_personal_word_cache := nil;
     if m_mixed_abbreviation_cache <> nil then
     begin
         m_mixed_abbreviation_cache.Free;
@@ -4167,6 +4173,157 @@ begin
         m_mixed_abbreviation_cache.AddOrSetValue(query_key, Copy(results, 0, Length(results)));
     end;
     Result := Length(results) > 0;
+end;
+
+function TncSqliteDictionary.lookup_personal_words(const query: string;
+    const abbreviate: Boolean; out words: TncPersonalWordList): Boolean;
+const
+    c_cache_limit = 1024;
+    c_abbreviated_key_limit = 48;
+    c_word_limit = 64;
+    c_exact_sql =
+        'SELECT pinyin, text, commit_count, last_used, 0 FROM dict_user_stats ' +
+        'WHERE pinyin = ?1 UNION ALL ' +
+        'SELECT pinyin, text, weight, last_used, 1 FROM dict_user WHERE pinyin = ?1';
+    // Words with the first letter of the keys, through the pinyin indexes.
+    c_range_sql =
+        'SELECT pinyin, text, commit_count, last_used, 0 FROM dict_user_stats ' +
+        'WHERE pinyin >= ?1 AND pinyin < ?2 UNION ALL ' +
+        'SELECT pinyin, text, weight, last_used, 1 FROM dict_user ' +
+        'WHERE pinyin >= ?1 AND pinyin < ?2';
+var
+    key, cache_key, row_pinyin, row_text: string;
+    by_row: TDictionary<string, Integer>;
+    list: TArray<TncPersonalWord>;
+    count, position, other, row_count, units: Integer;
+    exact_row, is_abbreviated: Boolean;
+    stmt: Psqlite3_stmt;
+    item: TncPersonalWord;
+    ch: Char;
+
+    function ranks_before(const left, right: TncPersonalWord): Boolean;
+    begin
+        // Stored under exactly the typed keys first (the choices of those keys).
+        if (left.pinyin = key) <> (right.pinyin = key) then Exit(left.pinyin = key);
+        if left.use_count <> right.use_count then Exit(left.use_count > right.use_count);
+        if left.last_used <> right.last_used then Exit(left.last_used > right.last_used);
+        Result := left.text < right.text;
+    end;
+begin
+    words := nil;
+    Result := False;
+    key := LowerCase(Trim(query));
+    if key = '' then Exit;
+    for ch in key do
+        if not CharInSet(ch, ['a' .. 'z']) then Exit;
+    cache_key := key;
+    if abbreviate then cache_key := key + '*';
+    if (m_personal_word_cache <> nil) and
+        m_personal_word_cache.TryGetValue(cache_key, words) then
+        Exit(Length(words) > 0);
+    if (not ensure_open) or (not m_user_ready) then Exit;
+    is_abbreviated := abbreviate and (Length(key) <= c_abbreviated_key_limit) and
+        nc_pinyin_letters_abbreviate(key);
+
+    SetLength(list, 0);
+    count := 0;
+    by_row := TDictionary<string, Integer>.Create;
+    stmt := nil;
+    try
+        if is_abbreviated then
+        begin
+            if not (m_user_connection.prepare(c_range_sql, stmt) and
+                m_user_connection.BindText(stmt, 1, Copy(key, 1, 1)) and
+                m_user_connection.BindText(stmt, 2,
+                build_prefix_upper_bound(Copy(key, 1, 1)))) then Exit;
+        end
+        else if not (m_user_connection.prepare(c_exact_sql, stmt) and
+            m_user_connection.BindText(stmt, 1, key)) then Exit;
+        while m_user_connection.step(stmt) = SQLITE_ROW do
+        begin
+            row_pinyin := m_user_connection.ColumnText(stmt, 0);
+            row_text := m_user_connection.ColumnText(stmt, 1);
+            if row_text = '' then Continue;
+            exact_row := row_pinyin = key;
+            // Under another reading only a word of its syllables, and never a
+            // single character: nothing else is an abbreviation of a word.
+            if not exact_row then
+            begin
+                units := get_valid_cjk_codepoint_count(row_text);
+                if (units < 2) or
+                    not nc_pinyin_letters_spell_word(key, row_pinyin, units) then Continue;
+            end;
+            if by_row.TryGetValue(row_pinyin + #1 + row_text, position) then
+            begin
+                row_count := m_user_connection.ColumnInt(stmt, 2);
+                if row_count > list[position].use_count then
+                    list[position].use_count := row_count;
+                if m_user_connection.ColumnInt(stmt, 4) <> 0 then
+                    list[position].is_user_word := True;
+                Continue;
+            end;
+            item := Default(TncPersonalWord);
+            item.pinyin := row_pinyin;
+            item.text := user_text_for_script(row_pinyin, row_text);
+            item.use_count := m_user_connection.ColumnInt(stmt, 2);
+            item.last_used := m_user_connection.ColumnInt64(stmt, 3);
+            item.is_user_word := m_user_connection.ColumnInt(stmt, 4) <> 0;
+            if count >= Length(list) then
+                SetLength(list, count * 2 + 8);
+            list[count] := item;
+            by_row.Add(row_pinyin + #1 + row_text, count);
+            Inc(count);
+        end;
+    finally
+        if stmt <> nil then m_user_connection.finalize(stmt);
+        by_row.Free;
+    end;
+
+    // One entry for a text read in more than one way: the better one first.
+    SetLength(list, count);
+    for position := 1 to count - 1 do
+    begin
+        item := list[position];
+        other := position - 1;
+        while (other >= 0) and ranks_before(item, list[other]) do
+        begin
+            list[other + 1] := list[other];
+            Dec(other);
+        end;
+        list[other + 1] := item;
+    end;
+    SetLength(words, count);
+    row_count := 0;
+    for position := 0 to count - 1 do
+    begin
+        exact_row := False;
+        for other := 0 to row_count - 1 do
+            if words[other].text = list[position].text then
+            begin
+                exact_row := True;
+                // Stored under the abbreviation as well: its reading is this.
+                if words[other].pinyin = key then
+                    words[other].pinyin := list[position].pinyin;
+                if list[position].use_count > words[other].use_count then
+                    words[other].use_count := list[position].use_count;
+                words[other].is_user_word := words[other].is_user_word or
+                    list[position].is_user_word;
+                Break;
+            end;
+        if exact_row then Continue;
+        if row_count >= c_word_limit then Continue;
+        words[row_count] := list[position];
+        Inc(row_count);
+    end;
+    SetLength(words, row_count);
+
+    if m_personal_word_cache <> nil then
+    begin
+        if m_personal_word_cache.Count >= nc_cache_limit(c_cache_limit) then
+            m_personal_word_cache.Clear;
+        m_personal_word_cache.AddOrSetValue(cache_key, words);
+    end;
+    Result := row_count > 0;
 end;
 
 function TncSqliteDictionary.lookup_candidate_prefix_completions(
@@ -12038,6 +12195,10 @@ begin
     if m_mixed_abbreviation_cache <> nil then
     begin
         m_mixed_abbreviation_cache.Clear;
+    end;
+    if m_personal_word_cache <> nil then
+    begin
+        m_personal_word_cache.Clear;
     end;
     if m_word_completion_cache <> nil then
     begin

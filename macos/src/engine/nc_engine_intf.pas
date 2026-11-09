@@ -671,6 +671,18 @@ type
         m_allow_one_key_completion_lookup: Boolean;
         m_custom_phrases: TDictionary<string, string>;
         m_custom_phrase_config: TncCustomPhraseList;
+        m_custom_phrase_keys: TArray<string>;
+        m_custom_phrase_match_key: string;
+        m_custom_phrase_match_texts: TArray<string>;
+        m_custom_phrase_match_valid: Boolean;
+        // The page in front of the user is not in the order of the candidates:
+        // the words of the user's own went first (apply_personal_candidates).
+        // What they stand for is kept here, not on every candidate: candidate
+        // lists are what the lookup caches are full of.
+        m_personal_page: Boolean;
+        m_personal_page_key: string;
+        m_personal_page_phrases: TArray<string>;
+        m_personal_page_words: TncPersonalWordList;
         m_visible_candidates_cache: TncCandidateList;
         m_visible_candidate_source_indices_cache: TArray<Integer>;
         m_visible_candidates_cache_composition_text: string;
@@ -1219,7 +1231,18 @@ type
             out completion_score: Integer): Boolean;
         procedure refresh_one_key_completion;
         procedure reload_custom_phrases;
+        function get_custom_phrases_for_input: TArray<string>;
         function try_refresh_custom_phrase: Boolean;
+        function try_refresh_personal_word: Boolean;
+        function collect_personal_candidates: Boolean;
+        procedure apply_personal_candidates(var candidates: TncCandidateList;
+            var source_indices: TArray<Integer>; const page_size: Integer);
+        function personal_text_key(const text: string): string;
+        function get_personal_phrase_text(const candidate: TncCandidate;
+            out phrase: string): Boolean;
+        function try_commit_personal_candidate(const candidate: TncCandidate;
+            const source_index: Integer; const explicit_choice: Boolean;
+            const punctuation: string): Boolean;
         procedure refresh_exact_tail_completion;
         function accept_one_key_completion: Boolean;
         procedure apply_long_complete_candidate_pool(
@@ -1445,6 +1468,9 @@ type
         function clear_user_dictionary: Boolean;
         function dictionary_base_ready: Boolean;
         function dictionary_user_ready: Boolean;
+        { The reading of a candidate that is a word the user has used, reached
+          by a spelling of its own ('' for any other candidate). }
+        function get_personal_word_reading(const candidate: TncCandidate): string;
         function is_user_or_literal_entry(const pinyin: string;
             const text: string): Boolean;
         { Imports a list of the user's words with how often they typed them
@@ -6628,25 +6654,53 @@ begin
         m_custom_phrases := TDictionary<string, string>.Create
     else
         m_custom_phrases.Clear;
+    m_custom_phrase_keys := nil;
+    m_custom_phrase_match_valid := False;
     for phrase in m_config.custom_phrases do
     begin
         key := nc_custom_phrase_key(phrase.shortcut);
         if (key <> '') and nc_custom_phrase_text_valid(phrase.text) and
             not m_custom_phrases.ContainsKey(key) then
+        begin
             m_custom_phrases.Add(key, phrase.text);
+            m_custom_phrase_keys := m_custom_phrase_keys + [key];
+        end;
     end;
 end;
 
-function TncEngine.try_refresh_custom_phrase: Boolean;
-var key, text: string;
+// The phrases the keys reach: by the whole shortcut, and, a shortcut that is
+// pinyin, by its syllables shortened (mmd for memeda).
+function TncEngine.get_custom_phrases_for_input: TArray<string>;
+var key, shortcut, text: string;
 begin
-    Result := False;
+    Result := nil;
     if (m_custom_phrases = nil) or (m_custom_phrases.Count = 0) or
         (m_config.input_mode <> im_chinese) or (m_confirmed_text <> '') or
         m_has_pending_commit then Exit;
     // Match the keys, not decoded double-pinyin, fuzzy or typo-corrected spelling.
     key := LowerCase(m_composition_display_text);
-    if (key = '') or not m_custom_phrases.TryGetValue(key, text) then Exit;
+    if key = '' then Exit;
+    if m_custom_phrase_match_valid and (m_custom_phrase_match_key = key) then
+        Exit(m_custom_phrase_match_texts);
+    if m_custom_phrases.TryGetValue(key, text) then Result := [text];
+    if nc_pinyin_letters_abbreviate(key) then
+        for shortcut in m_custom_phrase_keys do
+            if (shortcut <> key) and nc_pinyin_letters_spell_word(key, shortcut, 0) and
+                m_custom_phrases.TryGetValue(shortcut, text) then
+                Result := Result + [text];
+    m_custom_phrase_match_key := key;
+    m_custom_phrase_match_texts := Result;
+    m_custom_phrase_match_valid := True;
+end;
+
+function TncEngine.try_refresh_custom_phrase: Boolean;
+var key, text: string; phrases: TArray<string>;
+begin
+    Result := False;
+    phrases := get_custom_phrases_for_input;
+    if Length(phrases) = 0 then Exit;
+    key := LowerCase(m_composition_display_text);
+    text := phrases[0];
     if (m_one_key_completion.source <> okcs_custom_phrase) or
         (m_one_key_completion.text <> text) or
         (m_one_key_completion_query_prefix <> key) then
@@ -6659,6 +6713,40 @@ begin
         m_one_key_completion_score := MaxInt;
     end;
     Result := True;
+end;
+
+// An abbreviation with nothing to complete otherwise: Tab takes the word the
+// user has used most for these keys, as it would a word the keys begin.
+function TncEngine.try_refresh_personal_word: Boolean;
+var
+    key: string;
+    words: TncPersonalWordList;
+    idx: Integer;
+begin
+    Result := False;
+    if (not m_allow_one_key_completion_lookup) or (m_dictionary = nil) or
+        (m_config.input_mode <> im_chinese) or (m_confirmed_text <> '') or
+        m_has_pending_commit or m_quick_input.exclusive or is_shuangpin_input then Exit;
+    key := normalize_pinyin_text(m_composition_text);
+    if (key = '') or (not m_dictionary.lookup_personal_words(key, True, words)) or
+        (not nc_pinyin_letters_abbreviate(key)) then Exit;
+    for idx := 0 to High(words) do
+        if get_candidate_text_unit_count(words[idx].text) >= 2 then
+        begin
+            if (m_one_key_completion.source <> okcs_user_exact) or
+                (m_one_key_completion.text <> words[idx].text) or
+                (m_one_key_completion_query_prefix <> key) then
+            begin
+                clear_one_key_completion;
+                clear_one_key_completion_feedback_target;
+                m_one_key_completion.text := words[idx].text;
+                m_one_key_completion.full_pinyin := words[idx].pinyin;
+                m_one_key_completion.source := okcs_user_exact;
+                m_one_key_completion_query_prefix := key;
+                m_one_key_completion_score := MaxInt;
+            end;
+            Exit(True);
+        end;
 end;
 
 procedure TncEngine.clear_one_key_completion;
@@ -8305,6 +8393,7 @@ begin
     previous_query_prefix := m_one_key_completion_query_prefix;
     clear_one_key_completion;
     if try_refresh_custom_phrase then Exit;
+    if try_refresh_personal_word then Exit;
     if (not m_allow_one_key_completion_lookup) or (m_dictionary = nil) or
         (m_config.input_mode <> im_chinese) or
         (Trim(m_confirmed_text) <> '') or (Trim(m_composition_text) = '') or
@@ -9407,10 +9496,11 @@ begin
             completion_text);
     end;
 
-    // Neither predicted suffixes nor exact-tail joins create user words.
-    // Keep the full spelling only for subsequent context bookkeeping.
-    set_pending_commit(completion_text, '', False, '', True, '', False,
-        False, '', True);
+    // A word taken with Tab is a word used, whether the dictionary knows it or
+    // the engine joined it: it learns like one picked from the candidates, under
+    // its full spelling. (Upstream keeps these out of the user's words.)
+    set_pending_commit(completion_text, '', completion_pinyin <> '', '', True, '', False,
+        False, '', completion_pinyin = '');
     if completion_pinyin <> '' then
     begin
         m_pending_commit_query_key := completion_pinyin;
@@ -9487,9 +9577,9 @@ end;
 
 procedure TncEngine.refresh_raw_input_candidate;
 const
-    // With a Chinese reading of the whole input on the page, the letters go
-    // first when the LM holds them this far above the best such reading, and
-    // are shown without being selected down to this far below it. On chat
+    // With a Chinese reading of the whole input on the page, letters the user
+    // chose before go first when the LM holds them this far above the best such
+    // reading; any letters are shown down to this far below it. On chat
     // text the LM never saw, no word typed in full pinyin lost its place at
     // these values.
     c_select_margin = 2.0;
@@ -9601,7 +9691,13 @@ begin
     shown_reading := '';
     if Length(readings) > 0 then shown_reading := readings[0];
     decided := True;
-    if Length(readings) = 0 then
+    if m_personal_page and not capital then
+    begin
+        // What the user made their own goes first, also before letters they
+        // committed for this input (they stay within reach, on Enter as well).
+        if learned then offer(False);
+    end
+    else if Length(readings) = 0 then
     begin
         // The page converts only a part of the input.
         if capital or learned then
@@ -9683,7 +9779,10 @@ begin
     begin
         margin := lm_margin;
         if learned then margin := margin + c_learned_bonus;
-        if scored and (margin >= c_select_margin) then offer(True)
+        // With a Chinese reading on the page the letters go first only when the
+        // user chose them for this input before: guessing English took the place
+        // of abbreviations (pdf, ok). They stay in reach, on Enter as well.
+        if scored and (margin >= c_select_margin) and learned then offer(True)
         else if learned or (scored and (margin >= c_show_margin)) then offer(False);
     end;
     if m_raw_input_selected then m_raw_input_sticky := key;
@@ -138105,13 +138204,16 @@ procedure TncEngine.convert_page_to_traditional(var candidates: TncCandidateList
     var source_indices: TArray<Integer>);
 var
     idx, other, count, source: Integer;
-    text: string;
+    text, phrase: string;
     repeated: Boolean;
 begin
     count := 0;
     for idx := 0 to High(candidates) do
     begin
-        text := nc_simplified_to_traditional(candidates[idx].text);
+        // A custom phrase is literal.
+        text := candidates[idx].text;
+        if not get_personal_phrase_text(candidates[idx], phrase) then
+            text := nc_simplified_to_traditional(text);
         repeated := False;
         if text <> candidates[idx].text then
         begin
@@ -138302,6 +138404,283 @@ begin
         m_long_visible_candidate_pool_source_indices_cache := sources;
     end;
     promote_in(candidates, source_indices, True);
+end;
+
+function TncEngine.collect_personal_candidates: Boolean;
+begin
+    m_personal_page := False;
+    m_personal_page_key := '';
+    m_personal_page_phrases := nil;
+    m_personal_page_words := nil;
+    Result := False;
+    if (m_page_index <> 0) or m_quick_input.exclusive or
+        (m_config.input_mode <> im_chinese) then Exit;
+    m_personal_page_phrases := get_custom_phrases_for_input;
+    m_personal_page_key := normalize_pinyin_text(m_composition_text);
+    if (m_dictionary <> nil) and (m_personal_page_key <> '') then
+        m_dictionary.lookup_personal_words(m_personal_page_key, not is_shuangpin_input,
+            m_personal_page_words);
+    Result := (Length(m_personal_page_phrases) > 0) or (Length(m_personal_page_words) > 0);
+end;
+
+function TncEngine.personal_text_key(const text: string): string;
+begin
+    Result := Trim(text);
+    if m_config.dictionary_variant = dv_traditional then
+        Result := nc_simplified_to_traditional(Result);
+end;
+
+function TncEngine.get_personal_phrase_text(const candidate: TncCandidate;
+    out phrase: string): Boolean;
+var idx: Integer;
+begin
+    Result := False;
+    phrase := '';
+    if (candidate.source <> cs_quick_input) or (not m_personal_page) or
+        m_quick_input.exclusive then Exit;
+    for idx := 0 to High(m_personal_page_phrases) do
+        if nc_custom_phrase_candidate_text(m_personal_page_phrases[idx]) = candidate.text then
+        begin
+            phrase := m_personal_page_phrases[idx];
+            Exit(True);
+        end;
+end;
+
+function TncEngine.get_personal_word_reading(const candidate: TncCandidate): string;
+var
+    idx: Integer;
+    key: string;
+begin
+    Result := '';
+    if (not m_personal_page) or m_quick_input.exclusive or
+        (Trim(candidate.comment) <> '') or (candidate.fuzzy_cost > 0) then Exit;
+    key := personal_text_key(candidate.text);
+    for idx := 0 to High(m_personal_page_words) do
+        if personal_text_key(m_personal_page_words[idx].text) = key then
+            Exit(m_personal_page_words[idx].pinyin);
+end;
+
+// A phrase, or a word of the user's own that the ordinary selection cannot
+// learn: it would learn under the typed keys, and it may not be a candidate.
+function TncEngine.try_commit_personal_candidate(const candidate: TncCandidate;
+    const source_index: Integer; const explicit_choice: Boolean;
+    const punctuation: string): Boolean;
+var phrase, reading: string;
+begin
+    Result := False;
+    if get_personal_phrase_text(candidate, phrase) then
+    begin
+        // As with Tab: the literal, non-learning quick-text commit path.
+        clear_one_key_completion_feedback_target;
+        set_pending_commit(phrase + punctuation, '', False, '', punctuation = '', '', False,
+            False, '', True);
+        m_quick_input.pending_commit := True;
+        Exit(True);
+    end;
+    reading := get_personal_word_reading(candidate);
+    if (reading = '') or
+        ((reading = m_personal_page_key) and (source_index >= 0)) then Exit;
+    if punctuation = '' then
+        set_pending_commit(candidate.text, '', True, '', explicit_choice)
+    else
+    begin
+        // Text with punctuation is not learned: this keeps the word apart from it.
+        if m_dictionary <> nil then
+        begin
+            m_dictionary.record_commit(reading, candidate.text);
+            if m_personal_page_key <> reading then
+                m_dictionary.record_raw_input_choice(m_personal_page_key, candidate.text);
+        end;
+        set_pending_commit(candidate.text + punctuation, '', False, '', False, '', False,
+            False, '', True);
+    end;
+    m_pending_commit_query_key := reading;
+    Result := True;
+end;
+
+// What the user made their own comes first, whatever the rest of the page
+// says: custom phrases, then words used before, by any spelling of theirs. The
+// last step of a page, so that no ranking stage can take them away again.
+//
+// The word the engine puts first stays first when it is one of them: that is
+// where the language model's choice for this context lands, among words the
+// user knows. The others go by how often they were used. A word that the keys
+// spell but the engine did not find (they abbreviate it, or it is no dictionary
+// word) is added here and learns under its own reading when chosen.
+procedure TncEngine.apply_personal_candidates(var candidates: TncCandidateList;
+    var source_indices: TArray<Integer>; const page_size: Integer);
+type
+    TOwnWord = record
+        candidate: TncCandidate;
+        source: Integer;
+        use_count: Integer;
+        last_used: Int64;
+    end;
+var
+    items, merged: TncCandidateList;
+    item_sources, merged_sources: TArray<Integer>;
+    own: TArray<TOwnWord>;
+    rest: TArray<Integer>;
+    taken: TArray<Boolean>;
+    word_of_text: TDictionary<string, Integer>;
+    phrase_texts, seen: TDictionary<string, Boolean>;
+    value: TncCandidate;
+    moving: TOwnWord;
+    item_key, phrase_key: string;
+    idx, other, word, own_count, rest_count, first_sorted, filled: Integer;
+    first_is_own, at_first, whole: Boolean;
+
+    procedure add_own(const candidate: TncCandidate; const source, use_count: Integer;
+        const last_used: Int64);
+    begin
+        if own_count >= Length(own) then
+            SetLength(own, own_count * 2 + 8);
+        own[own_count].candidate := candidate;
+        own[own_count].source := source;
+        own[own_count].use_count := use_count;
+        own[own_count].last_used := last_used;
+        Inc(own_count);
+    end;
+
+    procedure add_merged(const candidate: TncCandidate; const source: Integer);
+    begin
+        merged[filled] := candidate;
+        merged_sources[filled] := source;
+        Inc(filled);
+    end;
+
+begin
+    word_of_text := TDictionary<string, Integer>.Create;
+    phrase_texts := TDictionary<string, Boolean>.Create;
+    seen := TDictionary<string, Boolean>.Create;
+    try
+        // The page as it stands, then the rest of what paging would show.
+        items := Copy(candidates);
+        item_sources := Copy(source_indices);
+        for idx := 0 to High(items) do
+            seen.AddOrSetValue(nc_visible_candidate_key(items[idx], items[idx].comment), True);
+        if long_visible_candidate_pool_cache_is_current(page_size) then
+        begin
+            filled := Length(items);
+            SetLength(items, filled + Length(m_long_visible_candidate_pool_cache));
+            SetLength(item_sources, Length(items));
+            for idx := 0 to High(m_long_visible_candidate_pool_cache) do
+            begin
+                item_key := nc_visible_candidate_key(m_long_visible_candidate_pool_cache[idx],
+                    m_long_visible_candidate_pool_cache[idx].comment);
+                if seen.ContainsKey(item_key) then Continue;
+                seen.Add(item_key, True);
+                items[filled] := m_long_visible_candidate_pool_cache[idx];
+                item_sources[filled] := m_long_visible_candidate_pool_source_indices_cache[idx];
+                Inc(filled);
+            end;
+            SetLength(items, filled);
+            SetLength(item_sources, filled);
+        end;
+
+        for idx := 0 to High(m_personal_page_phrases) do
+            phrase_texts.AddOrSetValue(personal_text_key(
+                nc_custom_phrase_candidate_text(m_personal_page_phrases[idx])), True);
+        for idx := 0 to High(m_personal_page_words) do
+            word_of_text.AddOrSetValue(personal_text_key(m_personal_page_words[idx].text), idx);
+        SetLength(taken, Length(m_personal_page_words));
+        SetLength(rest, Length(items));
+        own_count := 0;
+        rest_count := 0;
+        first_is_own := False;
+        at_first := True;
+        for idx := 0 to High(items) do
+        begin
+            value := items[idx];
+            whole := (Trim(value.comment) = '') and (value.fuzzy_cost <= 0) and
+                (Trim(value.text) <> '');
+            if whole and phrase_texts.ContainsKey(personal_text_key(value.text)) then Continue;
+            if whole and word_of_text.TryGetValue(personal_text_key(value.text), word) then
+            begin
+                taken[word] := True;
+                add_own(value, item_sources[idx], m_personal_page_words[word].use_count,
+                    m_personal_page_words[word].last_used);
+                first_is_own := first_is_own or at_first;
+            end
+            else if whole and (value.source = cs_user) then
+            begin
+                add_own(value, item_sources[idx], 0, 0);
+                first_is_own := first_is_own or at_first;
+            end
+            else
+            begin
+                rest[rest_count] := idx;
+                Inc(rest_count);
+            end;
+            at_first := False;
+        end;
+        for word := 0 to High(m_personal_page_words) do
+        begin
+            // A character the engine does not offer for the keys is no reading of them.
+            if taken[word] or
+                phrase_texts.ContainsKey(personal_text_key(m_personal_page_words[word].text)) or
+                (get_candidate_text_unit_count(m_personal_page_words[word].text) < 2) then Continue;
+            value := Default(TncCandidate);
+            value.text := m_personal_page_words[word].text;
+            if m_personal_page_words[word].is_user_word then
+                value.source := cs_user
+            else
+                value.source := cs_rule;
+            add_own(value, -1, m_personal_page_words[word].use_count,
+                m_personal_page_words[word].last_used);
+        end;
+
+        first_sorted := Ord(first_is_own);
+        for idx := first_sorted + 1 to own_count - 1 do
+        begin
+            moving := own[idx];
+            other := idx - 1;
+            while (other >= first_sorted) and
+                ((moving.use_count > own[other].use_count) or
+                ((moving.use_count = own[other].use_count) and
+                (moving.last_used > own[other].last_used))) do
+            begin
+                own[other + 1] := own[other];
+                Dec(other);
+            end;
+            own[other + 1] := moving;
+        end;
+
+        SetLength(merged, Length(m_personal_page_phrases) + own_count + rest_count);
+        SetLength(merged_sources, Length(merged));
+        filled := 0;
+        for idx := 0 to High(m_personal_page_phrases) do
+        begin
+            // Two phrases that show the same would commit the first of them anyway.
+            phrase_key := nc_custom_phrase_candidate_text(m_personal_page_phrases[idx]);
+            other := 0;
+            while (other < filled) and (merged[other].text <> phrase_key) do Inc(other);
+            if other < filled then Continue;
+            value := Default(TncCandidate);
+            value.text := phrase_key;
+            value.source := cs_quick_input;
+            add_merged(value, -1);
+        end;
+        for idx := 0 to own_count - 1 do
+            add_merged(own[idx].candidate, own[idx].source);
+        for idx := 0 to rest_count - 1 do
+            add_merged(items[rest[idx]], item_sources[rest[idx]]);
+        SetLength(merged, filled);
+        SetLength(merged_sources, filled);
+    finally
+        seen.Free;
+        phrase_texts.Free;
+        word_of_text.Free;
+    end;
+
+    m_long_visible_candidate_pool_cache := merged;
+    m_long_visible_candidate_pool_source_indices_cache := merged_sources;
+    m_long_visible_candidate_pool_cache_key :=
+        get_long_visible_candidate_pool_cache_key(page_size);
+    m_long_visible_candidate_pool_source_signature := get_candidate_state_signature;
+    m_long_visible_candidate_pool_cache_valid := True;
+    nc_copy_candidate_page(merged, merged_sources, 0, page_size, candidates, source_indices);
+    m_personal_page := True;
 end;
 
 function TncEngine.get_candidate_word_frequency(const text: string): Integer;
@@ -156154,6 +156533,8 @@ var
                 m_dictionary.is_user_entry(head_key_local, head_text_local));
         end;
     begin
+        if try_commit_personal_candidate(selected, selected_candidate_index,
+            explicit_selection, '') then Exit(True);
         if selected.source = cs_quick_input then
         begin
             if (m_quick_input.kind = qik_symbols) and
@@ -156254,6 +156635,7 @@ var
             (selected.fuzzy_cost <= 0)) and (m_last_lookup_key <> '') and
             (selected_candidate_index > 0) and
             (Length(m_candidates) > 0) and
+            (not m_personal_page) and
             (not short_exact_lexicon_completion_selection) then
         begin
             top_candidate := m_candidates[0];
@@ -156494,7 +156876,10 @@ begin
                             '', False, '', False, '', False, False, '', True);
                         Exit(True);
                     end;
-                    get_selected_candidate(candidate, m_quick_input.kind <> qik_none);
+                    get_selected_candidate(candidate,
+                        (m_quick_input.kind <> qik_none) or m_personal_page);
+                    if try_commit_personal_candidate(candidate, index, False, punct_text) then
+                        Exit(True);
                     if candidate.source = cs_quick_input then
                     begin
                         if (m_quick_input.kind = qik_symbols) and
@@ -180598,6 +180983,7 @@ var
 
     procedure build_current_page_result;
     var
+        has_personal_candidates: Boolean;
         page_idx: Integer;
         source_idx: Integer;
         complete_visible_texts: TDictionary<string, Boolean>;
@@ -185928,7 +186314,8 @@ var
             // Aliases add their date/time choices to this pool before the page
             // is published, so freeze their entire filtered tail even if sparse.
             if (Length(Result) < visible_page_size) and (count > Length(Result)) and
-                (m_quick_input.kind <> qik_date_alias) then Exit;
+                (m_quick_input.kind <> qik_date_alias) and
+                not has_personal_candidates then Exit;
             SetLength(pool, count);
             SetLength(sources, count);
             m_long_visible_candidate_pool_cache := pool;
@@ -186314,6 +186701,7 @@ var
                     m_long_visible_candidate_pool_source_indices_cache[page_idx] := visible_source_indices[page_idx];
                 end;
             drop_visible_predictive_longer_candidates;
+            has_personal_candidates := collect_personal_candidates;
             freeze_remaining_pages;
             if (m_quick_input.kind = qik_date_alias) and (m_page_index = 0) then
             begin
@@ -186332,6 +186720,8 @@ var
                     m_long_visible_candidate_pool_source_indices_cache, 0,
                     visible_page_size, Result, visible_source_indices);
             end;
+            if has_personal_candidates then
+                apply_personal_candidates(Result, visible_source_indices, visible_page_size);
             cache_visible_candidate_page(Result, visible_source_indices, visible_page_size);
         finally
             emitted_visible_texts.Free;
@@ -187192,12 +187582,13 @@ begin
 end;
 
 function TncEngine.get_candidate_page_snapshot(const page_index: Integer): TncCandidateList;
-var idx: Integer;
+var idx: Integer; phrase: string;
 begin
     Result := get_candidate_page_snapshot_raw(page_index);
     if m_config.dictionary_variant = dv_traditional then
         for idx := 0 to High(Result) do
-            Result[idx].text := nc_simplified_to_traditional(Result[idx].text);
+            if not get_personal_phrase_text(Result[idx], phrase) then
+                Result[idx].text := nc_simplified_to_traditional(Result[idx].text);
 end;
 
 function TncEngine.get_display_text: string;
@@ -187226,6 +187617,7 @@ begin
     if m_one_key_completion.source = okcs_custom_phrase then
         clear_one_key_completion;
     if m_quick_input.exclusive then Exit(Default(TncOneKeyCompletion));
+    if try_refresh_personal_word then Exit(m_one_key_completion);
 {$IFDEF CASSOTIS_TAB_HANDOFF_DIAGNOSTICS}
     carry_validated_prefix_completion;
     if GetEnvironmentVariable('CASSOTIS_TAB_REPAIRED_PREFIX') = 'carry' then
@@ -188447,6 +188839,8 @@ var
     literal_word_to_record: Boolean;
     single_char_tail: Boolean;
     literal_full_pinyin: string;
+    word_reading: string;
+    typed_key: string;
 
     function is_boundary_learning_unit(const text_value: string): Boolean;
     begin
@@ -189103,6 +189497,23 @@ begin
                     else
                         m_dictionary.record_commit(normalized_pinyin, commit_segment_text,
                             explicit_commit_choice);
+                    // Chosen under another spelling than its own: for those keys this
+                    // is now the latest choice, in place of letters committed before.
+                    typed_key := normalize_pinyin_text(m_composition_text);
+                    if (typed_key <> '') and (typed_key <> normalized_pinyin) and
+                        (not is_full_pinyin_key(typed_key)) then
+                        m_dictionary.record_raw_input_choice(typed_key, commit_segment_text);
+                    // A word chosen by its abbreviation was used: under its own
+                    // reading its other spellings find it as well.
+                    if (not is_full_pinyin_key(normalized_pinyin)) and
+                        m_dictionary.resolve_literal_user_word_pinyin(normalized_pinyin,
+                        commit_segment_text, word_reading) then
+                    begin
+                        word_reading := normalize_pinyin_text(word_reading);
+                        if word_reading <> normalized_pinyin then
+                            m_dictionary.record_commit(word_reading, commit_segment_text,
+                                explicit_commit_choice);
+                    end;
                     if should_persist_segment_path(effective_segment_path) then
                     begin
                         if should_persist_path_prefixes(effective_segment_path) then

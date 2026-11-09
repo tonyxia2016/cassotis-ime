@@ -25,6 +25,11 @@ type
           e.g. "xiannrou" (xian + n + rou), user words first, then by weight. }
         function lookup_mixed_abbreviation_words(const pinyin: string;
             out results: TncCandidateList): Boolean; virtual;
+        { The words the user has used that the typed keys spell: under exactly
+          these keys, and with abbreviate also with their syllables shortened
+          (nc_pinyin_letters_spell_word), most used first. }
+        function lookup_personal_words(const query: string; const abbreviate: Boolean;
+            out words: TncPersonalWordList): Boolean; virtual;
         function lookup_candidate_prefix_completions(const pinyin_prefix: string;
             out results: TncOneKeyCompletionList): Boolean; virtual;
         { Base words whose leading syllables are exactly the given complete
@@ -235,6 +240,13 @@ function TncDictionaryProvider.lookup_mixed_abbreviation_words(const pinyin: str
     out results: TncCandidateList): Boolean;
 begin
     SetLength(results, 0);
+    Result := False;
+end;
+
+function TncDictionaryProvider.lookup_personal_words(const query: string;
+    const abbreviate: Boolean; out words: TncPersonalWordList): Boolean;
+begin
+    words := nil;
     Result := False;
 end;
 

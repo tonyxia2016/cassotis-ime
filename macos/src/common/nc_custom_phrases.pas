@@ -20,6 +20,9 @@ function nc_custom_phrases_to_json(const phrases: TncCustomPhraseList): string;
 function nc_parse_custom_phrases(const value: string;
     out phrases: TncCustomPhraseList): Boolean;
 function nc_custom_phrase_preview(const value: string): string;
+{ How a phrase shows among the candidates: on one line and short enough to
+  leave room for the others. }
+function nc_custom_phrase_candidate_text(const value: string): string;
 
 implementation
 
@@ -126,6 +129,24 @@ begin
     for idx := 1 to Length(Result) do
         if CharInSet(Result[idx], [#9, #10, #13]) then Result[idx] := ' ';
     if count < Length(value) then Result := Result + '...';
+end;
+
+function nc_custom_phrase_candidate_text(const value: string): string;
+const
+    c_shown_units = 24;
+var idx, count: Integer;
+begin
+    count := Length(value);
+    if count > c_shown_units then
+    begin
+        count := c_shown_units;
+        if (Ord(value[count]) >= $D800) and (Ord(value[count]) <= $DBFF) then
+            Dec(count);
+    end;
+    Result := Copy(value, 1, count);
+    for idx := 1 to Length(Result) do
+        if CharInSet(Result[idx], [#9, #10, #13]) then Result[idx] := ' ';
+    if count < Length(value) then Result := Result + '…';
 end;
 
 end.

@@ -171,6 +171,16 @@ type
         deletable: Boolean;
     end;
     TncCandidateList = array of TncCandidate;
+    // A word the user has used: a learned word or a dictionary word picked
+    // before (dict_user and dict_user_stats).
+    TncPersonalWord = record
+        pinyin: string;
+        text: string;
+        use_count: Integer;
+        last_used: Int64;
+        is_user_word: Boolean;
+    end;
+    TncPersonalWordList = array of TncPersonalWord;
     TncCandidatePage = record
         page_index: Integer;
         candidates: TncCandidateList;

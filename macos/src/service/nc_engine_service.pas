@@ -598,6 +598,7 @@ end;
 procedure TncEngineService.NormalizeCandidates(var candidates: TncCandidateList;
     const query: string);
 var
+    reading: string;
     index: Integer;
 begin
     for index := 0 to High(candidates) do
@@ -612,9 +613,15 @@ begin
             candidates[index].display_kind := cdk_default;
         candidates[index].deletable := False;
         if candidates[index].source = cs_user then
+        begin
+            // A word reached by its abbreviation is stored under its own reading.
+            reading := FEngine.get_personal_word_reading(candidates[index]);
+            if reading = '' then
+                reading := query;
             candidates[index].deletable :=
-                FEngine.is_user_or_literal_entry(query,
+                FEngine.is_user_or_literal_entry(reading,
                 candidates[index].text);
+        end;
     end;
 end;
 
