@@ -189271,6 +189271,99 @@ var
         end;
     end;
 
+    // Every word of what is committed was used (the user, 2026-11-11): the words
+    // picked one by one before the rest, and the words of a sentence taken whole.
+    // Each learns under its own reading, as if chosen by itself, so that its full
+    // spelling and its abbreviations put it first. Single characters keep their
+    // rule: they learn only when committed on their own.
+    procedure record_words_used(const commit_learned: Boolean);
+    var
+        words, syllables: TArray<string>;
+        units: TArray<Integer>;
+        confirmed: TncConfirmedSegment;
+        word, reading, resolved: string;
+        idx, unit_idx, total, position: Integer;
+
+        function is_trailing_punctuation(const ch: Char): Boolean;
+        begin
+            Result := CharInSet(ch, [' ', '!' .. '/', ':' .. '@', '[' .. '`', '{' .. '~']) or
+                ((Ord(ch) >= $3000) and (Ord(ch) <= $303F)) or
+                ((Ord(ch) >= $FF00) and (Ord(ch) <= $FF65)) or
+                ((Ord(ch) >= $2010) and (Ord(ch) <= $2027));
+        end;
+
+        // A word committed with punctuation after it is the word.
+        function word_text(const value: string): string;
+        begin
+            Result := Trim(value);
+            while (Result <> '') and is_trailing_punctuation(Result[Length(Result)]) do
+                SetLength(Result, Length(Result) - 1);
+        end;
+
+        procedure record_word(const word_pinyin, text: string; const explicit_choice: Boolean);
+        begin
+            if (word_pinyin = '') or (get_candidate_text_unit_count(text) < 2) then Exit;
+            // What the commit itself learned already.
+            if commit_learned and
+                (((word_pinyin = normalized_pinyin) and (text = commit_segment_text)) or
+                ((word_pinyin = full_pinyin) and (text = commit_text))) then Exit;
+            m_dictionary.record_commit(word_pinyin, text, explicit_choice);
+        end;
+
+    begin
+        if m_dictionary = nil then Exit;
+        if m_confirmed_segments <> nil then
+            for confirmed in m_confirmed_segments do
+            begin
+                if confirmed.fuzzy_choice then Continue;
+                word := word_text(confirmed.text);
+                if get_candidate_text_unit_count(word) < 2 then Continue;
+                reading := normalize_pinyin_text(confirmed.pinyin);
+                // Picked by its abbreviation: the word's own reading.
+                if (reading <> '') and not is_full_pinyin_key(reading) then
+                begin
+                    resolved := '';
+                    if confirmed.canonical_pinyin <> '' then
+                        resolved := confirmed.canonical_pinyin
+                    else if not m_dictionary.resolve_literal_user_word_pinyin(reading, word,
+                        resolved) then
+                        resolved := '';
+                    reading := normalize_pinyin_text(resolved);
+                end;
+                if (reading <> '') and (Length(nc_pinyin_cut_syllables(reading,
+                    get_candidate_text_unit_count(word))) > 0) then
+                    record_word(reading, word, confirmed.explicit_choice);
+            end;
+
+        // The rest: its segment path cuts its reading into the words.
+        if (normalized_pinyin = '') or not is_full_pinyin_key(normalized_pinyin) then Exit;
+        if effective_segment_path <> '' then
+            words := effective_segment_path.Split([c_segment_path_separator],
+                TStringSplitOptions.ExcludeEmpty)
+        else
+            words := [commit_segment_text];
+        SetLength(units, Length(words));
+        total := 0;
+        for idx := 0 to High(words) do
+        begin
+            words[idx] := word_text(words[idx]);
+            units[idx] := get_candidate_text_unit_count(words[idx]);
+            if units[idx] <= 0 then Exit;
+            Inc(total, units[idx]);
+        end;
+        syllables := nc_pinyin_cut_syllables(normalized_pinyin, total);
+        if Length(syllables) <> total then Exit;
+        position := 0;
+        for idx := 0 to High(words) do
+        begin
+            reading := '';
+            for unit_idx := 0 to units[idx] - 1 do
+                reading := reading + syllables[position + unit_idx];
+            Inc(position, units[idx]);
+            record_word(reading, words[idx], False);
+        end;
+    end;
+
 begin
     out_text := '';
     if not m_has_pending_commit then
@@ -189553,6 +189646,7 @@ begin
                     end;
 
                 end;
+                record_words_used(True);
             end;
             m_dictionary.commit_learning_batch;
         except
@@ -189564,6 +189658,19 @@ begin
         (not fuzzy_commit_choice) then
     begin
         record_context_pair(prev_left_context, out_text);
+    end;
+    if (m_dictionary <> nil) and literal_only_commit and (not fuzzy_commit_choice) then
+    begin
+        // A word put together from abbreviations stays a literal entry and
+        // learns nothing else; the words it was put together from were used.
+        m_dictionary.begin_learning_batch;
+        try
+            record_words_used(False);
+            m_dictionary.commit_learning_batch;
+        except
+            m_dictionary.rollback_learning_batch;
+            raise;
+        end;
     end;
     if (not literal_only_commit) and (not fuzzy_commit_choice) and
         (commit_segment_text <> '') and (not single_char_tail) then

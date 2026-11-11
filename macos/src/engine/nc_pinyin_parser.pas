@@ -53,6 +53,9 @@ function nc_pinyin_splits_one_way(const value: string; const units: Integer): Bo
   does not matter. }
 function nc_pinyin_letters_spell_word(const letters, pinyin: string;
     const units: Integer): Boolean;
+{ Compact pinyin cut into exactly units canonical syllables, longer syllables
+  tried first (xian for one character, xi an for two); empty when it cannot be. }
+function nc_pinyin_cut_syllables(const pinyin: string; const units: Integer): TArray<string>;
 { True when the letters cannot be whole syllables only: some key stands for a
   syllable it only begins. Complete pinyin (tian, memeda) is read as written,
   not as an abbreviation of something else. }
@@ -362,6 +365,38 @@ begin
         Inc(position);
     end;
     Result := solve(1, 1, 0);
+end;
+
+function nc_pinyin_cut_syllables(const pinyin: string; const units: Integer): TArray<string>;
+var
+    cut: TArray<string>;
+    failed: array of Boolean;
+
+    function solve(const position, count: Integer): Boolean;
+    var
+        syllable_length: Integer;
+        syllable: string;
+    begin
+        if position > Length(pinyin) then Exit(count = units);
+        Result := False;
+        if (count >= units) or failed[position * (units + 1) + count] then Exit;
+        for syllable_length := 6 downto 1 do
+        begin
+            if position + syllable_length - 1 > Length(pinyin) then Continue;
+            syllable := Copy(pinyin, position, syllable_length);
+            if not nc_is_canonical_pinyin_syllable(syllable) then Continue;
+            cut[count] := syllable;
+            if solve(position + syllable_length, count + 1) then Exit(True);
+        end;
+        failed[position * (units + 1) + count] := True;
+    end;
+
+begin
+    Result := nil;
+    if (pinyin = '') or (units <= 0) or (units > Length(pinyin)) then Exit;
+    SetLength(cut, units);
+    SetLength(failed, (Length(pinyin) + 2) * (units + 1));
+    if solve(1, 0) then Result := cut;
 end;
 
 function nc_pinyin_letters_abbreviate(const letters: string): Boolean;
