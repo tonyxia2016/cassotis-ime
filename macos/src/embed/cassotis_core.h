@@ -60,6 +60,16 @@ uint32_t cassotis_core_cache_census(char *buffer, uint32_t capacity);
 // of a new model file compiles it for the Neural Engine (seconds).
 int32_t cassotis_core_model_state(int32_t timeout_ms);
 
+// The custom phrases in json (UTF-8, json_length bytes) as the macOS settings
+// import a file of them (nc_parse_custom_phrases): a JSON list of [abbreviation,
+// text] pairs, all valid or none taken. Writes them as the state payload writes its
+// phrase list (a uint32 count, then each abbreviation and text as a uint32 byte
+// length and UTF-8; little-endian) and returns that length; nothing is written when
+// capacity is smaller. CASSOTIS_ERR_ARG when json is not such a list. The engine
+// need not be open.
+int32_t cassotis_core_parse_phrases(const char *json, uint32_t json_length,
+                                    uint8_t *output, uint32_t capacity);
+
 // The one call that may come from any thread, while another call runs: a poll
 // that is running the candidates again with the character LM (char_lm_deferred)
 // skips the model calls it has not started and returns soon. A host calls it

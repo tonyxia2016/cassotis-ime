@@ -21,12 +21,16 @@ procedure cassotis_core_close; cdecl;
 function cassotis_core_set_option(name: PAnsiChar; value: LongInt): LongInt; cdecl;
 function cassotis_core_cache_census(buffer: PAnsiChar; capacity: Cardinal): Cardinal; cdecl;
 function cassotis_core_model_state(timeout_ms: LongInt): LongInt; cdecl;
+function cassotis_core_parse_phrases(json: PAnsiChar; json_length: Cardinal;
+    output: PByte; capacity: Cardinal): LongInt; cdecl;
 procedure cassotis_core_interrupt; cdecl;
 
 implementation
 
 uses
     SysUtils,
+    nc_types,
+    nc_custom_phrases,
     nc_cache_policy,
     nc_runtime_paths,
     nc_engine_service,
@@ -218,6 +222,74 @@ begin
     except
         on E: Exception do
             set_error(E.ClassName + ': ' + E.Message);
+    end;
+end;
+
+{ The keyboard takes custom phrases from the clipboard; parsing them here means it
+  accepts exactly what the macOS settings accept from a file. }
+function cassotis_core_parse_phrases(json: PAnsiChar; json_length: Cardinal;
+    output: PByte; capacity: Cardinal): LongInt; cdecl;
+var
+    source: UTF8String;
+    phrases: TncCustomPhraseList;
+    parts: array of UTF8String;
+    data: TBytes;
+    idx, offset: Integer;
+
+    procedure put_length(const value: Cardinal);
+    begin
+        data[offset] := Byte(value);
+        data[offset + 1] := Byte(value shr 8);
+        data[offset + 2] := Byte(value shr 16);
+        data[offset + 3] := Byte(value shr 24);
+        Inc(offset, 4);
+    end;
+
+begin
+    try
+        if (json = nil) and (json_length > 0) then
+        begin
+            set_error('phrase text is missing');
+            Exit(c_err_arg);
+        end;
+        SetLength(source, json_length);
+        if json_length > 0 then
+            Move(json^, source[1], json_length);
+        if not nc_parse_custom_phrases(UTF8Decode(source), phrases) then
+        begin
+            set_error('not a custom phrase list');
+            Exit(c_err_arg);
+        end;
+        { At most 1024 phrases of 32 letters and 4096 UTF-16 units (12 KB as UTF-8):
+          about 13 MB at most, so Integer offsets do. }
+        SetLength(parts, 2 * Length(phrases));
+        offset := 4;
+        for idx := 0 to High(phrases) do
+        begin
+            parts[2 * idx] := UTF8Encode(phrases[idx].shortcut);
+            parts[2 * idx + 1] := UTF8Encode(phrases[idx].text);
+        end;
+        for idx := 0 to High(parts) do
+            Inc(offset, 4 + Length(parts[idx]));
+        SetLength(data, offset);
+        offset := 0;
+        put_length(Length(phrases));
+        for idx := 0 to High(parts) do
+        begin
+            put_length(Length(parts[idx]));
+            if Length(parts[idx]) > 0 then
+                Move(parts[idx][1], data[offset], Length(parts[idx]));
+            Inc(offset, Length(parts[idx]));
+        end;
+        Result := Length(data);
+        if (output <> nil) and (Cardinal(Result) <= capacity) then
+            Move(data[0], output^, Result);
+    except
+        on E: Exception do
+        begin
+            set_error(E.ClassName + ': ' + E.Message);
+            Result := c_err_exception;
+        end;
     end;
 end;
 

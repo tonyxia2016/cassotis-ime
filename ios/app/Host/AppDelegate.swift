@@ -8,6 +8,9 @@ import UIKit
 //   keyboard         reads "@@run <options>@@" from documentContextBeforeInput,
 //                    runs inside the extension, inserts "@@report ...@@end@@"
 //   host             saves the report to Documents/reports/
+//   launch argument  --pasteboard <file>      that file in Documents/ goes on the
+//                    clipboard first, for the keyboard's phrase import (simctl
+//                    pbcopy does not reach the iOS 27 simulator)
 private let reportBegin = "@@report "
 private let reportEnd = "@@end@@"
 
@@ -96,6 +99,11 @@ final class HostViewController: UIViewController, UITextViewDelegate {
     }
     if let index = arguments.firstIndex(of: "--field"), index + 1 < arguments.count {
       field = arguments[index + 1]
+    }
+    if let index = arguments.firstIndex(of: "--pasteboard"), index + 1 < arguments.count {
+      let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      let file = documents.appendingPathComponent(arguments[index + 1])
+      UIPasteboard.general.string = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
     }
   }
 

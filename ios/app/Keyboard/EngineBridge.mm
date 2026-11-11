@@ -279,6 +279,122 @@ static CassotisKeyResult *wrap(const Result &r) {
     try { _client.clearLearning(); [self forget]; return YES; }
     catch (const std::exception &e) { NSLog(@"clear learning: %s", e.what()); return NO; }
 }
+- (int32_t)phraseCount {
+    try { return int32_t(_client.state(true).customPhrases.size()); }
+    catch (const std::exception &e) { NSLog(@"phrases: %s", e.what()); return -1; }
+}
+// The phrases in json as macOS's own parser takes them (cassotis_core_parse_phrases):
+// false when it refuses them.
+static bool parsePhrases(NSData *json, std::vector<CustomPhrase> &phrases) {
+    try {
+        Bytes out(64 * 1024);
+        int32_t length = 0;
+        for (int attempt = 0; attempt < 2; ++attempt) {
+            length = cassotis_core_parse_phrases(static_cast<const char *>(json.bytes), uint32_t(json.length),
+                                                 out.data(), uint32_t(out.size()));
+            if (length < 0) return false;
+            if (size_t(length) <= out.size()) break;
+            out.resize(size_t(length));
+        }
+        if (size_t(length) > out.size()) return false;
+        out.resize(size_t(length));
+        Reader r(out);
+        uint32_t count = r.u32();
+        for (uint32_t i = 0; i < count; ++i) {
+            CustomPhrase phrase;
+            phrase.shortcut = r.string();
+            phrase.text = r.string();
+            phrases.push_back(std::move(phrase));
+        }
+        r.end();
+        return true;
+    } catch (const std::exception &e) {
+        NSLog(@"parse phrases: %s", e.what());
+        return false;
+    }
+}
+// Why the parser refused json, for the user: the first thing wrong, found with the
+// rules of nc_parse_custom_phrases (an abbreviation is trimmed and lowercased, then
+// 1–32 letters a–z; a text is not blank, at most 4096 UTF-16 units, without control
+// characters but tab and line breaks). What only a strict JSON reading refuses (a
+// comma before a closing bracket, say) gets the general answer.
+static NSString *phraseError(NSData *json) {
+    id root = [NSJSONSerialization JSONObjectWithData:json options:0 error:nil];
+    if (![root isKindOfClass:NSArray.class])
+        return @"剪贴板里不是 Mac 导出的短语：要 [[\"缩写\", \"内容\"], …] 这样的 JSON。";
+    NSArray *rows = root;
+    if (rows.count > 1024)
+        return [NSString stringWithFormat:@"剪贴板里有 %lu 条，最多 1024 条。", (unsigned long)rows.count];
+    for (NSUInteger i = 0; i < rows.count; ++i) {
+        NSArray *row = [rows[i] isKindOfClass:NSArray.class] ? rows[i] : nil;
+        if (row.count != 2 || ![row[0] isKindOfClass:NSString.class] || ![row[1] isKindOfClass:NSString.class])
+            return [NSString stringWithFormat:@"第 %lu 条不是 [\"缩写\", \"内容\"]。", (unsigned long)(i + 1)];
+        NSString *key = [row[0] stringByTrimmingCharactersInSet:
+            [NSCharacterSet characterSetWithRange:NSMakeRange(0, 33)]];
+        bool letters = key.length > 0 && key.length <= 32;
+        for (NSUInteger j = 0; letters && j < key.length; ++j) {
+            unichar c = [key characterAtIndex:j];  // ASCII letters of either case: LowerCase folds only those
+            letters = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        }
+        if (!letters)
+            return [NSString stringWithFormat:@"第 %lu 条的缩写不对：要 1–32 个英文字母。", (unsigned long)(i + 1)];
+        key = key.lowercaseString;
+        NSString *text = row[1];
+        bool blank = true, control = false;
+        for (NSUInteger j = 0; j < text.length; ++j) {
+            unichar c = [text characterAtIndex:j];
+            if (c > ' ') blank = false;
+            if (c < ' ' && c != '\t' && c != '\n' && c != '\r') control = true;
+        }
+        if (blank || control || text.length > 4096)
+            return [NSString stringWithFormat:@"第 %lu 条（%@）的内容不对：不能空着，最多 4096 字，"
+                    "除了制表符和换行不能有控制字符。", (unsigned long)(i + 1), key];
+    }
+    return @"剪贴板里的 JSON 格式不对，比如方括号前多了逗号。";
+}
+- (NSString *)importPhrases:(NSString *)json added:(int32_t *)added {
+    if (added) *added = 0;
+    // As the macOS settings read a file: at most 16 MB, then all of it or nothing.
+    NSData *data = [json dataUsingEncoding:NSUTF8StringEncoding];
+    if (!data) return @"剪贴板里的文字有无效字符，没有导入。";
+    if (data.length > 16 * 1024 * 1024) return @"剪贴板里的内容超过 16 MB，没有导入。";
+    std::vector<CustomPhrase> parsed;
+    if (!parsePhrases(data, parsed)) return [phraseError(data) stringByAppendingString:@"没有导入。"];
+    if (parsed.empty()) return @"剪贴板里没有短语。";
+    try {
+        State s = _client.state(true);
+        size_t before = s.customPhrases.size();
+        for (auto &phrase : parsed) {
+            bool known = std::any_of(s.customPhrases.begin(), s.customPhrases.end(), [&](const CustomPhrase &p) {
+                return p.shortcut == phrase.shortcut && p.text == phrase.text;
+            });
+            if (!known) s.customPhrases.push_back(std::move(phrase));
+        }
+        size_t fresh = s.customPhrases.size() - before;
+        if (s.customPhrases.size() > 1024)
+            return [NSString stringWithFormat:@"已有 %lu 条，再加 %lu 条新的就超过 1024 条了。没有导入。",
+                    (unsigned long)before, (unsigned long)fresh];
+        if (fresh > 0) {
+            _client.setState(s);
+            [self forget];
+        }
+        if (added) *added = int32_t(fresh);
+        return nil;
+    } catch (const std::exception &e) {
+        NSLog(@"import phrases: %s", e.what());
+        return @"引擎没有接受这些短语，没有导入。";
+    }
+}
+- (BOOL)clearPhrases {
+    try {
+        State s = _client.state(true);
+        if (s.customPhrases.empty()) return YES;
+        s.customPhrases.clear();
+        _client.setState(s);
+        [self forget];
+        return YES;
+    } catch (const std::exception &e) { NSLog(@"clear phrases: %s", e.what()); return NO; }
+}
 - (void)trim:(int32_t)level {
     cassotis_core_trim(level);
     malloc_zone_pressure_relief(nullptr, 0);  // hand the freed pages back at once

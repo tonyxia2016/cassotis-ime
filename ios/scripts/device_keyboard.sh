@@ -2,6 +2,8 @@
 # Run a command inside a keyboard extension on the phone and fetch its report.
 #   device_keyboard.sh <uikit|swiftui> <label> "<options>"
 # The extension is restarted first, so marks and footprints are from a cold start.
+# CASSOTIS_PASTEBOARD=file: the host puts that file's text on the phone's clipboard
+# first (for the phrase import, {set:400}), replacing what was there.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 device="${CASSOTIS_DEVICE:-$(python3 -I "$root/scripts/find_device.py")}"
@@ -9,9 +11,16 @@ bundle=com.hustmobile.cassotis.poc
 field="$1"; label="$2"; options="${3:-}"
 timeout_s="${CASSOTIS_TIMEOUT:-600}"
 want="$bundle.$([[ "$field" == swiftui ]] && echo swiftui || echo keyboard)"
+paste=()
+if [[ -n "${CASSOTIS_PASTEBOARD:-}" ]]; then
+    xcrun devicectl device copy to --device "$device" --domain-type appDataContainer \
+        --domain-identifier "$bundle" --source "$CASSOTIS_PASTEBOARD" \
+        --destination Documents/pasteboard.txt >/dev/null 2>&1
+    paste=(--pasteboard pasteboard.txt)
+fi
 run_host() {
     xcrun devicectl device process launch --device "$device" --terminate-existing \
-        "$bundle" --field "$field" --keyboard "$want" --command "$1" >/dev/null 2>&1
+        "$bundle" --field "$field" --keyboard "$want" --command "$1" ${paste[@]+"${paste[@]}"} >/dev/null 2>&1
 }
 list_reports() {
     xcrun devicectl device info files --device "$device" --domain-type appDataContainer \

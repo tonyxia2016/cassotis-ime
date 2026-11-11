@@ -2,21 +2,25 @@ import UIKit
 
 @MainActor
 protocol SettingsPanelDelegate: AnyObject {
-  /// A status action id (KeyboardSettings.swift): a switch, a scheme, a fuzzy rule, or
-  /// clearing what was learned.
+  /// A status action id (KeyboardSettings.swift): a switch, a scheme, a fuzzy rule,
+  /// clearing what was learned, importing or clearing the custom phrases.
   func settingChosen(_ id: Int32)
   func settingsClose()
 }
 
 /// The keyboard's settings, opened by holding 123: a short list in the keyboard's own
-/// look, with two sub-lists (scheme, fuzzy rules) and a second tap to confirm clearing
-/// what was learned. Plain views rather than menus, which a keyboard may not present.
+/// look, with three sub-lists (scheme, fuzzy rules, custom phrases) and a second tap to
+/// confirm clearing what was learned or the phrases. Plain views rather than menus,
+/// which a keyboard may not present.
 final class SettingsPanel: UIView {
   weak var delegate: SettingsPanelDelegate?
-  private enum Page { case main, scheme, fuzzy }
+  private enum Page { case main, scheme, fuzzy, phrases }
   private var page = Page.main
   private var settings = CassotisSettings()
+  private var phraseCount = 0
+  private var phraseNote: (text: String, error: Bool)?
   private var confirmClear = false
+  private var confirmClearPhrases = false
   private let header = UILabel()
   private let left = UIButton(type: .system)
   private let done = UIButton(type: .system)
@@ -43,14 +47,19 @@ final class SettingsPanel: UIView {
 
   private var dark: Bool { traitCollection.userInterfaceStyle == .dark }
 
-  func show(_ settings: CassotisSettings) {
+  /// note: what the last import or clearing of the phrases did, shown on their page.
+  func show(_ settings: CassotisSettings, phrases: Int, note: (text: String, error: Bool)?) {
     self.settings = settings
+    phraseCount = phrases
+    phraseNote = note
+    if phrases == 0 { confirmClearPhrases = false }
     rebuild()
   }
 
   func reset() {
     page = .main
     confirmClear = false
+    confirmClearPhrases = false
     rebuild()
   }
 
@@ -84,6 +93,8 @@ final class SettingsPanel: UIView {
       }.count
       rows.append(linkRow("模糊拼音", count == 0 ? "关" : "\(count) 项") { [weak self] in self?.go(.fuzzy) })
       rows.append(
+        linkRow("自定义短语", phraseCount == 0 ? "无" : "\(phraseCount) 条") { [weak self] in self?.go(.phrases) })
+      rows.append(
         actionRow(confirmClear ? "确认清除全部学习记录" : "清除学习记录…", destructive: true) { [weak self] in
           guard let self else { return }
           if self.confirmClear {
@@ -114,6 +125,36 @@ final class SettingsPanel: UIView {
             self?.delegate?.settingChosen(300 + Int32(index))
           })
       }
+    case .phrases:
+      // The phrases come from the Mac (the keyboard has no list to edit them in): its
+      // settings export them as JSON, which reaches the phone's clipboard by copying.
+      header.text = "自定义短语"
+      left.isHidden = false
+      left.setTitle("‹ 返回", for: .normal)
+      rows.append(
+        actionRow("从剪贴板导入短语", destructive: false) { [weak self] in
+          self?.confirmClearPhrases = false
+          self?.delegate?.settingChosen(KeyboardViewController.Setting.importPhrases)
+        })
+      rows.append(
+        noteRow(
+          phraseNote?.text
+            ?? "在 Mac 的言泉设置 → 自定义短语里导出，打开导出的文件全部拷贝，再点上面一行。导入的接在已有的后面，已有的不会重复。",
+          error: phraseNote?.error ?? false))
+      if phraseCount > 0 {
+        rows.append(
+          actionRow(confirmClearPhrases ? "确认清空全部 \(phraseCount) 条短语" : "清空 \(phraseCount) 条短语…", destructive: true) {
+            [weak self] in
+            guard let self else { return }
+            if self.confirmClearPhrases {
+              self.confirmClearPhrases = false
+              self.delegate?.settingChosen(KeyboardViewController.Setting.clearPhrases)
+            } else {
+              self.confirmClearPhrases = true
+            }
+            self.rebuild()
+          })
+      }
     }
     rows.forEach { scroll.addSubview($0) }
     setNeedsLayout()
@@ -127,10 +168,19 @@ final class SettingsPanel: UIView {
     done.frame = CGRect(x: bounds.width - 70, y: 0, width: 64, height: top)
     scroll.frame = CGRect(x: 0, y: top, width: bounds.width, height: bounds.height - top)
     let rowHeight: CGFloat = 44
-    for (index, row) in rows.enumerated() {
-      row.frame = CGRect(x: 10, y: CGFloat(index) * (rowHeight + 1), width: bounds.width - 20, height: rowHeight)
+    var y: CGFloat = 0
+    for row in rows {
+      if let note = row as? UILabel {  // as tall as its text, lined up with the rows' titles
+        let width = bounds.width - 48
+        let height = ceil(note.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height)
+        note.frame = CGRect(x: 24, y: y + 6, width: width, height: height)
+        y += height + 13
+      } else {
+        row.frame = CGRect(x: 10, y: y, width: bounds.width - 20, height: rowHeight)
+        y += rowHeight + 1
+      }
     }
-    scroll.contentSize = CGSize(width: bounds.width, height: CGFloat(rows.count) * (rowHeight + 1))
+    scroll.contentSize = CGSize(width: bounds.width, height: y)
   }
 
   // MARK: - Rows
@@ -201,9 +251,19 @@ final class SettingsPanel: UIView {
 
   private func actionRow(_ title: String, destructive: Bool, action: @escaping () -> Void) -> UIView {
     let (row, text) = base(title)
-    if destructive { text.textColor = .systemRed }
+    text.textColor = destructive ? .systemRed : KeyboardTheme.action
     addTap(row, action)
     return row
+  }
+
+  /// A line of explanation on the panel's background, not a row to tap.
+  private func noteRow(_ text: String, error: Bool) -> UIView {
+    let note = UILabel()
+    note.text = text
+    note.font = .systemFont(ofSize: 13)
+    note.numberOfLines = 0
+    note.textColor = error ? .systemRed : KeyboardTheme.secondary(dark)
+    return note
   }
 
   private var actions: [ObjectIdentifier: () -> Void] = [:]
@@ -226,6 +286,7 @@ final class SettingsPanel: UIView {
   private func go(_ page: Page) {
     self.page = page
     confirmClear = false
+    confirmClearPhrases = false
     rebuild()
   }
 

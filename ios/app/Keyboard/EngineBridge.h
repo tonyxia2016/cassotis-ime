@@ -112,6 +112,18 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)applySettings:(CassotisSettings *)settings;
 // Empties the user dictionary: everything learned is gone.
 - (BOOL)clearLearning;
+// The custom phrases (macOS: 设置 → 自定义短语), which the engine saves with its
+// settings. The keyboard has no list to edit them in; they come from the JSON macOS
+// exports, a list of [abbreviation, text] pairs. -1 when the engine cannot say.
+- (int32_t)phraseCount;
+// Adds the phrases in json after the engine's, by the rules macOS imports with
+// (macos/src/common/nc_custom_phrases.pas): all or none. One the engine already has,
+// the same abbreviation and text, is skipped, so importing a list again adds only
+// what is new. nil when that worked (added: how many were new), otherwise why not,
+// in words for the user.
+- (nullable NSString *)importPhrases:(NSString *)json added:(int32_t *)added;
+// Removes every custom phrase. NO when the engine refused.
+- (BOOL)clearPhrases;
 // cassotis_core_model_state: starts the character LM's load and waits up to
 // timeoutMs; 1 ready, 0 loading, -1 none (modelError says why). The next
 // replay reports the answer and the wait.

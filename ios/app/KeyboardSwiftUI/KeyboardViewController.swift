@@ -23,6 +23,9 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   // sessions open neither.
   private(set) var emojiPanel: EmojiPanel?
   private(set) var settingsPanel: SettingsPanel?
+  /// What the last import or clearing of custom phrases did (KeyboardSettings.swift);
+  /// a panel opened afresh starts without it.
+  var phraseNote: (text: String, error: Bool)?
   // DocumentEditing.swift
   var documentTimer: Timer?
   var documentIdentifier = ""
@@ -225,6 +228,7 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     panel.delegate = self
     addPanel(panel)
     settingsPanel = panel
+    phraseNote = nil
     refreshSettings()
     panel.reset()
   }
@@ -276,6 +280,11 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   }
 
   // MARK: - Test commands
+
+  override func typeReport() -> [String: Any] {
+    guard let phraseNote else { return [:] }
+    return ["phrase_note": phraseNote.text, "phrase_note_error": phraseNote.error]
+  }
 
   /// mode=type's commands for this keyboard: open its pages and panels for a screenshot,
   /// change a setting, type a symbol from a number page.

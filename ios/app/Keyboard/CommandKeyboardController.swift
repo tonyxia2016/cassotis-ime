@@ -148,6 +148,8 @@ class CommandKeyboardController: UIInputViewController {
   func moveCursor(_ code: String) {}
   /// mode=type's {…} tokens that only a subclass can carry out; true when handled.
   func typeCommand(_ token: String) -> Bool { false }
+  /// What a subclass adds to mode=type's report.
+  func typeReport() -> [String: Any] { [:] }
 
   static func mark(_ name: String) {
     marks.append(
@@ -813,7 +815,8 @@ class CommandKeyboardController: UIInputViewController {
 
   /// Types keys through the same calls as the keys on screen and reports what a user
   /// would see: the document, the composition and candidates left at the end, the
-  /// user dictionary, and with debug=1 the left context the engine ranked with.
+  /// user dictionary, how many custom phrases the engine has, and with debug=1 the left
+  /// context the engine ranked with.
   ///   keys    a–z, digits, ' and punctuation as typed; _ space, < backspace,
   ///           ~ return, #N the Nth candidate of the list (scrolled part included),
   ///           + scroll the list to its end so that it reads the next page,
@@ -934,6 +937,7 @@ class CommandKeyboardController: UIInputViewController {
           "count": times.count, "p50": at(0.5), "p95": at(0.95), "max": times.last!,
         ]
       }
+      report.merge(typeReport()) { _, added in added }
       report["speculates"] = Self.speculates
       report["polls_applied"] = pollsApplied
       report["polls_dropped"] = pollsDropped
@@ -945,6 +949,7 @@ class CommandKeyboardController: UIInputViewController {
         let state = Self.engine.wait(forModel: 0)
         report["model_state"] = state
         report["mode"] = Self.engine.inputMode()
+        report["phrases"] = Self.engine.phraseCount()
         if let s = Self.engine.settings() {
           report["settings"] = [
             "full_width": s.fullWidth,

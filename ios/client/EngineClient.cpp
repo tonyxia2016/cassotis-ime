@@ -227,6 +227,10 @@ Bytes EngineClient::transact(uint16_t type,const Bytes &payload) {
     require(r.u64()==id && r.u64()==1 && r.u64()==generation,"Stale IPC response");
     size_t n=r.u32(); require(n<=maxPayload && 44+n==size_t(length),"Invalid IPC length");
     Bytes body(reply_.begin()+44,reply_.begin()+44+n);
+    // A long custom phrase list grows the buffer; a keyboard should not keep that. A
+    // reply that outgrows it again is fetched by running the request a second time, and
+    // the one reply that big, the settings with those phrases, is safe to read twice.
+    if(reply_.size()>256*1024) Bytes(256*1024).swap(reply_);
     if(flags&2) { Reader e(body); require(e.schema()==1,"Invalid engine error"); e.u32(); throw std::runtime_error(e.string()); }
     // Requests answered with an engine result (11): key, poll, remove, action, pages.
     require(kind==((type==10 || type==17 || type==18 || type==19 || type==21)?11:type),"Unexpected IPC response");

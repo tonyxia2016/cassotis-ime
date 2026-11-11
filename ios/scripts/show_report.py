@@ -26,6 +26,9 @@ if "document" in r:  # mode=type
         print(f"  context {r['debug_context']!r} reported={r['debug_context_reported']}")
     if "settings" in r:
         print(f"  mode {r.get('mode')}  settings {r['settings']}")
+    if "phrases" in r or "phrase_note" in r:
+        note = f"  {'error' if r.get('phrase_note_error') else 'note'} {r['phrase_note']!r}" if "phrase_note" in r else ""
+        print(f"  custom phrases {r.get('phrases')}{note}")
     if "release_ms" in r:
         m = r["release_ms"]
         print(f"  key-down compute {r.get('speculates')}  release->drawn n {m['count']} p50 {m['p50']:.1f} p95 {m['p95']:.1f} max {m['max']:.1f} ms  polls applied {r.get('polls_applied')} dropped {r.get('polls_dropped')}")
