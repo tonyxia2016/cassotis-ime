@@ -82,26 +82,31 @@ installed=1
 # the input source. macOS can discard a first key while launching a replacement
 # input method; the frontend can buffer keys once its IMK server is running.
 "$control" launch
-# Keyboard Settings keeps its own input-source index. After an App ID or
-# bundle path change it can still resolve Cassotis to its removed URL even
-# when TIS in the installer already reports the new input source as enabled.
-refresh_keyboard_settings_index() {
-    local cache="$1" index file
-    [[ -n "$cache" ]] || return 1
-    cache="${cache%/}/com.apple.Keyboard-Settings.extension"
+# Notes and Keyboard Settings can each keep resolving Cassotis to the old
+# bundle even after TIS reports the new source as enabled.
+refresh_input_source_index() {
+    local cache="$1" application="$2" index file
+    [[ -d "$cache" && ! -L "$cache" ]] || return 0
     index="$cache/com.apple.IntlDataCache.le.kbdx"
     [[ -f "$index" && ! -L "$index" ]] || return 0
     LC_ALL=C /usr/bin/grep -aFq -- "$legacy" "$index" || return 0
     if LC_ALL=C /usr/bin/grep -aFq -- "$destination" "$index"; then return 0; fi
-    for file in "$index" "$cache/com.apple.IntlDataCache.le"; do
+    # Keep the path-bearing index until last so a failed refresh can be retried.
+    for file in "$cache/com.apple.IntlDataCache.le" "$index"; do
         if [[ -f "$file" && ! -L "$file" ]]; then
-            mv "$file" "$staging/" || return 1
+            mv "$file" "$staging/${cache##*/}.${file##*/}" || return 1
         fi
     done
-    printf '键盘设置将重新读取言泉的安装位置。如果系统设置已打开，请退出后重新打开。\n'
+    printf '如果「%s」已打开，请退出后重新打开，以使用新版言泉输入法。\n' "$application"
 }
-refresh_keyboard_settings_index "$(/usr/bin/getconf DARWIN_USER_CACHE_DIR)" ||
-    printf '键盘设置索引暂时无法刷新。请重新打开键盘设置查看输入源。\n' >&2
+if user_cache="$(/usr/bin/getconf DARWIN_USER_CACHE_DIR)" && [[ -n "$user_cache" ]]; then
+    refresh_input_source_index "${user_cache%/}/com.apple.Keyboard-Settings.extension" '系统设置' ||
+        printf '暂时无法刷新键盘设置的输入源索引。\n' >&2
+    refresh_input_source_index "${user_cache%/}/com.apple.Notes" '备忘录' ||
+        printf '暂时无法刷新备忘录的输入源索引。\n' >&2
+else
+    printf '暂时无法定位当前用户的输入源缓存目录。\n' >&2
+fi
 printf 'Installed: %s\n' "$destination"
 cat <<'INSTRUCTIONS'
 应用文件已安装。图形安装器会继续请求 macOS 启用言泉输入法。
