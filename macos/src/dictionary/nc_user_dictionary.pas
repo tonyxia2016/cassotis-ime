@@ -51,7 +51,7 @@ type
         function RemoveUserWord(const pinyin: string;
             const text: string): Boolean;
         function LoadEngineState(out state: TncEngineState): Boolean;
-        function SaveEngineState(const state: TncEngineState): Boolean;
+        function SaveEngineState(const state: TncEngineState; const save_phrases: Boolean = True): Boolean;
         property Opened: Boolean read FOpened;
         property ErrorMessage: string read FErrorMessage;
     end;
@@ -584,7 +584,7 @@ begin
 end;
 
 function TncUserDictionary.SaveEngineState(
-    const state: TncEngineState): Boolean;
+    const state: TncEngineState; const save_phrases: Boolean): Boolean;
 const
     c_upsert_setting = 'INSERT INTO meta(key, value) VALUES (?1, ?2) ' +
         'ON CONFLICT(key) DO UPDATE SET value = excluded.value;';
@@ -621,8 +621,8 @@ begin
         UTF8Decode(IntToStr(Ord(state.decimal_period_after_digit)))) and
         ExecutePairStatement(c_upsert_setting, 'setting.punctuation_ascii_symbols',
             nc_normalize_punctuation_ascii_symbols(state.punctuation_ascii_symbols)) and
-        ExecutePairStatement(c_upsert_setting, 'setting.custom_phrases',
-            nc_custom_phrases_to_json(state.custom_phrases)) and
+        ((not save_phrases) or ExecutePairStatement(c_upsert_setting, 'setting.custom_phrases',
+            nc_custom_phrases_to_json(state.custom_phrases))) and
         ExecutePairStatement(c_upsert_setting, 'setting.auto_english',
             UTF8Decode(IntToStr(Ord(state.auto_english)))) and
         ExecutePairStatement(c_upsert_setting,

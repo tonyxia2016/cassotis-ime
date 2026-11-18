@@ -62,6 +62,22 @@ CASSOTIS_COREML_PYTHON=/path/to/coreml-venv/bin/python ./scripts/build_coreml_mo
 
 `VERSION` 控制显示版本，`BUILD_NUMBER` 控制应用和安装器的 `CFBundleVersion`。修改后需重新构建；打包器会拒绝版本或构建号不匹配的旧应用。
 
+## CloudKit 构建与分发
+
+macOS 输入法、iOS 键盘和宿主 App 共用 `iCloud.com.hustmobile.cassotis` 容器。iOS 的键盘和宿主还共用 `group.com.hustmobile.cassotis`。Xcode 登录有权限的开发团队后，可在本目录运行 `python3 scripts/provision_icloud.py mac ios ioshost` 申请或更新开发描述文件。日常构建从本机选取匹配文件。未带 CloudKit 权限的本地包仍可验证离线输入。
+
+开发包使用 Development 环境。可在 Mac 上运行 `build/arm64/Cassotis.app/Contents/MacOS/Cassotis --sync-probe`，在一次性私有区域验证加密记录写入和读回。iOS 宿主接受同一启动参数，结果保存在该 App 的 `Documents/cassotis-sync-probe.txt`。本地合并测试使用 `bash tools/sync/run_sync_test.sh`，可附加一份 SQLite 用户词库路径在临时副本上验证往返。
+
+正式分发时，macOS Developer ID 包需要授权该容器的分发描述文件，可用 `CASSOTIS_DISTRIBUTION_PROFILE` 指向它。iOS 归档导出时选择同一容器的 Production 环境以及宿主、键盘的 App Group。两个平台的正式包需连接同一环境。发布前在 CloudKit Console 将验证过的开发 schema 部署到 Production。[Apple 的 Developer ID 说明](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/) · [部署 CloudKit schema](https://developer.apple.com/documentation/cloudkit/deploying-an-icloud-container-s-schema)
+
+私有数据库中的自定义区域为 `CassotisSync`，按区域变更令牌读取。记录字段如下。
+
+| 记录类型 | 普通字段 | 加密 Bytes 字段 |
+| --- | --- | --- |
+| Batch | replica (String), seq (Int64), created (Date/Time) | ops |
+| Replica | replica, platform, label, applied (String), lastSeq, minSeq (Int64), lastSync (Date/Time) | |
+| Snapshot | replica, applied (String), generation, parts, index (Int64), created (Date/Time) | chunk |
+
 ## 延后排序
 
 输入法默认打开延后排序：
@@ -119,7 +135,7 @@ Tab 补全逐键比较（`--pace-us 0 --settle-ms 3000`，去掉模型刚启动�
 ./scripts/package.sh
 ```
 
-输出位于 `dist/`，包括带图形安装器的 DMG、命令行安装 ZIP 和各自的 SHA-256。默认 `-local` 包使用临时签名。
+输出位于 `dist/`，包括带图形安装器的 DMG、命令行安装 ZIP 和各自的 SHA-256。默认 `-local` 包保留输入法构建时的本机签名。
 
 DMG 图形安装器在文件安装成功后请求系统启用输入法，按需显示 macOS 的授权确认。确认启用后可直接从输入菜单选用；未成功时提供“重试启用”和键盘设置入口。命令行安装保留上述手动添加步骤。
 

@@ -45,8 +45,10 @@
     _uninstall=[NSButton buttonWithTitle:@"卸载…" target:self action:@selector(uninstall:)];
     _uninstall.bordered=NO; _uninstall.contentTintColor=NSColor.secondaryLabelColor;
     _uninstall.accessibilityIdentifier=@"installer-uninstall";
-    NSString *installed=[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Input Methods/Cassotis.app"];
-    if([NSFileManager.defaultManager fileExistsAtPath:installed]) _primary.title=@"安装 / 更新";
+    NSString *directory=[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Input Methods"];
+    NSString *installed=[directory stringByAppendingPathComponent:@"CassotisIME.app"];
+    NSString *legacy=[directory stringByAppendingPathComponent:@"Cassotis.app"];
+    if([NSFileManager.defaultManager fileExistsAtPath:installed] || [NSFileManager.defaultManager fileExistsAtPath:legacy]) _primary.title=@"安装 / 更新";
     else _uninstall.hidden=YES;
     for(NSView *view in @[icon,_heading,subtitle,_message,_steps,_progress,_primary,_secondary,_uninstall]) {
         [root addSubview:view]; view.translatesAutoresizingMaskIntoConstraints=NO;

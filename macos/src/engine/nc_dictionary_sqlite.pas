@@ -16447,10 +16447,12 @@ begin
             user_weight := m_user_connection.ColumnInt(stmt, 2);
             commit_count := m_user_connection.ColumnInt(stmt, 3);
             last_used_value := m_user_connection.ColumnInt(stmt, 4);
-            if user_text_for_script(pinyin_value, text_value) <> text_value then
+            // A dated selection is real user history. A different device can
+            // learn it through shorthand, a fuzzy reading or another script.
+            // Candidate validation still uses this device's dictionary.
+            if ((commit_count > 0) and (last_used_value > 0)) or
+                (user_text_for_script(pinyin_value, text_value) <> text_value) then
             begin
-                // A shared entry written in the other script is not invalid
-                // just because this base dictionary uses different glyphs.
                 step_result := m_user_connection.step(stmt);
                 Continue;
             end;
@@ -16638,7 +16640,7 @@ begin
         (not full_pinyin_text_alignment_valid(pinyin_key, text));
     if invalid_full_pinyin_alignment then
     begin
-        purge_user_entry_internal(pinyin_key, text, False, False);
+        // Ignoring an invalid new selection must preserve earlier selections.
         Exit;
     end;
     if full_pinyin_input and (get_valid_cjk_codepoint_count(text) = 1) and
@@ -19774,7 +19776,12 @@ begin
         end;
         transaction_active := True;
 
-        if (not m_user_connection.exec('DELETE FROM dict_user;')) or
+        // Keep a local clear distinct from word-by-word deletions, even when
+        // iCloud is off or the keyboard is stopped immediately after commit.
+        if (not m_user_connection.exec(
+            'INSERT OR REPLACE INTO meta(key,value) VALUES (''sync.local_clear'', ' +
+            'strftime(''%s'',''now'') || '':'' || hex(randomblob(8)));')) or
+            (not m_user_connection.exec('DELETE FROM dict_user;')) or
             (not m_user_connection.exec('DELETE FROM dict_user_literal;')) or
             (not m_user_connection.exec('DELETE FROM dict_user_stats;')) or
             (not m_user_connection.exec('DELETE FROM dict_user_fuzzy_choice;')) or

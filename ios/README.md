@@ -10,8 +10,8 @@ iOS 键盘扩展。第 0 阶段验证了 Pascal 引擎能放进键盘扩展，�
 - 一个装有 numpy、onnx、coremltools 的 Python 环境，用来把字符模型转成 Core ML（见 `../macos/BUILD.md` 的 Core ML 一节），用 `CASSOTIS_COREML_PYTHON` 指向它
 - 手机要 iOS 18 及以上：这是项目的最低版本，不为更老的系统写兼容代码。`CASSOTIS_MIN_IOS` 可改运行库和引擎的目标版本，默认 18.0
 - 运行模型还要神经引擎至少 16 核（A14 及以后）。iPhone 12 Pro Max（A14）实测可用，见 REPORT-MODEL.md 第 7 节；iPhone XS Max（A12）等机型上，键盘照常工作，只是不用模型，见第 6 节
-- 真机：Apple Development 证书和能覆盖设备的开发 profile。`scripts/build_app.sh` 只在本地签名，不改动开发者账号。默认找钥匙串里的 `Apple Development` 证书和名为 `iOS Team Provisioning Profile: *` 的通配 profile，可用 `CASSOTIS_IDENTITY`、`CASSOTIS_PROFILE` 指定。
-- Xcode 工程里的 bundle ID 是 `com.hustmobile.cassotis.poc*`，团队是 `TR78TGFZDE`。换账号时改 `scripts/gen_xcodeproj.py` 和 `scripts/build_app.sh`。
+- 真机开发需要 Apple Development 证书和覆盖目标设备的描述文件。主 App `com.hustmobile.cassotis` 和日常使用的键盘 `com.hustmobile.cassotis.keyboard` 需要同一个 CloudKit 容器和 App Group。测量用的 `com.hustmobile.cassotis.testkeyboard` 使用通配描述文件。
+- 默认开发团队为 `TR78TGFZDE`。开发者账户已在 Xcode 登录时，`python3 ../macos/scripts/provision_icloud.py ios ioshost` 可以更新两个开发描述文件。日常构建在本机选取证书和描述文件，可通过 `CASSOTIS_IDENTITY` 和 `CASSOTIS_PROFILE` 指定开发身份和通配描述文件。
 
 ## 从零构建
 
@@ -32,10 +32,11 @@ CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build_engine.sh ios
 ./scripts/build_app.sh                # Release，真机，签名
 ```
 
-安装到连着的 iPhone：
+安装到指定 iPhone 时，通过迁移脚本保留该机以前的键盘数据。先用 `xcrun devicectl list devices` 查看设备标识，每部手机使用独立的备份名。
 
 ```bash
-xcrun devicectl device install app --device "$(python3 scripts/find_device.py)" build/dd/Build/Products/Release-iphoneos/CassotisPOC.app
+CASSOTIS_DEVICE="<该机的设备标识>" ./scripts/migrate_keyboard_data.sh iphone-1 \
+  --install build/dd/Build/Products/Release-iphoneos/CassotisPOC.app
 ```
 
 模拟器：FPC 3.2.2 没有 aarch64-iphonesim，`scripts/sim-clang-wrapper.sh` 让汇编器把目标平台改成模拟器即可，不用换编译器：
@@ -51,11 +52,25 @@ CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build_engine.sh ios-sim
 UDID=$(xcrun simctl create "Cassotis Test" com.apple.CoreSimulator.SimDeviceType.iPhone-17 com.apple.CoreSimulator.SimRuntime.iOS-27-2)
 echo "$UDID" > build/sim.udid && xcrun simctl boot "$UDID"
 xcrun simctl spawn "$UDID" defaults write -g AppleKeyboards -array "en_US@sw=QWERTY;hw=Automatic" \
-  "com.hustmobile.cassotis.poc.swiftui" "com.hustmobile.cassotis.poc.keyboard"
+  "com.hustmobile.cassotis.keyboard" "com.hustmobile.cassotis.testkeyboard"
 ./scripts/build_sim.sh
 ```
 
 模拟器没有神经网络引擎，键盘在模拟器里不用模型。
+
+## iCloud 自动同步
+
+「言泉」App 和键盘内长按 `123` 打开的设置面板都有「iCloud 自动同步」开关，初始为开启，关闭只影响这部设备。键盘需要系统授予新版「言泉」完全访问权限才能联网。键盘打字、学习和保存短语可离线使用。系统为每个键盘扩展分别保存启用状态和权限。[Apple 自定义键盘文档](https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/CustomKeyboard.html)
+
+在各台 iPhone 和 Mac 的系统设置中登录同一个 iCloud 账户，即可使用同一份私有词库。CloudKit 根据系统 iCloud 身份选择私有数据库，App Store 的「媒体与购买项目」可以使用独立账户。开发版和正式版连接各自的 CloudKit 环境。[Apple 私有数据库文档](https://developer.apple.com/documentation/cloudkit/ckcontainer/privateclouddatabase)
+
+同步包括自定义短语、用户词、选词频次、最近选择、上下文、模糊音和补全反馈。键盘使用时检查距上次尝试是否已有 60 分钟。宿主 App 也会申请最早一小时后的后台刷新，系统决定实际唤醒时间。键盘收起期间，宿主可代传 App Group 中的压缩变更。键盘再次打开时在后台合并下载的记录并刷新引擎。传输通过 CloudKit 的 TLS 连接，包含词句的批次和快照使用加密字段。关闭开关会保留本机词库。[Apple 后台调度文档](https://developer.apple.com/documentation/backgroundtasks/bgtaskrequest/earliestbegindate)
+
+## 更换 App ID 时迁移词库
+
+- **连接开发机的 iPhone** 使用上面的安装命令。脚本在 `build/migration/<备份名>/install-*/` 中分别保留旧键盘和已安装新版的备份，纳入 SQLite 的 WAL，校验完整性，并从手机读回暂存文件核对 SHA-256。新版键盘打开词库时在事务里导入，成功后记录迁移来源。显示 `import pending` 表示快照已到设备，键盘首次实际运行时会继续。
+- **已有新词库** 会保留已有短语顺序，追加旧版独有的短语。相同学习记录的历史计数取较大值，避免对早期开发版已复制的使用次数重复计数。两份库中各自独有的学习记录都会保留。
+- **面向商店分发** 时，旧版也需要先发布一次带同一 App Group 的过渡更新。旧键盘在用户启用完全访问并使用后，把一致的 SQLite 快照保存在 `group.com.hustmobile.cassotis`。新版第一次读取共享快照后将它合入本机。为过渡构建指定旧的 `CASSOTIS_HOST_ID=com.hustmobile.cassotis.poc`、`CASSOTIS_KEYBOARD_ID=com.hustmobile.cassotis.poc.swiftui` 和 `CASSOTIS_TEST_ID=com.hustmobile.cassotis.poc.keyboard`，并为旧宿主和旧键盘配置该共享组的签名权限。旧版的私有容器仅由旧键盘或已配对的开发机读取。应在迁移完成后再移除旧 App。
 
 ## 在 Mac 上回放
 
@@ -79,9 +94,7 @@ CASSOTIS_VARIANT=macos-cmem CASSOTIS_FPC_DEFINES=-dCASSOTIS_CMEM ./scripts/build
 
 ## 真机测量
 
-键盘要在手机上手动添加一次：设置 → 通用 → 键盘 → 键盘 → 添加新键盘 → 言泉 POC。这个 App 带两个键盘，要点进子页面把“言泉 POC”和“言泉 POC SwiftUI”都加上。Full Access 不用开。
-
-之后不用碰手机。宿主 App 会切到指定键盘；命令和报告都走输入框往返，所以不需要 App Group，也不需要 Full Access。脚本默认找第一台用数据线连着的 iPhone，也可以用 `CASSOTIS_DEVICE` 指定。
+真机测量前，在「设置 → 通用 → 键盘 → 键盘 → 添加新键盘」中启用要测量的「言泉」或「言泉测试」。回放命令和报告经由宿主的输入框传递，普通测量可在关闭完全访问时运行。脚本默认选择第一台通过数据线连接的 iPhone，可用 `CASSOTIS_DEVICE` 指定设备。
 
 ```bash
 ./scripts/device_keyboard.sh uikit base-10k "keys=10000"
@@ -123,9 +136,9 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 
 - **学习：** 用户词库是键盘扩展自己容器里的 `Library/Application Support/Cassotis/user_dict.db`，不需要 Full Access。每次上屏都直接写进 SQLite，扩展被系统结束也不会丢。两个键盘各有一份。测量回放默认不学习，`learning=1` 才打开。
   - 学过的用户词和用过的词库词，打全拼或缩写都排在候选最前面（`memeda`、`mmd` 都是 `么么哒`），点补全行接受的词、整句里打出的词也算用过。规则和 macOS 相同，见 `macos/CONFIGURATION.md`“用过的词排在最前面”。
-- **自定义短语：** 用法和 macOS 相同（`macos/CONFIGURATION.md`“自定义短语”）：完整打出缩写，短语排在候选第一个，同时显示在补全行；空格、数字、点候选或点补全行都上屏原文；缩写本身是全拼的，也可以简写（`zhongguo` 用 `zg`、`zhg`）。手机上没有编辑列表，短语从 Mac 导入：
+- **自定义短语：** 用法和 macOS 相同（`macos/CONFIGURATION.md`“自定义短语”）：完整打出缩写，短语排在候选第一个，同时显示在补全行；空格、数字、点候选或点补全行都上屏原文；缩写本身是全拼的，也可以简写（`zhongguo` 用 `zg`、`zhg`）。跨设备自动同步开启时，Mac 的短语会同步到手机。也可以手动导入：
   - 在 Mac 的设置 → 自定义短语里导出，打开导出的文件全部拷贝（通用剪贴板把它带到手机上），再在键盘设置 → 自定义短语里点“从剪贴板导入短语”。读剪贴板要开完全访问，没开时面板里说怎么开，什么都不读。
-  - 导入接在已有的后面；缩写和内容都相同的跳过，所以 Mac 上加了几条后整份再导入一次，只加新的。Mac 上改了或删了的不会跟着变，要先清空再导入。
+  - 导入接在已有的后面；缩写和内容都相同的跳过，所以 Mac 上加了几条后整份再导入一次，只加新的。仅用剪贴板导入时，如需使列表与导出文件完全一致，可先清空再导入。
   - 和 macOS 导入文件一样整份检查：解析用的就是 macOS 的 `nc_parse_custom_phrases`（经嵌入接口 `cassotis_core_parse_phrases`），有一条不对、超过 1024 条或超过 16 MB 就一条也不导入，面板里说是第几条、哪里不对。
   - 短语和引擎设置一起存在用户词库里，重开键盘、清除学习记录后都还在。面板里显示条数，可以清空。
 - **上下文：** 开始一段新输入前，键盘把光标前最多 1024 个 UTF-16 单位交给引擎，和 macOS 相同；输入框不提供时告诉引擎“没有上下文”，不沿用上一个输入框的。
@@ -136,7 +149,7 @@ CASSOTIS_TIMEOUT=720 ./scripts/device_keyboard.sh swiftui idle "mode=idle second
 - **手势：** 手指可以滑到别的字母上再抬起，以抬起时所在的键为准。长按空格进入触控板，左右拖动移动光标。按住退格连续删除，一段时间后加快。长按 `123` 打开设置。点 ⇧ 输入一个大写字母，连点两下锁定大写。
 - **按下即算：** 手指按下拼音小写字母时就把它交给引擎，抬起时直接显示算好的结果；手指滑到别的键上，就用退格把原来的字母从引擎里撤回，它从没显示过。标点、空格等可能上屏的键仍等抬起。提前算的字母可能领先于屏幕，所以模型的轮询结果只有在查询串与屏幕上的一致时才采用。退格也排进引擎队列，保证落在之前的按键之后。
 - **表情：** 第三方键盘调不出系统的表情键盘，所以做了一个简单的：按类别横向滚动，最近用过的排在最前。面板打开时才建，关掉就释放，每次打开都从“常用”开始：第一屏的彩色表情就有约 6 MB 位图，隐藏着也一样要画。设置面板也是用时才建。
-- **设置：** 长按 `123` 打开：全角、中文标点、大写字母开始英文、英文输入四个开关；输入方案（全拼和六种双拼）；模糊拼音逐条勾选，勾了任何一条就打开；自定义短语（从剪贴板导入、条数、清空）；清除学习记录和清空短语都要再点一次确认。没有 App Group，宿主 App 读不到键盘的文件，所以设置放在键盘里。引擎把设置存在用户词库里，清除学习记录不会清掉它们；中英模式由键盘自己记住。iOS 版只做简体中文，不提供繁體。
+- **设置：** 长按 `123` 打开：全角、中文标点、大写字母开始英文、英文输入四个开关；输入方案（全拼和六种双拼）；模糊拼音逐条勾选，勾了任何一条就打开；自定义短语（从剪贴板导入、条数、清空）；清除学习记录和清空短语都要再点一次确认。长按面板也提供本机的 iCloud 自动同步开关和状态。主 App 可读写共享的同步开关。引擎把设置存在用户词库里，清除学习记录不会清掉它们；中英模式由键盘自己记住。iOS 版只做简体中文，不提供繁體。
 - **换输入框和收起键盘：** 键盘显示时每 0.2 秒检查一次当前输入框，换了输入框就丢掉旧的拼音，不会打进新的输入框。键盘收起或换到别的键盘之前，先把拼音按第一个候选上屏，与 macOS 失去焦点时相同。
 - **一键补全：** macOS 候选窗下面那一行 Tab 补全，在 iOS 上放在候选栏上方单独一行：更长的词、整句后面的续写、古诗的下一句，每次一个，点一下上屏。整句续写可能很长，放进候选栏会把别的候选挤出去，所以单独一行，键盘因此高 30 pt（横屏 24 pt）。引擎猜出来的部分用蓝色，只是把已打的词连起来时用普通颜色，和 macOS 相同。没在打字时这一行空着。点补全行时，键盘把引擎设置里的补全键（Tab 或 `）发给引擎，和在 macOS 上按这个键一样。
   - 模型在后台给补全重新排序、续写长句（`char_lm_async`，键盘默认打开，回放用 `async=0` 关掉）。结果靠轮询取回：键盘每 30 ms 问一次，最多 3 秒，与 macOS 的定时器相同；手指按着字母时不问。只有补全变了时不重画候选栏，正在滚动的列表不会跳回开头。

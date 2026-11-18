@@ -1,5 +1,6 @@
 #import "EngineBridge.h"
 #include "EngineClient.hpp"
+#include "SyncStore.hpp"
 #include "cassotis_core.h"
 #include "replay.hpp"
 #include <algorithm>
@@ -91,6 +92,34 @@ static CassotisKeyResult *wrap(const Result &r) {
     _beforeOpen = memorySnapshot();
     auto t0 = std::chrono::steady_clock::now();
     std::string error;
+    if (userDictionary.length) {
+        NSFileManager *files = NSFileManager.defaultManager;
+        NSURL *library = [files URLsForDirectory:NSLibraryDirectory inDomains:NSUserDomainMask].firstObject;
+        NSString *ready = [[library URLByAppendingPathComponent:@"CassotisLegacy.ready"] path];
+        NSString *digest = [NSString stringWithContentsOfFile:ready encoding:NSUTF8StringEncoding error:nil];
+        NSCharacterSet *invalid = [NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdef"].invertedSet;
+        NSString *base = [@"CassotisLegacy-" stringByAppendingString:digest ?: @""];
+        NSString *staged = [[library URLByAppendingPathComponent:[base stringByAppendingString:@".sqlite"]] path];
+        NSString *sourceID = [NSBundle.mainBundle.bundleIdentifier hasSuffix:@".testkeyboard"]
+            ? @"com.hustmobile.cassotis.poc.keyboard" : @"com.hustmobile.cassotis.poc.swiftui";
+        if (digest.length == 64 && [digest rangeOfCharacterFromSet:invalid].location == NSNotFound) {
+            if (cassotis_sync::importLegacyDictionary(staged.fileSystemRepresentation,
+                    userDictionary.fileSystemRepresentation, sourceID.UTF8String, error)) {
+                NSURL *prefs = [library URLByAppendingPathComponent:[base stringByAppendingString:@".plist"]];
+                NSDictionary *old = [NSDictionary dictionaryWithContentsOfURL:prefs];
+                NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+                for (NSString *key in old)
+                    if ([key hasPrefix:@"cassotis."] && ![defaults objectForKey:key])
+                        [defaults setObject:old[key] forKey:key];
+                [files removeItemAtPath:ready error:nil];
+                [files removeItemAtPath:staged error:nil];
+                [files removeItemAtURL:prefs error:nil];
+            } else {
+                NSLog(@"cassotis legacy dictionary: import pending (%s)", error.c_str());
+                error.clear(); // The staged backup remains available for retry.
+            }
+        }
+    }
     bool ok = _client.connect(dictionary.UTF8String, userDictionary.UTF8String, resources.UTF8String, data.UTF8String, error);
     _openSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
     _afterOpen = memorySnapshot();
@@ -278,6 +307,30 @@ static CassotisKeyResult *wrap(const Result &r) {
 - (BOOL)clearLearning {
     try { _client.clearLearning(); [self forget]; return YES; }
     catch (const std::exception &e) { NSLog(@"clear learning: %s", e.what()); return NO; }
+}
++ (BOOL)migrateGroupDictionary:(NSString *)group dictionary:(NSString *)dictionary {
+    NSString *legacy = @"com.hustmobile.cassotis.poc.swiftui";
+    NSString *bundle = NSBundle.mainBundle.bundleIdentifier;
+    NSString *backup = [group stringByAppendingPathComponent:@"LegacyKeyboard.sqlite"];
+    std::string error;
+    if ([bundle isEqual:legacy]) {
+        if ([NSFileManager.defaultManager fileExistsAtPath:dictionary])
+            cassotis_sync::backupDictionary(dictionary.fileSystemRepresentation, backup.fileSystemRepresentation, error);
+    } else if ([bundle isEqual:@"com.hustmobile.cassotis.keyboard"] &&
+               ![NSUserDefaults.standardUserDefaults boolForKey:@"CassotisGroupLegacyImported"] &&
+               [NSFileManager.defaultManager fileExistsAtPath:backup]) {
+        if (cassotis_sync::importLegacyDictionary(backup.fileSystemRepresentation,
+                dictionary.fileSystemRepresentation, legacy.UTF8String, error)) {
+            [NSUserDefaults.standardUserDefaults setBool:YES forKey:@"CassotisGroupLegacyImported"];
+            return YES;
+        }
+    }
+    if (!error.empty()) NSLog(@"cassotis on-device migration: %s", error.c_str());
+    return NO;
+}
+- (BOOL)userDataChanged {
+    try { _client.userDataChanged(); return YES; }
+    catch (const std::exception &e) { NSLog(@"user data changed: %s", e.what()); return NO; }
 }
 - (int32_t)phraseCount {
     try { return int32_t(_client.state(true).customPhrases.size()); }

@@ -1477,6 +1477,9 @@ type
           (nc_user_word_import) as their own choices; entries is how many
           words the file held, imported how many the user dictionary took. }
         function import_user_words(const path: string; out entries, imported: Integer): Boolean;
+        { Another connection changed the user dictionary (iCloud sync): reopen it
+          and drop the lookups built from the old rows. }
+        procedure note_user_data_changed;
         procedure notify_user_dictionary_cleared;
         property config: TncEngineConfig read m_config write update_config;
     end;
@@ -190035,6 +190038,16 @@ begin
     Result := (m_dictionary <> nil) and
         (m_dictionary.is_user_entry(pinyin, text) or
         m_dictionary.is_literal_user_entry(pinyin, text));
+end;
+
+procedure TncEngine.note_user_data_changed;
+begin
+    // The dictionary follows PRAGMA data_version only on its next timed check, and
+    // the engine's own lookup caches not at all. Reopening the user connection
+    // (as for a changed file) clears the first, invalidating clears the rest.
+    if m_dictionary is TncSqliteDictionary then
+        TncSqliteDictionary(m_dictionary).reload_user_dictionary;
+    invalidate_dictionary_lookup_caches;
 end;
 
 function TncEngine.import_user_words(const path: string; out entries, imported: Integer): Boolean;

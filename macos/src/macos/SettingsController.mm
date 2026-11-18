@@ -5,6 +5,7 @@
 #import "ShortcutRecorder.h"
 #import "RuntimeLog.h"
 #import "CustomPhraseEditor.h"
+#import "SyncController.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface CassotisSettingsDocument : NSView
@@ -68,7 +69,8 @@ static BOOL CassotisSettingsFieldKey(NSControl *control,NSEvent *event) {
     NSSlider *_fontSize;
     NSTextField *_fontSizeLabel, *_status, *_punctuationSymbols;
     NSButton *_fullWidth, *_punctuation, *_decimalPeriod, *_fuzzy, *_retry, *_resetAppearance, *_logging, *_debugMode, *_expandCandidates, *_rememberMode, *_autoEnglish;
-    NSButton *_importWords, *_clearLearning, *_modeHint;
+    NSButton *_importWords, *_clearLearning, *_modeHint, *_cloudEnabled;
+    NSTextField *_cloudStatus;
     BOOL _importing;
     NSComboBox *_fontFamily;
     NSArray<NSString *> *_fontFamilies;
@@ -324,7 +326,12 @@ static BOOL CassotisSettingsFieldKey(NSControl *control,NSEvent *event) {
     _clearLearning.accessibilityIdentifier=@"clear-learning";
     _importWords=[NSButton buttonWithTitle:@"导入输入频次…" target:self action:@selector(importWords:)];
     _importWords.accessibilityIdentifier=@"import-word-frequencies";
-    [self section:@"高级" views:@[[self card:@[_logging,
+    _cloudEnabled=[self check:@"通过 iCloud 自动同步" identifier:@"cloud-sync-enabled"];
+    _cloudEnabled.action=@selector(cloudChanged:);
+    _cloudStatus=[self hint:@""];
+    [self section:@"高级" views:@[[self card:@[_cloudEnabled,
+        [self hint:@"约每小时同步自定义短语、用户词语和选词习惯。各台设备需登录同一 iCloud 账户。"],_cloudStatus]],
+        [self card:@[_logging,
         [self hint:@"默认关闭。开启后记录启动和运行诊断，开关立即生效并自动保存，不中断输入。关闭后停止写入，已有日志保留。每份日志最多 2 MB，保留上一份记录。"],
         [self row:@"运行日志" control:logs]]],
         [self card:@[_debugMode,[self hint:@"在候选栏右下角显示参与排序的上文及其来源。默认关闭，用于排查选词问题；此开关不启用日志。"]]],
@@ -340,6 +347,7 @@ static BOOL CassotisSettingsFieldKey(NSControl *control,NSEvent *event) {
         [stack.topAnchor constraintEqualToAnchor:document.topAnchor constant:24],
         [stack.bottomAnchor constraintEqualToAnchor:document.bottomAnchor constant:-24]]];
     for(NSView *section in contents) [section.widthAnchor constraintEqualToAnchor:stack.widthAnchor].active=YES;
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(syncFinished:) name:CassotisSyncDidFinishNotification object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(textEditing:) name:NSControlTextDidBeginEditingNotification object:nil];
     _scroll.contentView.postsBoundsChangedNotifications=YES;
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(scrolled:) name:NSViewBoundsDidChangeNotification object:_scroll.contentView];
@@ -541,7 +549,33 @@ static BOOL CassotisSettingsFieldKey(NSControl *control,NSEvent *event) {
     _modeHint.state=NSControlStateValueOn; CassotisSetInputModeHintEnabled(YES);
     [_theme selectItemAtIndex:0]; [_pageSize selectItemAtIndex:6]; _expandCandidates.state=0; [self appearanceChanged:nil];
 }
+- (void)cloudChanged:(id)sender {
+    (void)sender;
+    CassotisCloudSync *sync=CassotisSyncController.shared.sync;
+    sync.enabled=_cloudEnabled.state==NSControlStateValueOn;
+    _cloudStatus.stringValue=sync.enabled?@"等待同步":@"已关闭";
+    if(sync.enabled) [CassotisSyncController.shared syncNow];
+}
+- (void)syncFinished:(NSNotification *)notification {
+    CassotisSyncReport *report=notification.object;
+    if (!self.window.visible) return;
+    _cloudStatus.stringValue=CassotisSyncController.shared.sync.enabled?report.message:@"已关闭";
+    if (report.phrasesChanged && _ready) {
+        try {
+            cassotis::EngineClient engine;
+            if (engine.connect(CassotisSocketPath().UTF8String)) {
+                _state.customPhrases=engine.state().customPhrases;
+                [_customPhrases setPhrases:_state.customPhrases];
+            }
+        } catch(const std::exception &) { /* The next settings load retries. */ }
+    }
+}
 - (void)reloadSettings {
+    _cloudEnabled.state=CassotisSyncController.shared.sync.enabled?1:0;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY,0),^{
+        NSString *status=CassotisSyncController.shared.sync.statusText;
+        dispatch_async(dispatch_get_main_queue(),^{ self->_cloudStatus.stringValue=CassotisSyncController.shared.sync.enabled?status:@"已关闭"; });
+    });
     _loading=YES; _ready=NO; CassotisStartEngine(); cassotis::EngineClient engine;
     _rememberMode.state=CassotisRememberInputModeEnabled()?NSControlStateValueOn:NSControlStateValueOff;
     _modeHint.state=CassotisInputModeHintEnabled()?NSControlStateValueOn:NSControlStateValueOff;
@@ -610,6 +644,7 @@ static BOOL CassotisSettingsFieldKey(NSControl *control,NSEvent *event) {
 - (BOOL)persistSettings {
     if(!_ready) { _status.stringValue=@"引擎暂不可用，请重新打开设置后重试。"; return NO; }
     auto state=_state;
+    state.includesCustomPhrases=false; // Ordinary settings edits preserve the current engine phrase list.
     state.autoEnglish=_autoEnglish.state!=0;
     state.scheme=(uint8_t)_scheme.indexOfSelectedItem; state.dictionary=(uint8_t)_dictionary.indexOfSelectedItem;
     state.pageKeys=(uint8_t)_pageKeys.indexOfSelectedItem; state.completionKey=(uint8_t)_completionKey.indexOfSelectedItem;
@@ -690,7 +725,7 @@ static BOOL CassotisSettingsFieldKey(NSControl *control,NSEvent *event) {
     (void)sender; if(_importing || !_ready) return;
     NSAlert *alert=[[NSAlert alloc] init]; alert.alertStyle=NSAlertStyleWarning;
     alert.messageText=@"导入其他输入法的输入频次？";
-    alert.informativeText=@"把文件里的词按使用次数记入用户词库，当作你自己的选词习惯，只影响本机。\n\n"
+    alert.informativeText=@"把文件里的词按使用次数记入用户词库，当作你自己的选词习惯。开启 iCloud 同步后，导入的选词习惯也会同步。\n\n"
         @"文本文件每行一个词：词、完整拼音、次数，用逗号或 Tab 分隔，次数可以省略。例如：\n\n"
         @"知识,zhishi,120\n哪些,naxie,86\n输入法,shurufa\n\n"
         @"支持 UTF-8、带编码标记的 UTF-16 和 GBK 编码，最多 32 MB。\n\n"

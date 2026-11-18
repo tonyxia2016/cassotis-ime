@@ -20,6 +20,8 @@ printf '[AppKit %s] Cassotis\n' "$arch"
 xcrun clang++ -arch "$arch" -mmacosx-version-min=14.0 -std=c++20 -O2 -g \
     -fobjc-arc -Wall -Wextra -Werror -Wno-deprecated-declarations \
     -framework AppKit -framework InputMethodKit -framework Carbon -framework UniformTypeIdentifiers -framework QuartzCore \
+    -framework CloudKit -framework Security -lsqlite3 -lcompression -I"$root/src/sync" \
+    "$root/src/sync/CloudSync.mm" "$root/src/sync/SyncStore.cpp" "$root/src/macos/SyncController.mm" \
     "$root/src/macos/EngineClient.cpp" "$root/src/macos/CandidatePanel.mm" \
     "$root/src/macos/InputSession.mm" "$root/src/macos/SettingsController.mm" "$root/src/macos/CustomPhraseEditor.mm" \
     "$root/src/macos/CandidateAppearance.mm" "$root/src/macos/ShortcutRecorder.mm" \
@@ -58,17 +60,53 @@ cp "$root/third_party/opencc/LICENSE" "$app/Contents/Resources/licenses/OpenCC.t
 cp "$root/LICENSE" "$app/Contents/Resources/licenses/Cassotis.txt"
 cp "$root/third_party/onnxruntime/LICENSE" "$app/Contents/Resources/licenses/ONNXRuntime.txt"
 cp "$root/third_party/onnxruntime/ThirdPartyNotices.txt" "$app/Contents/Resources/licenses/ONNXRuntime-ThirdPartyNotices.txt"
-for binary in "$app/Contents/Frameworks/"*.dylib "$app/Contents/MacOS/Cassotis" "$app/Contents/MacOS/cassotis-engine"; do
-    codesign --force --sign - "$binary"
-done
-codesign --force --sign - "$app"
-codesign --verify --deep --strict "$app"
+# The bundle carries exactly the binaries just built (compared before signing,
+# which rewrites them unless it is ad hoc).
 cmp "$bin/cassotis-engine" "$app/Contents/MacOS/cassotis-engine"
 for library in libcassotis_ort.dylib libonnxruntime.1.20.1.dylib libcassotis_coreml.dylib; do
     cmp "$bin/$library" "$app/Contents/Frameworks/$library"
 done
+# iCloud sync needs the Apple Development identity and the development profile that
+# scripts/provision_icloud.py fetched (explicit App ID, iCloud container, this Mac).
+# Without one, sign ad hoc as before: the input method works but cannot sync.
+bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")"
+identity='-'
+entitlements=''
+rm -f "$app/Contents/embedded.provisionprofile"
+if found="$(python3 -B "$root/scripts/signing_profile.py" mac "$bundle_id")"; then
+    profile="${found%%$'\t'*}"
+    team="${found##*$'\t'}"
+    identity="${CASSOTIS_IDENTITY:-$(security find-identity -v -p codesigning | awk '/Apple Development/{print $2; exit}')}"
+    [[ -n "$identity" ]] || { echo 'No Apple Development signing identity.' >&2; exit 1; }
+    cp "$profile" "$app/Contents/embedded.provisionprofile"
+    entitlements="$root/build/$arch/Cassotis.entitlements"
+    cat >"$entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>com.apple.application-identifier</key><string>$team.$bundle_id</string>
+<key>com.apple.developer.team-identifier</key><string>$team</string>
+<key>com.apple.developer.icloud-container-identifiers</key><array><string>iCloud.com.hustmobile.cassotis</string></array>
+<key>com.apple.developer.icloud-services</key><array><string>CloudKit</string></array>
+<key>com.apple.developer.icloud-container-environment</key><string>Development</string>
+</dict></plist>
+PLIST
+else
+    printf 'No iCloud development profile (scripts/provision_icloud.py): signing ad hoc, without iCloud sync\n'
+fi
+for binary in "$app/Contents/Frameworks/"*.dylib "$app/Contents/MacOS/cassotis-engine"; do
+    codesign --force --sign "$identity" --timestamp=none "$binary"
+done
+if [[ -n "$entitlements" ]]; then
+    codesign --force --sign "$identity" --timestamp=none --entitlements "$entitlements" \
+        --generate-entitlement-der "$app"
+else
+    codesign --force --sign - "$app"
+fi
+codesign --verify --deep --strict "$app"
 printf 'Application built: %s\n' "$app"
 
 xcrun clang++ -arch "$arch" -mmacosx-version-min=14.0 -std=c++20 -O2 -g \
     -fobjc-arc -Wall -Wextra -Werror -framework AppKit -framework Carbon \
-    "$root/tools/control/input_source.mm" -o "$bin/cassotis-input-source"
+    -I"$root/src/sync" "$root/tools/control/input_source.mm" "$root/src/sync/SyncStore.cpp" \
+    -lsqlite3 -lcompression -o "$bin/cassotis-input-source"

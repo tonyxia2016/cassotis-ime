@@ -26,6 +26,8 @@ type
         function SetState(const state: TncEngineState): Boolean;
             virtual; abstract;
         function ClearUserDictionary: Boolean; virtual; abstract;
+        { The user dictionary changed outside the engine (iCloud sync). }
+        function UserDataChanged: Boolean; virtual;
         function ImportUserWords(const path: string; out entries, imported: Integer): Boolean; virtual;
         function ProcessKey(const context_id: QWord; const generation_id: QWord;
             const key_event: TncKeyEvent): TncEngineResult; virtual; abstract;
@@ -49,6 +51,11 @@ implementation
 function TncEngineCore.ImportUserWords(const path: string; out entries, imported: Integer): Boolean;
 begin
     entries := 0; imported := 0; Result := False;
+end;
+
+function TncEngineCore.UserDataChanged: Boolean;
+begin
+    Result := False;
 end;
 
 function TncEngineCore.CandidateActionVerified(const context_id, generation_id,

@@ -5,6 +5,7 @@
 #import "InputSession.h"
 #import "SettingsController.h"
 #import "ProductName.h"
+#import "SyncController.h"
 
 static void CassotisShowAboutPanel(void) {
     NSMutableParagraphStyle *paragraph=[[NSMutableParagraphStyle alloc] init];
@@ -90,6 +91,7 @@ static void CassotisShowAboutPanel(void) {
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     (void)notification; CassotisStartEngine();
+    [CassotisSyncController.shared start];
     [NSDistributedNotificationCenter.defaultCenter addObserver:self selector:@selector(inputSourceChanged:)
         name:(__bridge NSString *)kTISNotifySelectedKeyboardInputSourceChanged object:nil];
     [self inputSourceChanged:nil];
@@ -99,12 +101,41 @@ static void CassotisShowAboutPanel(void) {
         CassotisShowAboutPanel();
 }
 @end
+// Builds before 2026-11 ran under the upstream project's id. Carry its preferences
+// (candidate font and theme, remembered input modes, logging) over once.
+static void CassotisMigrateLegacyDefaults(void) {
+    NSUserDefaults *defaults=NSUserDefaults.standardUserDefaults;
+    NSString *mine=NSBundle.mainBundle.bundleIdentifier;
+    static NSString *const legacy=@"org.cassotis.inputmethod.Cassotis";
+    static NSString *const done=@"CassotisLegacyDefaultsMigrated";
+    if(!mine || [mine isEqual:legacy] || [defaults boolForKey:done]) return;
+    NSDictionary *old=[defaults persistentDomainForName:legacy];
+    NSMutableDictionary *current=[([defaults persistentDomainForName:mine]?:@{}) mutableCopy];
+    for(NSString *key in old) if(!current[key]) current[key]=old[key];
+    current[done]=@YES;
+    [defaults setPersistentDomain:current forName:mine];
+}
+
 int main(int argc,const char *argv[]) {
     (void)argc; (void)argv;
     @autoreleasepool {
+        // Checks signing and the iCloud entitlement from the shell: one round trip
+        // to the container in a throwaway zone, then exit. No input method starts.
+        if((argc==2 || argc==3) && !strcmp(argv[1],"--sync-probe")) {
+            __block NSString *result=nil;
+            __block BOOL success=NO;
+            [CassotisCloudSync probeWithCompletion:^(NSString *report, BOOL passed) {
+                dispatch_async(dispatch_get_main_queue(),^{ success=passed; result=report; });
+            }];
+            while(!result) [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
+            printf("%s\n",result.UTF8String);
+            return success ? 0 : 1;
+        }
+        CassotisMigrateLegacyDefaults();
         [NSApplication sharedApplication]; [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
         CassotisAppDelegate * __attribute__((objc_precise_lifetime)) delegate=[[CassotisAppDelegate alloc] init];
-        delegate.server=[[IMKServer alloc] initWithName:@"CassotisIME_Connection"
+        NSString *connection=[NSBundle.mainBundle objectForInfoDictionaryKey:@"InputMethodConnectionName"];
+        delegate.server=[[IMKServer alloc] initWithName:connection
             bundleIdentifier:NSBundle.mainBundle.bundleIdentifier];
         if(!delegate.server) return 1;
         NSApp.delegate=delegate; [NSApp run];

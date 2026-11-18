@@ -1,3 +1,4 @@
+import BackgroundTasks
 import ObjectiveC
 import UIKit
 
@@ -16,6 +17,78 @@ private let reportEnd = "@@end@@"
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
+  private static let refreshID = "com.hustmobile.cassotis.refresh"
+  private var backgroundSync: CassotisCloudSync?
+
+  func scheduleRefresh() {
+    guard KeyboardCloud.relay != nil,
+      UserDefaults(suiteName: KeyboardCloud.group)?.bool(forKey: "CassotisCloudSyncDisabled") != true else { return }
+    let request = BGAppRefreshTaskRequest(identifier: Self.refreshID)
+    request.earliestBeginDate = Date(timeIntervalSinceNow: 3600)
+    try? BGTaskScheduler.shared.submit(request)
+  }
+
+  func transportIfDue(completion: @escaping (CassotisSyncReport?) -> Void = { _ in }) {
+    guard let path = KeyboardCloud.relay?.path, FileManager.default.fileExists(atPath: path),
+      let preferences = UserDefaults(suiteName: KeyboardCloud.group) else {
+      completion(nil)
+      return
+    }
+    let sync: CassotisCloudSync
+    if let existing = backgroundSync { sync = existing }
+    else {
+      sync = KeyboardCloud.make(path: path)
+      sync.preferences = preferences
+      sync.transportOnly = true
+      backgroundSync = sync
+    }
+    sync.syncIfDue(3600, completion: completion)
+  }
+
+  private func refresh(_ task: BGTask) {
+    scheduleRefresh()
+    task.expirationHandler = { [weak self] in self?.backgroundSync?.cancel() }
+    transportIfDue { report in
+      task.expirationHandler = nil
+      task.setTaskCompleted(success: report?.ok ?? true)
+    }
+  }
+
+  /// A developer can collect an isolated CloudKit round trip from Documents with devicectl.
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.refreshID, using: .main) { [weak self] task in
+      guard let self else { task.setTaskCompleted(success: false); return }
+      self.refresh(task)
+    }
+    scheduleRefresh()
+    let arguments = ProcessInfo.processInfo.arguments
+    if arguments.contains("--sync-probe") {
+      let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      let destination = documents.appendingPathComponent("cassotis-sync-probe.txt")
+      try? FileManager.default.removeItem(at: destination)
+      CassotisCloudSync.probe { report, passed in
+        let queueAvailable = KeyboardCloud.relay.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        let result = (passed ? "PASS" : "FAIL") + "\n" + report + "\nbackground_queue=\(queueAvailable)"
+        do { try result.write(to: destination, atomically: true, encoding: .utf8) }
+        catch { NSLog("CloudKit diagnostic: %@", error.localizedDescription) }
+      }
+    }
+    return true
+  }
+
+  func setSyncEnabled(_ enabled: Bool) {
+    guard let preferences = UserDefaults(suiteName: KeyboardCloud.group) else { return }
+    preferences.set(!enabled, forKey: "CassotisCloudSyncDisabled")
+    if enabled { scheduleRefresh(); transportIfDue() }
+    else {
+      backgroundSync?.cancel()
+      BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Self.refreshID)
+    }
+  }
+
   func application(
     _ application: UIApplication,
     configurationForConnecting connectingSceneSession: UISceneSession,
@@ -30,6 +103,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 // iOS 27 traps a UIKit app built against its SDK if it has no scene lifecycle.
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   var window: UIWindow?
+  func sceneDidBecomeActive(_ scene: UIScene) {
+    (UIApplication.shared.delegate as? AppDelegate)?.transportIfDue()
+  }
+  func sceneDidEnterBackground(_ scene: UIScene) {
+    (UIApplication.shared.delegate as? AppDelegate)?.scheduleRefresh()
+  }
   func scene(
     _ scene: UIScene, willConnectTo session: UISceneSession,
     options connectionOptions: UIScene.ConnectionOptions
@@ -53,21 +132,27 @@ final class HostViewController: UIViewController, UITextViewDelegate {
   private let textView = KeyboardField()
   private let swiftUIView = KeyboardField()
   private let status = UILabel()
+  private let syncSwitch = UISwitch()
   private var command: String?
   private var field = "uikit"
   private var saved = 0
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    syncSwitch.isOn = UserDefaults(suiteName: KeyboardCloud.group)?.bool(forKey: "CassotisCloudSyncDisabled") != true
+  }
 
   private var activeField: KeyboardField { field == "swiftui" ? swiftUIView : textView }
 
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = .systemBackground
-    status.text = "上框选“言泉 POC”，下框选“言泉 POC SwiftUI”。"
+    status.text = "上框选“言泉测试”，下框选“言泉”。"
     status.font = .preferredFont(forTextStyle: .footnote)
     status.numberOfLines = 0
     status.translatesAutoresizingMaskIntoConstraints = false
-    textView.contextIdentifier = "com.hustmobile.cassotis.poc.uikit"
-    swiftUIView.contextIdentifier = "com.hustmobile.cassotis.poc.swiftui"
+    textView.contextIdentifier = "com.hustmobile.cassotis.testkeyboard"
+    swiftUIView.contextIdentifier = "com.hustmobile.cassotis.keyboard"
     for field in [textView, swiftUIView] {
       field.delegate = self
       field.font = .systemFont(ofSize: 15)
@@ -79,9 +164,23 @@ final class HostViewController: UIViewController, UITextViewDelegate {
       view.addSubview(field)
     }
     view.addSubview(status)
+    let syncLabel = UILabel()
+    syncLabel.text = "iCloud 自动同步"
+    syncLabel.font = .preferredFont(forTextStyle: .body)
+    syncSwitch.accessibilityLabel = syncLabel.text
+    syncSwitch.addTarget(self, action: #selector(changeCloud), for: .valueChanged)
+    let cloudRow = UIStackView(arrangedSubviews: [syncLabel, syncSwitch])
+    cloudRow.alignment = .center
+    cloudRow.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(cloudRow)
+    cloudRow.isHidden = KeyboardCloud.relay == nil
+    syncSwitch.isOn = UserDefaults(suiteName: KeyboardCloud.group)?.bool(forKey: "CassotisCloudSyncDisabled") != true
     let guide = view.safeAreaLayoutGuide
     NSLayoutConstraint.activate([
-      status.topAnchor.constraint(equalTo: guide.topAnchor, constant: 8),
+      cloudRow.topAnchor.constraint(equalTo: guide.topAnchor, constant: 8),
+      cloudRow.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 12),
+      cloudRow.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
+      status.topAnchor.constraint(equalTo: cloudRow.bottomAnchor, constant: 8),
       status.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 12),
       status.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
       textView.topAnchor.constraint(equalTo: status.bottomAnchor, constant: 8),
@@ -105,6 +204,10 @@ final class HostViewController: UIViewController, UITextViewDelegate {
       let file = documents.appendingPathComponent(arguments[index + 1])
       UIPasteboard.general.string = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
     }
+  }
+
+  @objc private func changeCloud() {
+    (UIApplication.shared.delegate as? AppDelegate)?.setSyncEnabled(syncSwitch.isOn)
   }
 
   /// What the globe key does, for a run started from the Mac. The classes are private;
@@ -183,6 +286,7 @@ final class HostViewController: UIViewController, UITextViewDelegate {
     super.viewDidAppear(animated)
     let arguments = ProcessInfo.processInfo.arguments
     writeKeyboardList()
+    if arguments.contains("--sync-probe") { return }
     if let index = arguments.firstIndex(of: "--selftest"), index + 1 < arguments.count {
       selfTest(arguments[index + 1])
       return

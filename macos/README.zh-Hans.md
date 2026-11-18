@@ -47,7 +47,7 @@ macOS 2.6.0（build 7）对标 Cassotis IME 与 Cassotis Lexicon v2.6.0：引擎
 - **中文标点**：中文标点、半角输入时，紧跟在数字后的句号输出为小数点；可在设置中指定原样输出的符号，也可一键换成 Markdown 预设或标准中文标点。默认的 Markdown 预设为 ``-#*+_=`~[]<>|@``；逗号、句号、圆括号和引号仍按中文习惯输入，反斜杠输入顿号 `、`。
 - **自定义短语**：以英文字母缩写调用文字，排在候选第一个，按空格、数字键或 Tab 原样上屏；缩写是全拼时也可以简写（`memeda` 用 `mmd`）；支持多行内容、排序、重复缩写优先级及 Windows 兼容的 JSON 导入、导出。填写缩写和内容后点击“添加短语”进入列表；编辑已有条目时使用“保存修改”或“取消编辑”。
 - **设置**：左侧分类的设置窗口，确认的修改立即保存；直接按键录制快捷键，字体名称可自动补全。日志默认关闭。
-- **完全本地**：不联网，不需要 GPU。引擎启动期间输入的按键会暂存，就绪后照常转换；语言模型尚未加载或不可用时，候选照常给出，只是不经过语言模型排序。
+- **离线输入。** 拼音转换和候选排序在本机完成。默认开启的 iCloud 会同步个人短语和学习记录，可在高级设置中关闭。引擎启动期间输入的按键会暂存，就绪后照常转换；语言模型尚未加载或不可用时，候选照常给出，只是不经过语言模型排序。
 
 <p align="center">
   <img src="docs/images/macos-three-row-candidates.png" alt="三行展开的候选窗，第二行为当前行" width="560">
@@ -121,7 +121,7 @@ export CASSOTIS_LEXICON_ROOT="/path/to/cassotis-lexicon"
 ./install.sh
 ```
 
-应用输出到 `build/arm64/Cassotis.app`，安装到当前用户的 `~/Library/Input Methods/Cassotis.app`；脚本不要用 `sudo` 运行。在“系统设置 → 键盘 → 文字输入”中添加言泉输入法，再从输入菜单选用。若输入源列表没有刷新，可退出登录后重新登录。
+应用输出到 `build/arm64/Cassotis.app`，安装到当前用户的 `~/Library/Input Methods/CassotisIME.app`；脚本不要用 `sudo` 运行。在“系统设置 → 键盘 → 文字输入”中添加言泉输入法，再从输入菜单选用。若输入源列表没有刷新，可退出登录后重新登录。
 
 `build_all.sh` 依次构建语言模型桥接、引擎、简繁词库、前端和安装器，并在核对 SHA-256 后把 `data/models/char_lm` 中的编号分片合并为应用携带的 `char_lm.onnx`。首次构建会下载官方 ONNX Runtime 1.20.1 arm64 发行包并核对固定的哈希。`./rebuild_all.sh` 清理后完整重建，`./uninstall.sh` 卸载输入法并保留学习记录，`./scripts/package.sh` 生成安装磁盘映像。选项、打包和签名见 [BUILD.md](BUILD.md)。
 

@@ -1,6 +1,6 @@
 #import "InputSourceRegistration.h"
 
-static NSString *const CassotisInputSourceID=@"org.cassotis.inputmethod.Cassotis";
+static NSString *const CassotisInputSourceID=@"com.hustmobile.inputmethod.Cassotis";
 
 static NSArray *sources(void) {
     NSDictionary *filter=@{(__bridge NSString *)kTISPropertyInputSourceID:CassotisInputSourceID};
@@ -8,7 +8,7 @@ static NSArray *sources(void) {
 }
 
 OSStatus CassotisRequestInputSourceEnablement(void) {
-    NSURL *url=[NSURL fileURLWithPath:[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Input Methods/Cassotis.app"]];
+    NSURL *url=[NSURL fileURLWithPath:[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Input Methods/CassotisIME.app"]];
     if(![[NSBundle bundleWithURL:url].bundleIdentifier isEqual:CassotisInputSourceID]) return fnfErr;
     OSStatus status=TISRegisterInputSource((__bridge CFURLRef)url);
     if(status!=noErr) return status;

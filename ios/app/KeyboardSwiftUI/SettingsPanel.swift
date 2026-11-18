@@ -17,6 +17,17 @@ final class SettingsPanel: UIView {
   private enum Page { case main, scheme, fuzzy, phrases }
   private var page = Page.main
   private var settings = CassotisSettings()
+  private var cloudEnabled = true
+  private var cloudStatus = ""
+  private var cloudEditable = true
+  func showCloud(enabled: Bool, editable: Bool, status: String) {
+    guard enabled != cloudEnabled || status != cloudStatus || editable != cloudEditable else { return }
+    cloudEnabled = enabled
+    cloudEditable = editable
+    cloudStatus = status
+    rebuild()
+  }
+
   private var phraseCount = 0
   private var phraseNote: (text: String, error: Bool)?
   private var confirmClear = false
@@ -80,6 +91,8 @@ final class SettingsPanel: UIView {
     case .main:
       header.text = "言泉设置"
       left.isHidden = true
+      rows.append(switchRow("iCloud 自动同步", cloudEnabled, id: KeyboardViewController.Setting.cloudSync, editable: cloudEditable))
+      rows.append(noteRow(cloudStatus, error: false))
       rows.append(switchRow("全角", settings.fullWidth, id: 2))
       rows.append(switchRow("中文标点", settings.chinesePunctuation, id: 3))
       rows.append(switchRow("大写字母开始英文", settings.autoEnglish, id: 4))
@@ -203,9 +216,10 @@ final class SettingsPanel: UIView {
     return (row, text)
   }
 
-  private func switchRow(_ title: String, _ on: Bool, id: Int32) -> UIView {
+  private func switchRow(_ title: String, _ on: Bool, id: Int32, editable: Bool = true) -> UIView {
     let (row, _) = base(title)
     let toggle = UISwitch()
+    toggle.isEnabled = editable
     toggle.isOn = on
     toggle.tag = Int(id)
     toggle.addTarget(self, action: #selector(switched(_:)), for: .valueChanged)

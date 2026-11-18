@@ -323,6 +323,15 @@ begin
                 else
                     response.payload := nc_encode_import_user_words_result(import_entries, import_count);
             end;
+        imt_user_data_changed:
+            begin
+                if not RequireEmptyPayload(request, response) then
+                    Exit;
+                if not FEngine.UserDataChanged then
+                    SetErrorResponse(request, response,
+                        c_ipc_dispatch_error_operation_failed,
+                        'Unable to reload user data');
+            end;
         imt_clear_user_dictionary:
             begin
                 if not RequireEmptyPayload(request, response) then

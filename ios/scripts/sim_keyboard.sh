@@ -6,12 +6,12 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 udid="$(cat "$root/build/sim.udid")"
 field="$1"; options="${2:-}"; wait_s="${3:-120}"
-bundle=com.hustmobile.cassotis.poc
+bundle=com.hustmobile.cassotis
 xcrun simctl terminate "$udid" "$bundle" >/dev/null 2>&1 || true
 [[ "${CASSOTIS_KEEP_EXTENSION:-0}" == 1 ]] || pkill -f "CassotisKeyboard" || true
 data="$(xcrun simctl get_app_container "$udid" "$bundle" data)"
 rm -rf "$data/Documents/reports"
-want="$bundle.$([[ "$field" == swiftui ]] && echo swiftui || echo keyboard)"
+want="$bundle.$([[ "$field" == swiftui ]] && echo keyboard || echo testkeyboard)"
 paste=()
 if [[ -n "${CASSOTIS_PASTEBOARD:-}" ]]; then
     mkdir -p "$data/Documents" && cp "$CASSOTIS_PASTEBOARD" "$data/Documents/pasteboard.txt"

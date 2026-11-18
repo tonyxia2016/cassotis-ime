@@ -116,6 +116,9 @@ public:
     State state(bool includeCustomPhrases = true);
     void setState(const State &state);
     void clearLearning();
+    // iCloud sync changed the user dictionary through another connection: the
+    // engine rereads it and rebuilds what it built from it (a composition stays).
+    void userDataChanged();
     UserWordImportResult importUserWords(const std::string &path);
 };
 }

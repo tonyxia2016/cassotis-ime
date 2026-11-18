@@ -10,12 +10,16 @@
 		6611492C4B758144344C1022 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		835A6FF32751BF062E956153 = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		4C576B27E12D6892B285C337 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		40BB66B29864E516F381445D = {isa = PBXBuildFile; fileRef = 12C9483FAA654A08482A328E; };
 		2BF423DEFBB15A3F45850399 = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
+		6AB5C68BC55F9F9E87B29C47 = {isa = PBXBuildFile; fileRef = 54EBDFB41A2B97B64113A43A; };
+		C7F4552E4DEF2213D6ABE098 = {isa = PBXBuildFile; fileRef = 068CDDC298D4F51AAE49420E; };
 		B392A25BED396C4676BFE8F2 = {isa = PBXBuildFile; fileRef = CAD36F85E6A3729FCF7711AA; };
 		DD4DE79EB1C5E91C9E488E12 = {isa = PBXBuildFile; fileRef = 14521C62C9E5FB08FAA8E404; };
 		4F2209D7C503EAE6C64DE8B1 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		9257539B87ABCB2F8881018E = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		2559B4AC5E028DCB3E200040 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		9FD199F6659C532C168AD495 = {isa = PBXBuildFile; fileRef = 12C9483FAA654A08482A328E; };
 		DD2CD5D29CA7A349B780222C = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
 		F00FC22FCC1F89346C2BB765 = {isa = PBXBuildFile; fileRef = F8C9F204141DC1EEDB4CEEE6; };
 		0D4C05CCE6BF23EB3054DDEF = {isa = PBXBuildFile; fileRef = A44D163741D0D2875FDBABBA; };
@@ -33,7 +37,10 @@
 		3D3AD054FD76ADDCB2761E47 = {isa = PBXBuildFile; fileRef = A72A3729DBBBE9B7203F7AA8; };
 		B0E7FCB26F884F2567E47C2D = {isa = PBXBuildFile; fileRef = E2350F80BEE7A7487DE441D9; };
 		30FC308173F7966D804B3A74 = {isa = PBXBuildFile; fileRef = 656ECDE031BD055ED47A1422; };
+		57F8ADA47BEFB7EBEC8E017F = {isa = PBXBuildFile; fileRef = 12C9483FAA654A08482A328E; };
 		F5B8F8BEF5800D5B38A8F9F6 = {isa = PBXBuildFile; fileRef = 261B2DBA1BD4B06A9D1AF633; };
+		9ACD4FB9AC29988A5544BCF2 = {isa = PBXBuildFile; fileRef = 54EBDFB41A2B97B64113A43A; };
+		7E6329A41F5CBEBB75583DE1 = {isa = PBXBuildFile; fileRef = 068CDDC298D4F51AAE49420E; };
 		0ED75F5269B73FF1F1AE62F7 = {isa = PBXBuildFile; fileRef = E98C161A42C3F8433503ECB6; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B669E4F2559CABE55B60B678 = {isa = PBXBuildFile; fileRef = 6244DB8E6A95F6A4A7D37EC2; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 
@@ -69,7 +76,10 @@
 		A72A3729DBBBE9B7203F7AA8 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = "EngineBridge.mm"; path = "Keyboard/EngineBridge.mm"; sourceTree = SOURCE_ROOT; };
 		E2350F80BEE7A7487DE441D9 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "EngineClient.cpp"; path = "../client/EngineClient.cpp"; sourceTree = SOURCE_ROOT; };
 		656ECDE031BD055ED47A1422 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "replay.cpp"; path = "../bench/replay.cpp"; sourceTree = SOURCE_ROOT; };
+		12C9483FAA654A08482A328E = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "SyncStore.cpp"; path = "../../macos/src/sync/SyncStore.cpp"; sourceTree = SOURCE_ROOT; };
 		261B2DBA1BD4B06A9D1AF633 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ModelProbe.swift"; path = "Keyboard/ModelProbe.swift"; sourceTree = SOURCE_ROOT; };
+		54EBDFB41A2B97B64113A43A = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = "CloudSync.mm"; path = "../../macos/src/sync/CloudSync.mm"; sourceTree = SOURCE_ROOT; };
+		068CDDC298D4F51AAE49420E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardCloud.swift"; path = "Keyboard/KeyboardCloud.swift"; sourceTree = SOURCE_ROOT; };
 		CAD36F85E6A3729FCF7711AA = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "KeyboardViewController.swift"; path = "Keyboard/KeyboardViewController.swift"; sourceTree = SOURCE_ROOT; };
 		14521C62C9E5FB08FAA8E404 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "CommandKeyboardController.swift"; path = "Keyboard/CommandKeyboardController.swift"; sourceTree = SOURCE_ROOT; };
 		F8C9F204141DC1EEDB4CEEE6 = {isa = PBXFileReference; lastKnownFileType = file; name = "dict_sc.db"; path = "../build/res/dict_sc.db"; sourceTree = SOURCE_ROOT; };
@@ -95,7 +105,10 @@
 				A72A3729DBBBE9B7203F7AA8,
 				E2350F80BEE7A7487DE441D9,
 				656ECDE031BD055ED47A1422,
+				12C9483FAA654A08482A328E,
 				261B2DBA1BD4B06A9D1AF633,
+				54EBDFB41A2B97B64113A43A,
+				068CDDC298D4F51AAE49420E,
 				CAD36F85E6A3729FCF7711AA,
 				14521C62C9E5FB08FAA8E404,
 				F8C9F204141DC1EEDB4CEEE6,
@@ -211,7 +224,10 @@
 				6611492C4B758144344C1022,
 				835A6FF32751BF062E956153,
 				4C576B27E12D6892B285C337,
+				40BB66B29864E516F381445D,
 				2BF423DEFBB15A3F45850399,
+				6AB5C68BC55F9F9E87B29C47,
+				C7F4552E4DEF2213D6ABE098,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,6 +247,7 @@
 				4F2209D7C503EAE6C64DE8B1,
 				9257539B87ABCB2F8881018E,
 				2559B4AC5E028DCB3E200040,
+				9FD199F6659C532C168AD495,
 				DD2CD5D29CA7A349B780222C,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -262,7 +279,10 @@
 				3D3AD054FD76ADDCB2761E47,
 				B0E7FCB26F884F2567E47C2D,
 				30FC308173F7966D804B3A74,
+				57F8ADA47BEFB7EBEC8E017F,
 				F5B8F8BEF5800D5B38A8F9F6,
+				9ACD4FB9AC29988A5544BCF2,
+				7E6329A41F5CBEBB75583DE1,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,6 +309,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+                CASSOTIS_HOST_ID = com.hustmobile.cassotis;
+                CASSOTIS_KEYBOARD_ID = com.hustmobile.cassotis.keyboard;
+                CASSOTIS_TEST_ID = com.hustmobile.cassotis.testkeyboard;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -316,6 +339,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+                CASSOTIS_HOST_ID = com.hustmobile.cassotis;
+                CASSOTIS_KEYBOARD_ID = com.hustmobile.cassotis.keyboard;
+                CASSOTIS_TEST_ID = com.hustmobile.cassotis.testkeyboard;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -348,19 +374,24 @@
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = Host/Info.plist;
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
+					"-framework",
+					"CloudKit",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CASSOTIS_HOST_ID)";
 				PRODUCT_NAME = CassotisPOC;
 				SWIFT_OBJC_BRIDGING_HEADER = "Host/Host-Bridging-Header.h";
+                CODE_SIGN_ENTITLEMENTS = Cloud.entitlements;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 			};
 			name = Debug;
@@ -373,19 +404,24 @@
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = Host/Info.plist;
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
+					"-framework",
+					"CloudKit",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CASSOTIS_HOST_ID)";
 				PRODUCT_NAME = CassotisPOC;
 				SWIFT_OBJC_BRIDGING_HEADER = "Host/Host-Bridging-Header.h";
+                CODE_SIGN_ENTITLEMENTS = Cloud.entitlements;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 			};
 			name = Release;
@@ -398,17 +434,19 @@
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.keyboard;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CASSOTIS_TEST_ID)";
 				PRODUCT_NAME = CassotisKeyboard;
 				SWIFT_OBJC_BRIDGING_HEADER = "Keyboard/Keyboard-Bridging-Header.h";
 				APPLICATION_EXTENSION_API_ONLY = YES;
@@ -425,17 +463,19 @@
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.keyboard;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CASSOTIS_TEST_ID)";
 				PRODUCT_NAME = CassotisKeyboard;
 				SWIFT_OBJC_BRIDGING_HEADER = "Keyboard/Keyboard-Bridging-Header.h";
 				APPLICATION_EXTENSION_API_ONLY = YES;
@@ -452,19 +492,24 @@
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = KeyboardSwiftUI/Info.plist;
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
+					"-framework",
+					"CloudKit",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.swiftui;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CASSOTIS_KEYBOARD_ID)";
 				PRODUCT_NAME = CassotisKeyboardSwiftUI;
 				SWIFT_OBJC_BRIDGING_HEADER = "KeyboardSwiftUI/Keyboard-Bridging-Header.h";
+                CODE_SIGN_ENTITLEMENTS = Cloud.entitlements;
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				SKIP_INSTALL = YES;
@@ -479,19 +524,24 @@
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = KeyboardSwiftUI/Info.plist;
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
+					"-framework",
+					"CloudKit",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.hustmobile.cassotis.poc.swiftui;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(CASSOTIS_KEYBOARD_ID)";
 				PRODUCT_NAME = CassotisKeyboardSwiftUI;
 				SWIFT_OBJC_BRIDGING_HEADER = "KeyboardSwiftUI/Keyboard-Bridging-Header.h";
+                CODE_SIGN_ENTITLEMENTS = Cloud.entitlements;
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				SKIP_INSTALL = YES;

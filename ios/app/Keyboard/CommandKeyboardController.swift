@@ -1,6 +1,6 @@
 import UIKit
 
-// What both POC keyboards share: the engine on its one thread, the document proxy,
+// What both keyboards share: the engine on its one thread, the document proxy,
 // memory marks, and a command channel through the text field so runs need no one
 // at the phone. A subclass only supplies the keys and draws the candidates:
 //   Keyboard/KeyboardViewController.swift          plain UIKit, the floor
@@ -132,6 +132,7 @@ class CommandKeyboardController: UIInputViewController {
   var engineIsOpen: Bool { Self.engineState == 2 }
 
   func buildKeyboard() {}
+  func learningDictionaryOpened() {}
   /// more: further pages follow, which loadCandidates reads when the list scrolls.
   /// selected: the highlighted one, which space takes (-1 for none).
   func showCandidates(_ candidates: [String], preedit: String, selected: Int, more: Bool) {}
@@ -150,7 +151,6 @@ class CommandKeyboardController: UIInputViewController {
   func typeCommand(_ token: String) -> Bool { false }
   /// What a subclass adds to mode=type's report.
   func typeReport() -> [String: Any] { [:] }
-
   static func mark(_ name: String) {
     marks.append(
       Mark(
@@ -158,7 +158,7 @@ class CommandKeyboardController: UIInputViewController {
         available: EngineBridge.available()))
   }
 
-  private static var dataDirectory: String {
+  static var dataDirectory: String {
     let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     let folder = base.appendingPathComponent("Cassotis", isDirectory: true)
     try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -226,6 +226,7 @@ class CommandKeyboardController: UIInputViewController {
         return
       }
       Self.engineState = 2
+      if learning { DispatchQueue.main.async { self.learningDictionaryOpened() } }
       if mode != 0 { Self.engine.setInputMode(Int32(mode)) }
       Self.mark("engineOpen")
       NSLog("cassotis engine open, footprint %.1f MB", Double(EngineBridge.footprint()) / 1_048_576)
@@ -686,6 +687,16 @@ class CommandKeyboardController: UIInputViewController {
       advanceToNextInputMode()
       return
     }
+    if options["mode"] == "migrate" {
+      withEngine {
+        let count = Self.engine.phraseCount()
+        DispatchQueue.main.async {
+          self.report("{\"migration_checked\":true,\"phrases\":\(count)}")
+          self.running = false
+        }
+      }
+      return
+    }
     if options["mode"] == "whoami" {
       report(
         "{\"bundle\":\"\(Bundle.main.bundleIdentifier ?? "")\",\"full_access\":\(hasFullAccess),"
@@ -1026,7 +1037,7 @@ class CommandKeyboardController: UIInputViewController {
     let data = URL(fileURLWithPath: Self.dataDirectory).appendingPathComponent("probe.txt")
     let wrote = (try? "x".write(to: data, atomically: true, encoding: .utf8)) != nil
     lines.append("\"private_container_write\":\(wrote)")
-    let group = "group.com.hustmobile.cassotis.poc"
+    let group = "group.com.hustmobile.cassotis"
     if let url = manager.containerURL(forSecurityApplicationGroupIdentifier: group) {
       lines.append("\"group_url\":\"\(url.path)\"")
       let marker = url.appendingPathComponent("host-marker.txt")

@@ -3,8 +3,9 @@
 
 Three targets: the host app, the plain UIKit keyboard (which also carries the
 dictionary and is the measurement floor), and the keyboard people use, in the style of
-iOS's own pinyin keyboard (app/KeyboardSwiftUI: the target kept its first name so that
-the keyboard users added and its learned words stay)."""
+iOS's own pinyin keyboard (app/KeyboardSwiftUI; the directory and target kept their first
+names). Bundle ids: com.hustmobile.cassotis for the host, .keyboard for the keyboard people
+use (the one with iCloud sync), .testkeyboard for the UIKit one."""
 import hashlib, os, pathlib
 
 root = pathlib.Path(__file__).resolve().parent.parent / "app"
@@ -15,7 +16,11 @@ def uid(name):
     return hashlib.md5(name.encode()).hexdigest()[:24].upper()
 
 
+# iCloud sync: the keyboard people use, and the host (status, probe); both have the
+# entitlement. The test keyboard has neither.
+sync = ["../../macos/src/sync/CloudSync.mm", "Keyboard/KeyboardCloud.swift"]
 bridge = ["Keyboard/EngineBridge.mm", "../client/EngineClient.cpp", "../bench/replay.cpp",
+          "../../macos/src/sync/SyncStore.cpp",
           "Keyboard/ModelProbe.swift"]
 keyboard = ["KeyboardSwiftUI/" + name for name in (
     "KeyboardViewController.swift", "KeyLayout.swift", "KeysView.swift", "CandidateViews.swift",
@@ -23,21 +28,22 @@ keyboard = ["KeyboardSwiftUI/" + name for name in (
 targets = {
     "host": dict(
         name="CassotisPOC", ext="app", ptype="com.apple.product-type.application",
-        sources=["Host/AppDelegate.swift"] + bridge, resources=[],
-        bundle="com.hustmobile.cassotis.poc", plist="Host/Info.plist",
+        sources=["Host/AppDelegate.swift"] + bridge + sync, resources=[],
+        links=["-framework", "CloudKit"],
+        bundle="$(CASSOTIS_HOST_ID)", plist="Host/Info.plist",
         header="Host/Host-Bridging-Header.h"),
     "kb": dict(
         name="CassotisKeyboard", ext="appex", ptype="com.apple.product-type.app-extension",
         sources=["Keyboard/KeyboardViewController.swift", "Keyboard/CommandKeyboardController.swift"] + bridge,
         resources=["../build/res/dict_sc.db", "../build/res/schema.sql", "../bench/corpus.tsv",
                    "../build/res/char_lm"],
-        bundle="com.hustmobile.cassotis.poc.keyboard", plist="Keyboard/Info.plist",
+        bundle="$(CASSOTIS_TEST_ID)", plist="Keyboard/Info.plist",
         header="Keyboard/Keyboard-Bridging-Header.h"),
     "sui": dict(
         name="CassotisKeyboardSwiftUI", ext="appex", ptype="com.apple.product-type.app-extension",
-        sources=keyboard + ["Keyboard/CommandKeyboardController.swift"] + bridge,
-        resources=[],
-        bundle="com.hustmobile.cassotis.poc.swiftui", plist="KeyboardSwiftUI/Info.plist",
+        sources=keyboard + ["Keyboard/CommandKeyboardController.swift"] + bridge + sync,
+        resources=[], links=["-framework", "CloudKit"],
+        bundle="$(CASSOTIS_KEYBOARD_ID)", plist="KeyboardSwiftUI/Info.plist",
         header="KeyboardSwiftUI/Keyboard-Bridging-Header.h"),
 }
 TYPES = {"swift": "sourcecode.swift", "mm": "sourcecode.cpp.objcpp", "cpp": "sourcecode.cpp.cpp",
@@ -56,6 +62,9 @@ for f in files:
     group += f"\t\t\t\t{uid('ref' + f)},\n"
 phases, native, lists, configs = "", "", "", ""
 common = """				ALWAYS_SEARCH_USER_PATHS = NO;
+                CASSOTIS_HOST_ID = com.hustmobile.cassotis;
+                CASSOTIS_KEYBOARD_ID = com.hustmobile.cassotis.keyboard;
+                CASSOTIS_TEST_ID = com.hustmobile.cassotis.testkeyboard;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -149,25 +158,30 @@ for key, t in targets.items():
 			productType = "{t["ptype"]}";
 		}};
 """
+    link_flags = "".join(f'\t\t\t\t\t"{flag}",\n' for flag in t.get("links", []))
     settings = f"""				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../macos/src/embed",
 					"$(SRCROOT)/../client",
 					"$(SRCROOT)/../bench",
 					"$(SRCROOT)/Keyboard",
+					"$(SRCROOT)/../../macos/src/sync",
 				);
 				INFOPLIST_FILE = {t["plist"]};
 				OTHER_LDFLAGS = (
 					"-force_load",
 					"$(SRCROOT)/../build/$(CASSOTIS_ENGINE)/libcassotis_core.a",
 					"-lsqlite3",
+					"-lcompression",
 					"-liconv",
 					"-lc++",
 					"-Wl,-no_fixup_chains",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = {t["bundle"]};
+{link_flags}				);
+				PRODUCT_BUNDLE_IDENTIFIER = "{t["bundle"]}";
 				PRODUCT_NAME = {t["name"]};
 				SWIFT_OBJC_BRIDGING_HEADER = "{t["header"]}";
 """
+    if key in ("host", "sui"):
+        settings += '                CODE_SIGN_ENTITLEMENTS = Cloud.entitlements;\n'
     if t["ext"] == "appex":
         settings += '				APPLICATION_EXTENSION_API_ONLY = YES;\n				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";\n				SKIP_INSTALL = YES;\n'
     else:

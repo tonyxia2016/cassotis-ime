@@ -7,10 +7,10 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 device="${CASSOTIS_DEVICE:-$(python3 -I "$root/scripts/find_device.py")}"
-bundle=com.hustmobile.cassotis.poc
+bundle=com.hustmobile.cassotis
 field="$1"; label="$2"; options="${3:-}"
 timeout_s="${CASSOTIS_TIMEOUT:-600}"
-want="$bundle.$([[ "$field" == swiftui ]] && echo swiftui || echo keyboard)"
+want="$bundle.$([[ "$field" == swiftui ]] && echo keyboard || echo testkeyboard)"
 paste=()
 if [[ -n "${CASSOTIS_PASTEBOARD:-}" ]]; then
     xcrun devicectl device copy to --device "$device" --domain-type appDataContainer \

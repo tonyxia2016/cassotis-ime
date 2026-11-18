@@ -43,7 +43,11 @@ type
         imt_import_user_words,
         { Read-only copies of further candidate pages (the iOS keyboard's
           scrolling list); the engine's page and selection stay as they are. }
-        imt_candidate_pages
+        imt_candidate_pages,
+        { Another connection changed the user dictionary (iCloud sync merged
+          other devices' learning): reread it and drop what was built from it.
+          No payload; a composition in progress stays. }
+        imt_user_data_changed
     );
 
     TncIpcEnvelope = record

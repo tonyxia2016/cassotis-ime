@@ -30,7 +30,7 @@ static const NSUInteger maximumLogSize=2*1024*1024;
     self=[super init];
     if(self) {
         _directory=[directory copy]; _defaults=defaults; _file=-1;
-        _queue=dispatch_queue_create("org.cassotis.runtime-log",DISPATCH_QUEUE_SERIAL);
+        _queue=dispatch_queue_create("com.hustmobile.cassotis.runtime-log",DISPATCH_QUEUE_SERIAL);
         // An absent preference is off, including upgrades from the always-on logger.
         _enabled=[defaults boolForKey:CassotisRuntimeLoggingEnabledKey];
     }

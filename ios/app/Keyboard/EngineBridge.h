@@ -112,6 +112,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)applySettings:(CassotisSettings *)settings;
 // Empties the user dictionary: everything learned is gone.
 - (BOOL)clearLearning;
+// iCloud sync merged other devices' learning into the user dictionary: the engine
+// rereads it. A composition in progress stays.
+- (BOOL)userDataChanged;
+// A transition release under the old ID exports to the common App Group. The
+// current keyboard imports that on-device snapshot once. Called on its engine thread.
++ (BOOL)migrateGroupDictionary:(NSString *)group dictionary:(NSString *)dictionary;
+
 // The custom phrases (macOS: 设置 → 自定义短语), which the engine saves with its
 // settings. The keyboard has no list to edit them in; they come from the JSON macOS
 // exports, a list of [abbreviation, text] pairs. -1 when the engine cannot say.

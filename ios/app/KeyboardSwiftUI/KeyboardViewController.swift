@@ -14,6 +14,75 @@ final class KeyboardInputView: UIInputView, UIInputViewAudioFeedback {
 final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
   CandidateViewsDelegate, EmojiPanelDelegate, SettingsPanelDelegate
 {
+  private static var synchronizer: CassotisCloudSync?
+  private var syncTimer: Timer?
+  var syncStatus = "尚未同步"
+  private var syncVisible = false
+
+  var cloud: CassotisCloudSync {
+    if let sync = Self.synchronizer { return sync }
+    let sync = KeyboardCloud.make(path: Self.dataDirectory + "/user_dict.db")
+    Self.synchronizer = sync
+    return sync
+  }
+
+  var cloudSwitchEditable: Bool { hasFullAccess || !UserDefaults.standard.bool(forKey: KeyboardCloud.usedGroup) }
+
+  func updateCloudPanel() {
+    let message = !cloud.isEnabled ? "已关闭" : (hasFullAccess ? syncStatus : "同步需要在系统键盘设置中允许完全访问。")
+    settingsPanel?.showCloud(enabled: cloud.isEnabled, editable: cloudSwitchEditable,
+      status: cloudSwitchEditable ? message : "打开「言泉」App 可修改本机同步开关。键盘参与同步需要完全访问。")
+  }
+
+  private func received(_ report: CassotisSyncReport?) {
+    guard let report else { return }
+    if report.learningChanged && engineIsOpen {
+      let sync = cloud
+      Self.thread.run {
+        if Self.engine.userDataChanged() { sync.acknowledgeRefresh(report) }
+        let count = Self.engine.phraseCount()
+        DispatchQueue.main.async {
+          if count >= 0 { Self.savedPhraseCount = Int(count) }
+          if self.settingsPanel != nil { self.refreshSettings() }
+        }
+      }
+    }
+  }
+
+  func attemptCloud(force: Bool = false) {
+    updateCloudPanel()
+    guard !legacyBridge, hasFullAccess, cloud.isEnabled else { return }
+    let sync = cloud
+    sync.syncIfDue(force ? 0 : 3600) { [weak self] report in
+      guard let self, let report else { return }
+      self.syncStatus = report.message
+      self.received(report)
+      self.updateCloudPanel()
+    }
+  }
+
+  private var legacyBridge: Bool { Bundle.main.bundleIdentifier == "com.hustmobile.cassotis.poc.swiftui" }
+
+  private func migrateGroupData() {
+    guard hasFullAccess, let directory = KeyboardCloud.relay?.deletingLastPathComponent() else { return }
+    let dictionary = Self.dataDirectory + "/user_dict.db"
+    Self.thread.run {
+      if EngineBridge.migrateGroupDictionary(directory.path, dictionary: dictionary), self.engineIsOpen {
+        _ = Self.engine.userDataChanged()
+      }
+    }
+  }
+
+  override func learningDictionaryOpened() {
+    guard syncVisible else { return }
+    KeyboardCloud.configure(cloud, fullAccess: hasFullAccess)
+    migrateGroupData()
+    if !legacyBridge && hasFullAccess && cloud.isEnabled {
+      cloud.prepareRelay { [weak self] report in self?.received(report) }
+    }
+    attemptCloud()
+  }
+
   let completionRow = CompletionRowView()
   let candidateBar = CandidateBarView()
   let candidateGrid = CandidateGridView()
@@ -120,6 +189,15 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     super.viewWillAppear(animated)
     closeOverlays()
     keysView.show(.letters)
+    syncVisible = true
+    KeyboardCloud.configure(cloud, fullAccess: hasFullAccess)
+    migrateGroupData()
+    if !legacyBridge && hasFullAccess && cloud.isEnabled {
+      cloud.prepareRelay { [weak self] report in self?.received(report) }
+    }
+    attemptCloud()
+    syncTimer?.invalidate()
+    syncTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in self?.attemptCloud() }
     keysView.hapticsEnabled = hasFullAccess  // a keyboard may vibrate only with Full Access
     updateReturnKey()
     showInputMode(Self.rememberedMode)
@@ -130,6 +208,13 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     // Another keyboard, or dismissed: commit as macOS does on deactivation.
     commitCompositionNow()
     stopDocumentPolling()
+    syncVisible = false
+    syncTimer?.invalidate()
+    syncTimer = nil
+    if legacyBridge { migrateGroupData() }
+    if !legacyBridge && hasFullAccess && cloud.isEnabled {
+      cloud.prepareRelay { [weak self] report in self?.received(report) }
+    }
     super.viewWillDisappear(animated)
   }
 
@@ -229,6 +314,15 @@ final class KeyboardViewController: CommandKeyboardController, KeysViewDelegate,
     addPanel(panel)
     settingsPanel = panel
     phraseNote = nil
+    let sync = cloud
+    DispatchQueue.global(qos: .utility).async { [weak self] in
+      let status = sync.statusText
+      DispatchQueue.main.async {
+        self?.syncStatus = status
+        self?.updateCloudPanel()
+      }
+    }
+    updateCloudPanel()
     refreshSettings()
     panel.reset()
   }

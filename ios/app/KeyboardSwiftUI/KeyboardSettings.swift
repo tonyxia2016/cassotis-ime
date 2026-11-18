@@ -11,6 +11,7 @@ extension KeyboardViewController {
   /// what was learned, 400 imports custom phrases from the clipboard, 401 removes them.
   /// mode=type's {set:N} uses the same numbers.
   enum Setting {
+    static let cloudSync: Int32 = 402
     static let fullWidth: Int32 = 2
     static let chinesePunctuation: Int32 = 3
     static let autoEnglish: Int32 = 4
@@ -81,6 +82,12 @@ extension KeyboardViewController {
   /// the mode, scheme or fuzzy rules change), save, and show what the engine took.
   func activateSetting(_ id: Int32) {
     switch id {
+    case Setting.cloudSync:
+      guard cloudSwitchEditable else { return }
+      cloud.isEnabled.toggle()
+      syncStatus = cloud.isEnabled ? "等待同步" : "已关闭"
+      attemptCloud(force: true)
+      return
     case Setting.importPhrases: return importPhrases()
     case Setting.clearPhrases: return changePhrases { Self.engine.clearPhrases() ? nil : "没能清空短语。" }
     default: break

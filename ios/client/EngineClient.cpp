@@ -278,6 +278,7 @@ void EngineClient::setState(const State &s) {
     transact(13,payload);
 }
 void EngineClient::clearLearning() { transact(16,{}); }
+void EngineClient::userDataChanged() { transact(22,{}); }
 UserWordImportResult decodeUserWordImportResult(const Bytes &data) {
     Reader r(data); require(r.schema()==1,"Invalid import result schema");
     UserWordImportResult result{r.u32(),r.u32()}; r.end();

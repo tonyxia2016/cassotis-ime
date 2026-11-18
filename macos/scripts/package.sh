@@ -108,12 +108,31 @@ cp "$root/resources/Uninstall.command" "$package/Uninstall.command"
 sed "s/@VERSION@/$version/g" "$root/resources/INSTALL.txt" >"$package/INSTALL.txt"
 chmod +x "$package/"*.command "$package/scripts/"*.sh
 if [[ -n "$identity" ]]; then
+    app_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$package/Cassotis.app/Contents/Info.plist")"
+    found="$(python3 -B "$root/scripts/signing_profile.py" mac-release "$app_id")" || {
+        echo "CloudKit needs a Developer ID provisioning profile for $app_id. Set CASSOTIS_DISTRIBUTION_PROFILE to its path." >&2
+        exit 1
+    }
+    cp "${found%%$'\t'*}" "$package/Cassotis.app/Contents/embedded.provisionprofile"
+    team="${found##*$'\t'}"
+    python3 -B - "$stage/cloud.plist" "$team" "$app_id" <<'PYTHON'
+import plistlib, sys
+with open(sys.argv[1], "wb") as output:
+    plistlib.dump({
+        "com.apple.application-identifier": sys.argv[2] + "." + sys.argv[3],
+        "com.apple.developer.team-identifier": sys.argv[2],
+        "com.apple.developer.icloud-container-identifiers": ["iCloud.com.hustmobile.cassotis"],
+        "com.apple.developer.icloud-services": ["CloudKit"],
+        "com.apple.developer.icloud-container-environment": "Production",
+    }, output)
+PYTHON
     for binary in "$package/Cassotis.app/Contents/Frameworks/"*.dylib \
         "$package/Cassotis.app/Contents/MacOS/Cassotis" "$package/Cassotis.app/Contents/MacOS/cassotis-engine" \
         "$package/tools/cassotis-input-source"; do
         codesign --force --options runtime --timestamp --sign "$identity" "$binary"
     done
-    codesign --force --options runtime --timestamp --sign "$identity" "$package/Cassotis.app"
+    codesign --force --options runtime --timestamp --sign "$identity" --generate-entitlement-der \
+        --entitlements "$stage/cloud.plist" "$package/Cassotis.app"
 fi
 codesign --verify --deep --strict "$package/Cassotis.app"
 archive="$root/dist/$name.zip"

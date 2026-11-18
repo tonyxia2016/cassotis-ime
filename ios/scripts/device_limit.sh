@@ -5,9 +5,9 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 device="${CASSOTIS_DEVICE:-$(python3 -I "$root/scripts/find_device.py")}"
-bundle=com.hustmobile.cassotis.poc
+bundle=com.hustmobile.cassotis
 field="$1"; label="$2"; step="${3:-8}"
-want="$bundle.$([[ "$field" == swiftui ]] && echo swiftui || echo keyboard)"
+want="$bundle.$([[ "$field" == swiftui ]] && echo keyboard || echo testkeyboard)"
 out="$root/results/$label"; rm -rf "$out"; mkdir -p "$out"
 list() {
     xcrun devicectl device info files --device "$device" --domain-type appDataContainer \

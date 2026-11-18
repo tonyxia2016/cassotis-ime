@@ -7,7 +7,7 @@ device="${CASSOTIS_DEVICE:-$(python3 -I "$root/scripts/find_device.py")}"
 label="$1"; options="${2:-}"
 console="$root/results/$label.console"
 timeout "${CASSOTIS_TIMEOUT:-300}" xcrun devicectl device process launch --device "$device" --terminate-existing --console \
-    com.hustmobile.cassotis.poc --selftest "label=$label $options" >"$console" 2>&1 &
+    com.hustmobile.cassotis --selftest "label=$label $options" >"$console" 2>&1 &
 launcher=$!
 for _ in $(seq 1 "$(( ${CASSOTIS_TIMEOUT:-300} - 20 ))"); do
     # The replay prints its JSON over many lines; mltest and mlplan print one.

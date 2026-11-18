@@ -102,6 +102,7 @@ type
         function GetState(out state: TncEngineState): Boolean; override;
         function SetState(const state: TncEngineState): Boolean; override;
         function ClearUserDictionary: Boolean; override;
+        function UserDataChanged: Boolean; override;
         function ImportUserWords(const path: string; out entries, imported: Integer): Boolean; override;
         function ProcessKey(const context_id: QWord; const generation_id: QWord;
             const key_event: TncKeyEvent): TncEngineResult; override;
@@ -402,7 +403,8 @@ begin
     Result := True;
     if FStateStore = nil then
         Exit;
-    Result := FStateStore.SaveEngineState(state);
+    Result := FStateStore.SaveEngineState(state,
+        not nc_custom_phrases_equal(FState.custom_phrases, state.custom_phrases));
     if not Result then
         FDictionaryError := FStateStore.ErrorMessage;
 end;
@@ -974,6 +976,33 @@ begin
     FLoadedContextId := c_invalid_context_id;
     FEngine.end_document;
     FEngine.Reset;
+end;
+
+function TncEngineService.UserDataChanged: Boolean;
+var
+    stored: TncEngineState;
+    config: TncEngineConfig;
+begin
+    // Unlike an import, no reset: someone may be typing. The candidates of each
+    // context are rebuilt from the merged learning at its next request.
+    Result := FEngine <> nil;
+    if not Result then
+        Exit;
+    if FStateStore <> nil then
+    begin
+        if not FStateStore.LoadEngineState(stored) then Exit(False);
+        if not nc_custom_phrases_equal(stored.custom_phrases, FState.custom_phrases) then
+        begin
+            config := FEngine.Config;
+            config.custom_phrases := Copy(stored.custom_phrases);
+            FEngine.update_config(config);
+            FConfig := FEngine.Config;
+            FState.custom_phrases := Copy(stored.custom_phrases);
+        end;
+    end;
+    FEngine.note_user_data_changed;
+    FContexts.InvalidateLearnedCandidates;
+    FLoadedContextId := c_invalid_context_id;
 end;
 
 procedure TncEngineService.SuspendCharLm(const value: Boolean);

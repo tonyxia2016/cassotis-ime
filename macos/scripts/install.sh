@@ -3,7 +3,8 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 arch="${CASSOTIS_ARCH:-arm64}"
 source_app="$root/build/$arch/Cassotis.app"
-destination="$HOME/Library/Input Methods/Cassotis.app"
+destination="$HOME/Library/Input Methods/CassotisIME.app"
+legacy="$HOME/Library/Input Methods/Cassotis.app"
 control="$root/build/$arch/bin/cassotis-input-source"
 if [[ -d "$root/Cassotis.app" ]]; then
     source_app="$root/Cassotis.app"
@@ -11,15 +12,18 @@ if [[ -d "$root/Cassotis.app" ]]; then
 fi
 [[ -d "$source_app" ]] || "$root/scripts/build.sh"
 codesign --verify --deep --strict "$source_app"
-[[ ! -L "$destination" ]] || { echo 'Installed application path is a symlink.' >&2; exit 1; }
-if [[ -d "$destination" ]]; then
-    [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$destination/Contents/Info.plist")" == org.cassotis.inputmethod.Cassotis ]] || {
-        echo 'Refusing to replace a different application at Cassotis.app.' >&2; exit 1;
-    }
-fi
+for existing in "$destination" "$legacy"; do
+    [[ ! -L "$existing" ]] || { echo "Installed application path is a symlink: $existing" >&2; exit 1; }
+    if [[ -d "$existing" ]]; then
+        [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$existing/Contents/Info.plist")" =~ ^(com\.hustmobile|org\.cassotis)\.inputmethod\.Cassotis$ ]] || {
+            echo "Refusing to replace a different application at $existing." >&2; exit 1;
+        }
+    fi
+done
 mkdir -p "$HOME/Library/Input Methods"
 staging="$(mktemp -d "$HOME/Library/Input Methods/.cassotis-install.XXXXXX")"
-backup=''
+previous_app="$staging/previous"
+previous_legacy="$staging/legacy"
 installed=0
 previous_source="$("$control" current)"
 cleanup() {
@@ -31,11 +35,18 @@ cleanup() {
             "$control" prepare-update >/dev/null || true
             mv "$destination" "$staging/failed.app"
         fi
-        if [[ -n "$backup" && -d "$backup" ]]; then
-            mv "$backup" "$destination"
+        if [[ -d "$previous_app" ]]; then
+            mv "$previous_app" "$destination"
             "$control" register-only "$destination" >/dev/null || true
-            "$control" launch >/dev/null || true
         fi
+        if [[ -d "$previous_legacy" ]]; then
+            mv "$previous_legacy" "$legacy"
+            "$control" register-only "$legacy" >/dev/null || true
+        fi
+        if [[ -d "$destination" || -d "$legacy" ]]; then "$control" launch >/dev/null || true; fi
+    fi
+    if [[ $status -eq 0 && "$previous_source" == org.cassotis.inputmethod.Cassotis ]]; then
+        previous_source=com.hustmobile.inputmethod.Cassotis
     fi
     if [[ -n "$previous_source" ]]; then "$control" select-id "$previous_source" >/dev/null || true; fi
     rm -rf "$staging"
@@ -47,13 +58,22 @@ trap cleanup EXIT
 # Inheriting it would translocate the input method away from its registered path.
 ditto --noextattr --noqtn "$source_app" "$staging/Cassotis.app"
 codesign --verify --deep --strict "$staging/Cassotis.app"
-"$control" prepare-update
-if [[ -d "$destination" ]]; then
-    backup="$HOME/Library/Application Support/CassotisIME/Backups/Cassotis-$(date +%Y%m%d-%H%M%S)-$(uuidgen).app"
-    mkdir -p "$(dirname "$backup")"
-    mv "$destination" "$backup"
-    printf 'Previous application backed up to %s\n' "$backup"
+dictionary="$HOME/Library/Application Support/CassotisIME/user_dict.db"
+backup_directory="$HOME/Library/Application Support/CassotisIME/Backups"
+dictionary_backup=''
+if [[ -d "$legacy" && -f "$dictionary" ]]; then
+    mkdir -p "$backup_directory"
+    dictionary_backup="$backup_directory/Before-App-ID-$(date +%Y%m%d-%H%M%S)-$(uuidgen).sqlite"
+    "$control" backup-dictionary "$dictionary" "$dictionary_backup"
+    printf 'Verified dictionary backup: %s\n' "$dictionary_backup"
 fi
+"$control" prepare-update
+if [[ -n "$dictionary_backup" ]]; then "$control" import-dictionary "$dictionary_backup" "$dictionary"; fi
+# A new App ID at the legacy URL can remain associated with the old keyboard
+# in the current login session. Keep the replaced directories in staging
+# only until registration and launch succeed, so a failure can be rolled back.
+if [[ -d "$legacy" ]]; then mv "$legacy" "$previous_legacy"; fi
+if [[ -d "$destination" ]]; then mv "$destination" "$previous_app"; fi
 mv "$staging/Cassotis.app" "$destination"
 installed=1
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$destination"
@@ -62,6 +82,26 @@ installed=1
 # the input source. macOS can discard a first key while launching a replacement
 # input method; the frontend can buffer keys once its IMK server is running.
 "$control" launch
+# Keyboard Settings keeps its own input-source index. After an App ID or
+# bundle path change it can still resolve Cassotis to its removed URL even
+# when TIS in the installer already reports the new input source as enabled.
+refresh_keyboard_settings_index() {
+    local cache="$1" index file
+    [[ -n "$cache" ]] || return 1
+    cache="${cache%/}/com.apple.Keyboard-Settings.extension"
+    index="$cache/com.apple.IntlDataCache.le.kbdx"
+    [[ -f "$index" && ! -L "$index" ]] || return 0
+    LC_ALL=C /usr/bin/grep -aFq -- "$legacy" "$index" || return 0
+    if LC_ALL=C /usr/bin/grep -aFq -- "$destination" "$index"; then return 0; fi
+    for file in "$index" "$cache/com.apple.IntlDataCache.le"; do
+        if [[ -f "$file" && ! -L "$file" ]]; then
+            mv "$file" "$staging/" || return 1
+        fi
+    done
+    printf '键盘设置将重新读取言泉的安装位置。如果系统设置已打开，请退出后重新打开。\n'
+}
+refresh_keyboard_settings_index "$(/usr/bin/getconf DARWIN_USER_CACHE_DIR)" ||
+    printf '键盘设置索引暂时无法刷新。请重新打开键盘设置查看输入源。\n' >&2
 printf 'Installed: %s\n' "$destination"
 cat <<'INSTRUCTIONS'
 应用文件已安装。图形安装器会继续请求 macOS 启用言泉输入法。

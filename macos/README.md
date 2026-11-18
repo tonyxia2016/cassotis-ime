@@ -47,7 +47,7 @@ The Chinese name **言泉** (Yanquan, "Spring of Words") matches Cassotis as a p
 - **Chinese punctuation.** With Chinese punctuation and half-width input, a full stop typed right after digits becomes a decimal point, and the symbols that stay as typed can be edited in Settings, set to the Markdown preset or to standard Chinese punctuation. The default Markdown preset keeps ``-#*+_=`~[]<>|@``; commas, full stops, parentheses and quotation marks stay Chinese, and the backslash gives the enumeration comma `、`.
 - **Custom phrases.** Define ordered letter shortcuts for literal, multiline text. A phrase comes first among the candidates and commits with Space, its number or Tab; a shortcut that is full Pinyin also answers to its abbreviation (`mmd` for `memeda`). Import and export JSON compatible with Windows. Fill in the shortcut and text, then click **添加短语** (Add Phrase); editing an existing entry uses **保存修改** (Save Changes) or **取消编辑** (Cancel Edit).
 - **Settings.** A sidebar settings window that saves every confirmed change at once, with direct shortcut recording and font-name completion. Logging is off by default.
-- **Local by design.** No network and no GPU. Keys typed while the engine starts are kept and converted once it is ready; while the language model is loading or unavailable, candidates are ranked without it.
+- **Offline input.** Conversion and ranking run on the device. With iCloud sync enabled (the default), personal phrases and learning also sync across your devices. You can turn it off in Advanced settings. Keys typed while the engine starts are kept and converted once it is ready; while the language model is loading or unavailable, candidates are ranked without it.
 
 <p align="center">
   <img src="docs/images/macos-three-row-candidates.png" alt="Three-row candidate window with the second row active" width="560">
@@ -122,7 +122,7 @@ export CASSOTIS_LEXICON_ROOT="/path/to/cassotis-lexicon"
 ./install.sh
 ```
 
-The application is built at `build/arm64/Cassotis.app` and installed for the current user in `~/Library/Input Methods/Cassotis.app`; run the scripts without `sudo`. Add 言泉输入法 under System Settings → Keyboard → Text Input, then select it from the input menu. If the input-source list does not refresh, log out and log back in.
+The application is built at `build/arm64/Cassotis.app` and installed for the current user in `~/Library/Input Methods/CassotisIME.app`; run the scripts without `sudo`. Add 言泉输入法 under System Settings → Keyboard → Text Input, then select it from the input menu. If the input-source list does not refresh, log out and log back in.
 
 `build_all.sh` builds the language-model bridge, the engine, both dictionaries, the frontend and the installer, and joins the numbered parts in `data/models/char_lm` into the `char_lm.onnx` the application carries, after checking their SHA-256 values. The first build downloads the official ONNX Runtime 1.20.1 arm64 package and checks its pinned hash. `./rebuild_all.sh` cleans and rebuilds everything, `./uninstall.sh` removes the input method and keeps the learned words, and `./scripts/package.sh` builds the installer disk image. See [BUILD.md (Chinese)](BUILD.md) for the options, packaging and signing.
 
